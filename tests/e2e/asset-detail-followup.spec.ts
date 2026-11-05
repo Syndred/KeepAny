@@ -114,6 +114,21 @@ for (const locale of ['zh-CN', 'en'] as const) {
   await page.locator('.unified-detail-header').getByRole('button',{name:t('edit'),exact:true}).click();
   await expect(page.locator('#catalog-record-contact')).toHaveValue('fictional@example.test');
   await page.locator('#catalog-record-contact').fill('changed@example.test');
+  const inspection=page.locator('#catalog-record-inspection');
+  await inspection.click();await expect(inspection).toHaveAttribute('aria-expanded','true');
+  await page.keyboard.press('Escape');
+  await expect(inspection).toHaveAttribute('aria-expanded','false');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.locator('#catalog-record-contact')).toHaveValue('changed@example.test');
+  await inspection.press('ArrowDown');await expect(page.locator('.date-popover')).toBeVisible();
+  await page.keyboard.press('Escape');await expect(page.locator('.date-popover')).toBeHidden();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.locator('#catalog-record-contact')).toHaveValue('changed@example.test');
+  await shot(page,info,`${locale}-calendar-escape-draft`);
+  await page.keyboard.press('Escape');await expect(page.getByRole('dialog')).toBeHidden();
+  await page.locator('.unified-detail-header').getByRole('button',{name:t('edit'),exact:true}).click();
+  await expect(page.locator('#catalog-record-contact')).toHaveValue('fictional@example.test');
+  await page.locator('#catalog-record-contact').fill('changed@example.test');
   await page.getByRole('dialog').getByRole('button',{name:t('save'),exact:true}).click();
   await expect(page.getByRole('dialog')).toBeHidden(); await page.reload();
   await expect(page.locator('.unified-detail-project-info')).toContainText('changed@example.test');
@@ -137,7 +152,7 @@ for (const locale of ['zh-CN', 'en'] as const) {
   await page.getByRole('dialog').getByRole('button',{name:t('projectDomainDelete'),exact:true}).click();
   await expect(page.getByRole('heading',{level:1})).toHaveText('DF ordinary full');await page.reload();
   await expect(page.locator('.unified-detail-domains a').filter({hasText:addedName})).toHaveCount(0);
-  await info.attach('contract-results.json',{body:JSON.stringify({ids:['DF03','DF04','TM02','TM03','TM04'],candidate:identity(),locale,result:'passed'}),contentType:'application/json'});
+  await info.attach('contract-results.json',{body:JSON.stringify({ids:['DF03','DF04','TM02','TM03','TM04','TM08'],candidate:identity(),locale,result:'passed'}),contentType:'application/json'});
  });
  test(`${locale} TM01 TM06 global accent color and shared consumers`, async ({page},info)=>{
   await start(page,locale);await page.setViewportSize({width:1280,height:900});
