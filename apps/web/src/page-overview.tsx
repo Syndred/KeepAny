@@ -1,3 +1,4 @@
+import { openReminderCenter } from "./reminder-navigation";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -43,7 +44,7 @@ export function Overview() {
  };
  function row(item: OverviewAttention) {
   const content = <><span className="overview-action-icon"><Repeat2 size={16}/></span><span className="overview-action-copy"><strong>{item.name}</strong><small>{date(item.dueDate, i18n.language)} · {t(({ task: "tasks", renewal: "overviewRenewal", warranty: "overviewWarranty", date: "dueDate" })[item.type])}</small></span><strong className="overview-action-date"><RemainingDays days={item.days}/></strong></>;
-  return item.asset ? <Link className="overview-action-row" key={item.id} to="/assets/$kind/$id" params={{ kind: item.asset.kind, id: item.asset.id }}>{content}</Link> : <Link className="overview-action-row" key={item.id} to="/tasks" hash={`task-${item.taskId}`}>{content}</Link>;
+  return item.asset ? <Link className="overview-action-row" key={item.id} to="/assets/$kind/$id" params={{ kind: item.asset.kind, id: item.asset.id }}>{content}</Link> : <button type="button" className="overview-action-row" key={item.id} onClick={() => { setList(null); requestAnimationFrame(() => openReminderCenter({ taskId: item.taskId })); }}>{content}</button>;
  }
  return <main className="page overview-page">
   <div className="overview-stats">
@@ -58,13 +59,13 @@ export function Overview() {
   <div className="overview-panels">
    <section className="overview-panel"><div className="overview-panel-head"><h2>{t("overviewCountdown")}</h2><Button variant="ghost" size="small" onClick={() => setList("upcoming")}>{t("viewAll")} <ArrowRight size={15}/></Button></div>
     {attention.upcoming.length ? attention.upcoming.slice(0, 3).map(row) : <div className="overview-quiet">{t("overviewNoActions")}</div>}
-    <div className="overview-countdown-footer"><button type="button" onClick={() => setList("overdue")}>{t("overviewOverdueCount", { count: attention.overdue.length })} <ArrowRight size={14}/></button><Link to="/tasks">{t("viewTasks")} <ArrowRight size={14}/></Link></div>
+    <div className="overview-countdown-footer"><button type="button" onClick={() => setList("overdue")}>{t("overviewOverdueCount", { count: attention.overdue.length })} <ArrowRight size={14}/></button><button type="button" onClick={() => openReminderCenter()}>{t("reminderEntryOpen")} <ArrowRight size={14}/></button></div>
    </section>
    <section className="overview-panel"><div className="overview-panel-head"><h2>{t("overviewAccountReminders")}</h2><Link to="/accounts">{t("overviewAllConnections")} <ArrowRight size={15}/></Link></div>
     {account ? <div className="overview-risk"><div><h3>{account.name}</h3><p>{t("overviewOldRelation", { count: staleRelations.filter(relation => relation.from === account.id || relation.to === account.id).length })}</p><small>{t("overviewBeforeChanges")}</small></div><Button size="small" onClick={() => visit(account)}><ArrowRight size={16}/>{t("viewConnections")}</Button></div> : <div className="overview-quiet">{t("overviewNoRelationReminders")}</div>}
    </section>
   </div>
   <footer className="overview-footer"><span><LockKeyhole size={13}/>{t("overviewLocalStorage")}</span><Link to="/backup">{t("backupAndRestore")}</Link></footer>
-  {list && <Dialog title={t(list === "overdue" ? "overdue" : "overviewCountdown")} className="overview-countdown-dialog" onClose={() => setList(null)}><div className="overview-countdown-list">{attention[list].length ? attention[list].map(row) : <p className="overview-quiet">{t("overviewNoActions")}</p>}</div><div className="actions"><Button onClick={() => setList(null)}>{t("close")}</Button><Link className="button" to="/tasks">{t("viewTasks")}</Link></div></Dialog>}
+  {list && <Dialog title={t(list === "overdue" ? "overdue" : "overviewCountdown")} className="overview-countdown-dialog" onClose={() => setList(null)}><div className="overview-countdown-list">{attention[list].length ? attention[list].map(row) : <p className="overview-quiet">{t("overviewNoActions")}</p>}</div><div className="actions"><Button onClick={() => setList(null)}>{t("close")}</Button><Button onClick={() => { setList(null); requestAnimationFrame(() => openReminderCenter()); }}>{t("reminderEntryOpen")}</Button></div></Dialog>}
  </main>;
 }

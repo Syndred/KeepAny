@@ -17,7 +17,12 @@ const indexRoute = createRoute({
 const taskRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/tasks",
-	component: lazyRouteComponent(() => import("./page-tasks"), "TaskPage"),
+	beforeLoad: ({ location }) => {
+  const oldHash = location.hash.replace(/^#/, "");
+  let taskId = oldHash.startsWith("task-") ? oldHash.slice(5) : "";
+  try { taskId = decodeURIComponent(taskId); } catch { taskId = ""; }
+  throw redirect({ to: "/", hash: taskId ? `reminder-task-${encodeURIComponent(taskId)}` : "reminders", replace: true });
+ },
 });
 export const listRoute = createRoute({
 	getParentRoute: () => rootRoute,

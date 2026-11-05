@@ -1,3 +1,5 @@
+import { reminderCenterCopy } from "./reminder-center-copy";
+import { reminderEntryCopy } from "./reminder-entry-copy";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import { aiCopy } from "./ai-copy";
@@ -2375,6 +2377,8 @@ Object.assign(
 	aiCopy,
 	aiWorkflowCopy,
 	reminderCopy,
+ reminderCenterCopy,
+ reminderEntryCopy,
 	smartImportCopy,
 	taskEditCopy,
 	financeCopy,
