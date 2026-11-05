@@ -23,6 +23,7 @@ const receipt = {
   templateSpecSha256: hash(readFileSync("tests/e2e/account-template.spec.ts")),
   toolbarTrashSpecSha256: hash(readFileSync("tests/e2e/toolbar-trash.spec.ts")),
   toolbarTrashCoverage: ["TT01", "TT02", "TT03", "TT04", "TT05", "TT06", "TT07", "TT08", "TT09"],
+  categoryDialogCoverage: ["MD01", "MD04"],
   automatedCoverage: ["AT01", "AT02", "AT03", "AT04", "AT05", "AT06", "AT08", "AT09", "AT10", "AT11", "AT12", "AT13", "CC01", "CC02", "CC11", "UE10", "SR01", "SR02", "SR03", "SR04", "SR05", "SR06", "SR07", "UE01", "UE02", "UE03", "UE04", "UE05", "UE06", "UE07", "UE08", "UE09", "CC03", "CC04", "CC05", "CC09"],
   coverageNotes: { UE10: "Controller and independent actual candidate review remain separate.", supersedes: "SE01-SE16's earlier form workflow is retained as history; user now requires unlock before account management and direct merged editing." },
   legacyLayout: {

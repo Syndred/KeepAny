@@ -29,6 +29,20 @@ for (const language of ["zh-CN", "en"] as const) {
  const t = (key: string) => (resources[language].translation as Record<string,string>)[key] ?? key;
  test.describe(language, () => {
  test.beforeEach(async ({ page }) => { await page.addInitScript(lang => localStorage.setItem("keepany-language", lang), language); });
+ test(`${language} MD01 MD04 category dialog keyboard sorting keeps long labels and durable order`, async ({ page }) => {
+  await setup(page,t); const name="Long category / 很长的分类名称 / keyboard", dialog=page.getByRole("dialog"), manage=page.locator(".asset-category-manage");
+  await page.locator(".asset-category-add").click(); await expect(dialog).toHaveClass(/dialog/); await dialog.locator("#category-name").fill(name); await dialog.getByRole("button",{name:t("collectionSave"),exact:true}).click(); await expect(dialog).toHaveCount(0); await manage.click();
+  const order=()=>dialog.locator(".asset-category-order .sortable-pill").allTextContents(), original=await order();
+  const moved=[...original.slice(0,-2),name,original.at(-2)!];
+  const handle=()=>dialog.getByRole("button",{name:`${name} ${t("drag")}`,exact:true});
+  const announce=(id:string)=>page.getByRole("status").filter({hasText:`was moved over droppable area ${id}.`});
+  async function start(){await handle().focus();await page.keyboard.press("Space");await expect(handle()).toHaveAttribute("aria-pressed","true");await expect(announce(name)).toHaveCount(1);}
+  async function move(key:"ArrowLeft"|"ArrowRight",end:"Space"|"Enter"){await start();await page.keyboard.press(key);await expect(announce("other")).toHaveCount(1);await page.keyboard.press(end);await expect(handle()).not.toHaveAttribute("aria-pressed","true");}
+  await move("ArrowLeft","Space");await expect.poll(order).toEqual(moved);await move("ArrowRight","Enter");await expect.poll(order).toEqual(original);
+  await start();await page.keyboard.press("ArrowRight");await page.keyboard.press("Enter");await expect.poll(order).toEqual(original);
+  await start();await page.keyboard.press("ArrowLeft");await expect(announce("other")).toHaveCount(1);await page.keyboard.press("Escape");await expect(dialog).toHaveCount(0);await expect(manage).toBeFocused();await manage.click();await expect.poll(order).toEqual(original);
+  await move("ArrowLeft","Space");await expect.poll(order).toEqual(moved);await dialog.getByRole("button",{name:t("cancel"),exact:true}).click();await page.reload();await page.locator("#password-vault-unlock-master").waitFor();await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve()))));await unlock(page,t);await page.locator(".account-toolbar-actions").waitFor();await manage.click();await expect.poll(order).toEqual(moved);await page.keyboard.press("Escape");await expect(manage).toBeFocused();
+ });
  test(`${language} TT01-02 baseline unified toolbar`, async ({ page }) => {
   await page.goto("/accounts");
   await page.locator("#password-vault-master").fill(master); await page.locator("#password-vault-master-confirm").fill(master);
