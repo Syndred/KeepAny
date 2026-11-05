@@ -81,6 +81,8 @@ function errorKey(error: unknown, context: "operation" | "import" = "operation")
 			return "pwVaultWrongPassword";
 		case "vault-locked":
 			return "pwVaultLockedError";
+		case "vault-memory":
+			return "pwVaultMemoryUnavailable";
 		case "stale":
 		case "vault-stale":
 			return "pwVaultConflict";

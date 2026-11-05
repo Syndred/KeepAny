@@ -101,9 +101,9 @@ for (const language of ["zh-CN", "en"] as const) {
 			await expect(card.locator("[data-login-username]")).toHaveText("main@example.test");
 			await expect(card.locator("select")).toHaveCount(0);
 			await card.locator(".compact-account-title-block").click();
-			await page.locator(".account-detail-actions").getByRole("button", { name: t("compactAccountCopyUrl"), exact: true }).click();
+			await page.locator(".account-login-summary").getByRole("button", { name: t("compactAccountCopyUrl"), exact: true }).click();
 			await expect.poll(() => clipboard(page)).toBe("https://main.example.test/login");
-            await page.locator(".account-detail-back").click();
+            await page.locator(".topbar-back-link").click();
 			await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
 			await expect(card.locator("[data-login-password]")).toHaveCount(0);
 			await expect(card.getByRole("button", { name: /^(切换登录账号|Next login)/ })).toHaveCount(0);
@@ -123,9 +123,11 @@ for (const language of ["zh-CN", "en"] as const) {
             await edit.getByRole("button", { name: t("cancel"), exact: true }).click();
             await expect(card.getByRole("button", { name: t("edit"), exact: true })).toBeFocused();
             await card.locator(".compact-account-title-block").click();
-            await page.locator(".account-detail-actions").getByRole("button", { name: t("pwVaultHistory"), exact: true }).click();
-            await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
-            await page.locator(".account-detail-back").click();
+            // History is now inline; this unchanged account has no prior saved versions.
+            await expect(page.locator(".account-history-card")).toBeVisible();
+            await expect(page.locator(".account-history-empty")).toHaveText(t("pwVaultHistoryEmpty"));
+            await expect(page.locator(".page-header").getByRole("button", { name: t("pwVaultHistory"), exact: true })).toHaveCount(0);
+            await page.locator(".topbar-back-link").click();
 			await page.reload(); await openVaultAccess(page);
 			await page.locator("#password-vault-unlock-master").fill(master);
 			await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).first().click();

@@ -57,7 +57,7 @@ const projectWorkflowRoute = createRoute({
 const changeImpactRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/change-impact",
-	component: lazyRouteComponent(() => import("./page-change-impact"), "ChangeImpactPage"),
+	beforeLoad: () => { throw redirect({ to: "/accounts", replace: true }); },
 });
 const assistantAccessRoute = createRoute({
 	getParentRoute: () => rootRoute,

@@ -72,14 +72,14 @@ for (const language of ["zh-CN", "en"] as const) {
    expect(ordinary).toMatchObject({notes:"",longDescription:"",accountProvider:"Preserved provider",contact:"Preserved contact",description:"Preserved purpose"});expect(JSON.stringify(rows)).not.toContain(privateNote);
   }finally{await context.close();}
  });
- test(`${language} SR01-SR04 simplified fields, title navigation and relation tasks survive refresh`, async ({ browser }, info) => {
+ test(`${language} SR01-SR04 simplified fields, relation navigation and inline history survive refresh`, async ({ browser }, info) => {
   const context = await browser.newContext({ baseURL: info.project.use.baseURL, viewport: { width: 1605, height: 1000 }, locale: language, permissions: ["clipboard-read", "clipboard-write"] });
   await context.addInitScript(lang => localStorage.setItem("keepany-language", lang), language);
   const page = await context.newPage(), errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   try {
    await setup(page, t); await create(page, t, "SR A main", true); await create(page, t, "SR B service"); await create(page, t, "SR C project");
    await card(page, "SR B service").getByRole("link", { name: "SR B service", exact: true }).click(); await connect(page, t, "SR C project");
-   await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
+   await page.locator(".topbar-back-link").click();
    const main = card(page, "SR A main");
    await expect(main.locator(".compact-account-title-block .compact-account-associations")).toHaveCount(1);
    await expect(main.locator(".compact-account-footer .compact-account-associations")).toHaveCount(0);
@@ -98,16 +98,17 @@ for (const language of ["zh-CN", "en"] as const) {
    await page.locator(".relation-filter input").fill("SR C project"); await expect(page.locator(".relation-filter small")).toBeVisible(); await page.locator(".relation-filter input").clear();
    await page.locator(".asset-graph-link").filter({hasText:"SR B service"}).click(); await page.locator(".page-header").getByRole("button",{name:t("edit"),exact:true}).click(); await page.locator("#password-vault-entry-notes").fill("Unsaved B draft"); await page.goBack(); await expect(page.getByRole("dialog")).toHaveCount(0); await expect(page.locator(".page-header h1")).toHaveText("SR A main");
    await page.getByRole("button", { name: t("accountGraphExpand"), exact: true }).click(); await expect(page.locator(".account-family-graph--expanded")).toBeVisible(); await shot(page, `relation-fullscreen-${language}`); await page.keyboard.press("Escape"); await expect(page.locator(".account-family-graph--expanded")).toHaveCount(0);
-   await page.locator(".asset-tasks-card").getByRole("button", { name: t("add"), exact: true }).click(); await page.getByRole("dialog").getByLabel(t("name"), { exact: true }).fill("SR verify account"); await save(page, t); await expect(page.locator(".asset-tasks-card")).toContainText("SR verify account");
-   const taskRow=page.locator(".account-compact-task"); expect((await taskRow.boundingBox())!.height).toBeLessThan(100); await taskRow.getByRole("button",{name:t("moreActions"),exact:true}).click(); await page.getByRole("menuitem",{name:t("edit"),exact:true}).click(); await page.getByRole("dialog").getByLabel(t("name"),{exact:true}).fill("SR verify account · updated"); await save(page,t);
-   await taskRow.getByRole("button",{name:t("moreActions"),exact:true}).click(); await page.getByRole("menuitem",{name:t("remindLater"),exact:true}).click(); await page.locator("[id^=compact-task-due-]").fill("2027-01-12"); await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click(); await expect(taskRow).not.toContainText("2027");
-   await taskRow.getByRole("button",{name:t("moreActions"),exact:true}).click(); await page.getByRole("menuitem",{name:t("remindLater"),exact:true}).click(); await page.locator("[id^=compact-task-due-]").fill("2027-01-12"); await save(page,t); await expect(taskRow).toContainText("2027"); await taskRow.getByRole("button",{name:t("complete"),exact:true}).click(); await expect(taskRow.locator("strong")).toHaveClass("done"); await taskRow.getByRole("button",{name:t("reopen"),exact:true}).click(); await expect(taskRow.locator("strong")).not.toHaveClass("done");
-   await page.locator(".account-impact-details > summary").click(); await expect(page.locator(".account-impact-details")).toHaveJSProperty("open", true); await shot(page, `relation-expanded-${language}`);
-   const impact=page.locator(".account-impact-details"); await impact.locator(".card-header button").click(); await expect(impact.locator(".impact-task-row")).toHaveCount(1);
-   for(const width of [390,768,1280,1920,2262,2560]){await page.setViewportSize({width,height:1000});await shot(page,`populated-impact-${language}-${width}`);expect(await impact.evaluate(n=>n.scrollWidth<=n.clientWidth+1)).toBe(true);const row=await impact.locator(".impact-task-row").boundingBox(),field=await impact.locator(".date-field").boundingBox();expect(field!.x+field!.width).toBeLessThanOrEqual(row!.x+row!.width+1);}
-   await impact.getByRole("button",{name:new RegExp("^"+t("complete")+" ·")}).click();await expect(impact.getByRole("button",{name:new RegExp("^"+t("reopen")+" ·")})).toBeVisible();await shot(page,`impact-completed-${language}`);await impact.getByRole("button",{name:new RegExp("^"+t("reopen")+" ·")}).click();await impact.locator(".date-field input").fill("2027-01-21");await expect(impact.getByRole("button",{name:new RegExp("^"+t("complete")+" ·")})).toBeEnabled();await page.setViewportSize({width:1605,height:1000});
+   // The approved account-detail contract retires manual tasks and impact generation.
+   // Preserve relation create/filter/family/fullscreen/delete coverage and verify the replacement surfaces.
+   await expect(page.locator(".asset-tasks-card,.account-impact-details,.account-compact-task")).toHaveCount(0);
+   await expect(page.locator(".account-history-card")).toBeVisible();
+   await expect(page.locator(".account-related-link")).toHaveCount(2);
+   await page.locator(".account-related-link").filter({hasText:"SR B service"}).click();
+   await expect(page.locator(".page-header h1")).toHaveText("SR B service"); await page.goBack();
+   await expect(page.locator(".page-header h1")).toHaveText("SR A main");
    await page.locator(".page-header").getByRole("button", { name: t("edit"), exact: true }).click(); await expect(page.getByRole("dialog").locator("textarea")).toHaveCount(1); await page.locator("#password-vault-entry-notes").fill("One saved note · 保存后的唯一备注"); await save(page, t); await expect(page.locator(".account-note-summary")).toContainText("保存后的唯一备注");
-   await page.reload(); await unlock(page, t); await expect(page.locator(".account-note-summary")).toContainText("保存后的唯一备注"); await expect(page.locator(".asset-tasks-card")).toContainText("SR verify account");
+   await page.reload(); await unlock(page, t); await expect(page.locator(".account-note-summary")).toContainText("保存后的唯一备注"); await expect(page.locator(".asset-tasks-card,.account-impact-details")).toHaveCount(0); await expect(page.locator(".account-history-row")).not.toHaveCount(0);
+   await page.locator(".account-history-row").first().getByRole("button").click(); await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click(); await expect(page.locator(".account-note-summary")).toContainText("保存后的唯一备注");
    await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
    const edge = page.locator(".react-flow__edge").first(); await edge.focus(); await edge.press("Enter"); await page.locator(".account-graph-selection-panel").getByRole("button", { name: t("deleteRelation"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click(); await expect(page.locator(".react-flow__edge")).toHaveCount(1);
    await page.locator(".account-graph-selection-panel").getByRole("button", { name: t("deleteRelation"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("deleteRelation"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0); await waitForAccountGraphLayout(page, { nodes: 1, edges: 0 }); await expect(page.locator("[data-login-username]")).toHaveText("main@example.test");
@@ -121,18 +122,20 @@ for (const language of ["zh-CN", "en"] as const) {
   try {
    await setup(page, t); await create(page, t, "SR Long account · 用于验证长标题和内容换行 " + "long-name ".repeat(8), true);
    const account = page.locator(".compact-account-card"), title = account.locator(".compact-account-title-block");
-   await title.click(); await page.locator(".asset-tasks-card").getByRole("button",{name:t("add"),exact:true}).click(); await page.getByRole("dialog").getByLabel(t("name"),{exact:true}).fill("A long task · 长内容需要自然换行 " + "Review connection ".repeat(5)); await save(page,t); await page.getByRole("link",{name:t("accountBack"),exact:true}).click();
+   // Prepare a real saved version and long note for the approved inline-history layout.
+   await title.click(); await page.locator(".page-header").getByRole("button",{name:t("edit"),exact:true}).click(); await page.locator("#password-vault-entry-notes").fill("A long note · 长内容需要自然换行 " + "Review connection ".repeat(30)); await save(page,t); await page.locator(".topbar-back-link").click();
    for (const width of [390, 768, 1280, 1920, 2262, 2560]) {
     await page.setViewportSize({ width, height: 1000 }); await shot(page, `simple-card-${language}-${width}`);
     await title.focus(); await expect(title).toBeFocused(); await title.hover(); await title.click(); await expect(page.locator(".account-login-summary")).toBeVisible(); await waitForAccountGraphLayout(page);
     await shot(page, `simple-detail-${language}-${width}`);
     expect((await page.locator(".page-header").boundingBox())!.height).toBeLessThan(width === 390 ? 240 : 200);
-    await page.locator(".account-compact-task").getByRole("button",{name:t("moreActions"),exact:true}).click(); await shot(page,`simple-task-${language}-${width}`); await page.getByRole("menuitem",{name:t("remindLater"),exact:true}).click(); await shot(page,`simple-reminder-${language}-${width}`); await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
+    await expect(page.locator(".asset-tasks-card,.account-impact-details")).toHaveCount(0); await expect(page.locator(".account-history-row")).not.toHaveCount(0);
+    await page.locator(".account-history-row").first().getByRole("button").click(); await shot(page,`simple-history-confirm-${language}-${width}`); await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
     if (width > 1000) { const left = await page.locator(".asset-relations-card").boundingBox(), right = await page.locator(".account-login-summary").boundingBox(); expect(Math.abs(left!.y - right!.y)).toBeLessThanOrEqual(1); expect(left!.x + left!.width).toBeLessThan(right!.x); }
-    await page.locator(".account-impact-details > summary").click(); await shot(page, `simple-impact-${language}-${width}`); await page.locator(".account-impact-details > summary").click();
+    await shot(page, `simple-inline-history-${language}-${width}`);
     await page.getByRole("button", { name: t("accountGraphExpand"), exact: true }).click(); await expect(page.locator(".account-family-graph--expanded")).toBeVisible(); await waitForAccountGraphLayout(page); await shot(page, `simple-graph-${language}-${width}`); await page.keyboard.press("Escape");
     await page.locator(".page-header").getByRole("button", { name: t("edit"), exact: true }).click(); await expect(page.getByRole("dialog").locator("textarea")).toHaveCount(1); await shot(page, `simple-edit-${language}-${width}`); await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click();
-    await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
+    await page.locator(".topbar-back-link").click();
    }
   } finally { await context.close(); }
  });
@@ -146,7 +149,7 @@ for (const language of ["zh-CN", "en"] as const) {
    await expect(page.locator("main.asset-detail-account")).toBeVisible();
    await page.getByRole("button", { name: t("addRelation"), exact: true }).click(); await expect(page.locator("#account-entry-category")).toHaveCount(0); await page.locator("#password-vault-entry-asset").click(); await page.getByRole("option",{name:`SR ordinary asset · ${t("account")}`,exact:true}).click(); await expect(page.locator(".password-vault-linked-chip")).toContainText("SR ordinary asset"); await save(page, t); await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 }); await shot(page, `private-detail-${language}`);
    const edge = page.locator(".react-flow__edge"); await edge.focus(); await edge.press("Enter"); await page.locator(".account-graph-selection-panel").getByRole("button", { name: t("deleteRelation"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0); await waitForAccountGraphLayout(page, { nodes: 1, edges: 0 });
-   await page.reload(); await unlock(page, t); await expect(page.locator(".account-login-summary")).toBeVisible(); await page.getByRole("link", { name: t("accountBack"), exact: true }).click(); await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(1); await expect(card(page, "SR private import")).toHaveAttribute("data-private-only", "true");
+   await page.reload(); await unlock(page, t); await expect(page.locator(".account-login-summary")).toBeVisible(); await page.locator(".topbar-back-link").click(); await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(1); await expect(card(page, "SR private import")).toHaveAttribute("data-private-only", "true");
    await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click(); await page.locator("#password-vault-unlock-master").fill("Wrong-fictional-password"); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(page.getByText(t("pwVaultUnlockFailed"),{exact:true})).toBeVisible(); await expect(page.locator(".compact-account-card")).toHaveCount(0); await unlock(page, t); await shot(page, `unlock-single-status-${language}`);
    await card(page, "SR private import").locator(".compact-account-title-block").click(); await page.locator(".page-header").getByRole("button", { name: t("edit"), exact: true }).click(); await page.locator("#password-vault-entry-notes").fill("Discarded private note");
    // A second real page saves a revision, exercising the existing cross-tab lock boundary.

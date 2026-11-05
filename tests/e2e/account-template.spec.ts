@@ -23,7 +23,7 @@ async function setup(page: Page, t: T) {
  await page.locator("#password-vault-entry-password").fill("Synthetic source secret"); await page.locator("#password-vault-entry-notes").fill("Private source notes"); await page.locator("#password-vault-entry-url").fill("https://mail.example.test/");
  await selectChoice(page.locator("#account-entry-category"), { label: t("email") }); await save(page, t);
 }
-async function openDetails(page: Page, card: Locator) { await card.locator(".compact-account-title-block").click(); await expect(page.locator(".account-detail-actions")).toBeVisible(); }
+async function openDetails(page: Page, card: Locator) { await card.locator(".compact-account-title-block").click(); await expect(page.locator(".account-login-summary")).toBeVisible(); await expect(page.locator(".account-history-card")).toBeVisible(); }
 for (const language of ["zh-CN", "en"] as const) {
  test.describe(language, () => {
  test.use({ locale: language });
@@ -63,13 +63,16 @@ for (const language of ["zh-CN", "en"] as const) {
  test(`${language} AT08-11 detail actions work for linked and private cards`, async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]); await setup(page, t);
   const source = byName(page, "Template Mail"); await source.getByRole("button", { name: t("edit"), exact: true }).click(); await page.locator("#password-vault-entry-notes").fill("Updated source notes"); await save(page, t);
-  await openDetails(page, source); const actions = page.locator(".account-detail-actions");
-  await actions.getByRole("button", { name: t("compactAccountCopyUrl"), exact: true }).click(); expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("https://mail.example.test/");
-  await actions.getByRole("button", { name: t("pwVaultHistory"), exact: true }).click(); await expect(page.locator(".password-vault-history-row")).not.toHaveCount(0); await shot(page, `history-${language}`);
+  await openDetails(page, source); const login = page.locator(".account-login-summary"), unlink = page.locator(".account-unlink-action");
+  // Approved detail contract supersedes the former More actions card and history modal.
+  await expect(page.locator(".account-detail-actions,.account-impact-details,.asset-tasks-card")).toHaveCount(0); await expect(page.locator(".page-header").getByRole("button", { name: t("pwVaultHistory"), exact: true })).toHaveCount(0);
+  await login.getByRole("button", { name: t("compactAccountCopyUrl"), exact: true }).click(); expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("https://mail.example.test/");
+  await expect(page.locator(".account-history-row")).not.toHaveCount(0); await shot(page, `history-${language}`);
+  await page.locator(".account-history-row").first().getByRole("button").click(); await expect(page.getByRole("dialog")).toHaveAccessibleName(t("pwVaultHistoryRestore"));
   await page.getByRole("dialog").getByRole("button", { name: t("pwVaultHistoryRestore"), exact: true }).first().click(); await expect(page.getByRole("dialog")).toHaveCount(0); await expect(page.locator(".account-note-summary")).toContainText("Private source notes");
-  await actions.getByRole("button", { name: t("accountViewRelations"), exact: true }).click(); await expect(page.locator("#account-relations")).toBeInViewport();
-  await actions.getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click(); await expect(actions.getByRole("button", { name: t("pwVaultUnlink"), exact: true })).toBeFocused();
-  await actions.getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: t("accountViewRelations"), exact: true })).toHaveCount(0); await expect(page.locator("#account-relations")).toBeInViewport();
+  await unlink.click(); await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click(); await expect(unlink).toBeFocused();
+  await unlink.click(); await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".account-detail-back")).toHaveCount(0); await page.locator(".topbar-back-link").click(); await expect(cards(page)).toHaveCount(2);
   // Existing password-only data is prepared by importing a synthetic KDBX through the UI.
   await importVisualKdbxEntries(page, t, [{ title: "Private template", username: "private@example.test", password: "Synthetic private source", url: "https://private.example.test/" }]);
@@ -97,8 +100,8 @@ for (const language of ["zh-CN", "en"] as const) {
    expect(geometry.overflow).toBe(false); expect(geometry.category.h).toBe(geometry.buttons.h); if (width >= 768) expect(Math.abs(geometry.category.y + geometry.category.h / 2 - geometry.buttons.y - geometry.buttons.h / 2)).toBeLessThanOrEqual(1); matrix.push({ width, geometry, alignment: width < 768 ? "N/A: title actions and category occupy separate rows on mobile" : "same row" });
    await dialog.locator("#account-entry-category").click(); await page.getByRole("option", { name: t("phone"), exact: true }).waitFor({ state: "visible" }); await shot(page, `category-open-${language}-${width}`); await page.keyboard.press("Escape"); await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
    await source.getByRole("button", { name: t("add"), exact: true }).click(); await shot(page, `create-${language}-${width}`); await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
-   await openDetails(page, source); await waitForAccountGraphLayout(page, { nodes: 1, edges: 0 }); await shot(page, `detail-${language}-${width}`); await page.locator(".account-detail-actions").getByRole("button", { name: t("pwVaultHistory"), exact: true }).click(); await shot(page, `history-empty-${language}-${width}`); await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
-   await page.locator(".account-detail-actions").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await shot(page, `unlink-${language}-${width}`); await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click(); await expect(page.locator(".account-detail-back")).toHaveCount(0); await page.locator(".topbar-back-link").click();
+   await openDetails(page, source); await waitForAccountGraphLayout(page, { nodes: 1, edges: 0 }); await shot(page, `detail-${language}-${width}`); await expect(page.locator(".account-history-empty")).toHaveText(t("pwVaultHistoryEmpty")); await shot(page, `history-empty-${language}-${width}`);
+   await page.locator(".account-unlink-action").click(); await shot(page, `unlink-${language}-${width}`); await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click(); await expect(page.locator(".account-detail-back")).toHaveCount(0); await page.locator(".topbar-back-link").click();
    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)).toBe(false);
   }
   writeFileSync(join(output, `matrix-${language}.json`), JSON.stringify({ ids: ["AT01", "AT12", "AT13"], candidate: portableCandidate(), matrix }, null, 2));

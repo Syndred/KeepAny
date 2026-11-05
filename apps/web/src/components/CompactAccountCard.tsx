@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeftRight, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff, LockKeyhole, Mail, Pencil, Plus, Smartphone, Trash2, UserRound } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import type { AccountTemplate } from "../account-entry-save";
 import type { Asset } from "../../../../packages/domain/src";
 import { accountHttpUrl, accountLoginChoices, nextAccountLogin, preferredAccountLogin } from "../account-login-choices";
 import { matchesAssetSearch } from "../asset-search";
@@ -11,7 +12,7 @@ import { usePasswordVault, type PasswordVaultEntrySummary } from "./PasswordVaul
 import { Button } from "./ui/button";
 import "../compact-account.css";
 
-type Props = { asset: Asset; entries: PasswordVaultEntrySummary[]; connectionCount: number; queries: string[]; focusEntryId?: string; tools: AccountVaultTools; onOpen: () => void; onCreate: (template: Asset, triggerId: string) => void; onEdit: (asset: Asset, entryId?: string, triggerId?: string) => void; onDeleteAccount: (asset: Asset) => void; virtual?: boolean };
+type Props = { asset: Asset; entries: PasswordVaultEntrySummary[]; connectionCount: number; queries: string[]; focusEntryId?: string; tools: AccountVaultTools; onOpen: () => void; onCreate: (template: AccountTemplate, triggerId: string) => void; onEdit: (asset: Asset, entryId?: string, triggerId?: string) => void; onDeleteAccount: (asset: Asset) => void; virtual?: boolean };
 
 function CompactIcon({ label, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode }) {
 	return <Button type="button" variant="ghost" size="icon" className="compact-account-icon" aria-label={label} title={label} {...props}>{children}</Button>;
@@ -82,7 +83,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 		setSelection({ key: nextAccountLogin(choices, current.key)?.key ?? "", queryKey });
 	}
 	const copiedIcon = (field: string) => copied === `${scope}:${field}` ? <Check size={16} /> : <Copy size={16} />;
-	return <Frame asset={{ ...asset, name: current?.entry.title ?? asset.name }} connectionCount={connectionCount} onOpen={onOpen} onCreate={() => onCreate({ ...asset, name: current?.entry.title ?? asset.name, url: current?.entry.url || asset.url }, createId)} onEdit={() => onEdit(asset, current?.entry.id, editId)} onDelete={() => current ? tools.deleteLogin(current.entry, username, virtual ? undefined : asset.id) : onDeleteAccount(asset)} busy={tools.busy} virtual={virtual} url={url} entryId={current?.entry.id} createId={createId} editId={editId}>
+	return <Frame asset={{ ...asset, name: current?.entry.title ?? asset.name }} connectionCount={connectionCount} onOpen={onOpen} onCreate={() => onCreate({ ...asset, name: current?.entry.title ?? asset.name, url: current?.entry.url || asset.url, sourceEntryId: current?.entry.id }, createId)} onEdit={() => onEdit(asset, current?.entry.id, editId)} onDelete={() => current ? tools.deleteLogin(current.entry, username, virtual ? undefined : asset.id) : onDeleteAccount(asset)} busy={tools.busy} virtual={virtual} url={url} entryId={current?.entry.id} createId={createId} editId={editId}>
 		<ValueRow label={t("pwVaultAccountShort")} actions={<>
 			{choices.length > 1 && <CompactIcon label={t("compactAccountNextLogin", { index: position, total: choices.length })} disabled={tools.busy} onClick={advance} className="compact-account-icon compact-account-switch"><ArrowLeftRight size={16} /><small aria-hidden="true">{position}/{choices.length}</small></CompactIcon>}
 			<CompactIcon label={t("pwVaultCopyUsername")} disabled={tools.busy || !username} onClick={() => void copy("pwVaultUsernameField", username, "username", Boolean(current))}>{copiedIcon("username")}</CompactIcon>
