@@ -289,7 +289,7 @@ function CategoryStrip({
 				</button>
 			</div>
 			{searchControl}
-			<Button variant="ghost" size="small" className="asset-category-manage" disabled={categoryBusy} onClick={openManager}>{t("manage")}</Button>
+			<Button size="small" className="asset-category-manage" disabled={categoryBusy} onClick={openManager}>{t("manage")}</Button>
 			{toolbarActions}
 			</div>
 			{data.categoryEditsError && <p className="field-error" role="alert">{t("error")}</p>}

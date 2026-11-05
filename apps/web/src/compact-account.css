@@ -1,6 +1,6 @@
 .unified-accounts-page .asset-account-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); align-items: start; }
 .compact-account-slot { min-width: 0; align-self: start; }
-.unified-accounts-page .compact-account-card { display: block; max-width: none; min-height: 0; height: auto; padding: 12px 13px 0; border-radius: 12px; overflow: visible; }
+.unified-accounts-page .compact-account-card { display: block; max-width: none; min-height: 0; height: auto; padding: 12px 13px 6px; border-radius: 12px; overflow: visible; }
 .unified-accounts-page .compact-account-card:hover { transform: none; }
 .compact-account-heading { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 38px; margin-bottom: 10px; }
 .compact-account-avatar { display: grid; place-items: center; flex: none; width: 32px; height: 34px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--yellow-soft); }
@@ -63,7 +63,7 @@
 	.unified-accounts-page .asset-category-toolbar .themed-select-trigger { padding-inline: 8px; gap: 4px; font-size: 14px; }
 	.unified-accounts-page .asset-category-manage { padding-inline: 8px; }
 	.unified-accounts-page .account-toolbar-actions { gap: 6px; }
-	.unified-accounts-page .compact-account-card { padding: 10px 12px 0; }
+	.unified-accounts-page .compact-account-card { padding: 10px 12px 6px; }
 	.compact-account-heading { min-height: 44px; margin-bottom: 7px; gap: 6px; }
 	.compact-account-title { font-size: 15px; }
 	.compact-account-title { min-height: 44px; line-height: 44px; }
