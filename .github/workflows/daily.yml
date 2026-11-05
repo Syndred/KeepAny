@@ -81,6 +81,9 @@ jobs:
       - name: Verify unified legacy links, theme backgrounds and natural history height
         run: node scripts/check-detail-followup.mjs
         timeout-minutes: 15
+      - name: Verify compact todo controls, persistence and responsive candidate evidence
+        run: node scripts/check-todo-style.mjs
+        timeout-minutes: 15
       - name: Verify sidebar bottom links and responsive candidate evidence
         run: node scripts/check-sidebar-bottom.mjs
         timeout-minutes: 5

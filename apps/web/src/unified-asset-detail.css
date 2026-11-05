@@ -448,7 +448,8 @@
 	box-shadow: none;
 }
 .unified-detail-tasks .account-compact-task {
-	display: flex;
+	display: grid;
+	grid-template-columns: 44px minmax(0, 1fr) auto;
 	align-items: center;
 }
 .unified-detail-tasks .impact-task-info {
