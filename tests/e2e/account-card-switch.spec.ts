@@ -1,0 +1,74 @@
+import { test, expect } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import { resources } from '../../apps/web/src/i18n';
+import { openVaultAccess } from './helpers/vault-access';
+const output = 'test-results/account-card-switch/evidence';
+mkdirSync(output, { recursive: true });
+for (const language of ['zh-CN', 'en'] as const) test(`${language} notes and independent whole-account switch`, async ({ browser }, info) => {
+ const t = (key: string) => (resources[language].translation as Record<string,string>)[key] ?? key;
+ const context = await browser.newContext({ baseURL: info.project.use.baseURL, permissions: ['clipboard-read', 'clipboard-write'], viewport: { width: 1280, height: 900 } });
+ await context.addInitScript(lang => localStorage.setItem('keepany-language', lang), language);
+ const page = await context.newPage();
+ const notes = 'Long synthetic note '.repeat(40) + '\nLast line';
+ const master = 'SyntheticCardSwitchMaster2026!';
+ const cards = page.locator('.compact-account-card');
+ const save = async () => { await page.getByRole('dialog').getByRole('button', { name: /^(保存|Save|保存条目|Save entry)$/ }).click(); await expect(page.getByRole('dialog')).toHaveCount(0); };
+ try {
+  await page.goto('/accounts'); await openVaultAccess(page);
+  await page.locator('#password-vault-master').fill(master); await page.locator('#password-vault-master-confirm').fill(master);
+  await page.getByRole('button', { name: t('accountSetUp'), exact: true }).click();
+  await page.locator('.asset-category-toolbar').getByRole('button', { name: t('add'), exact: true }).click();
+  await page.locator('#password-vault-entry-title').fill('Synthetic platform');
+  await page.locator('#password-vault-entry-username').fill('first-login');
+  await page.locator('#password-vault-entry-password').fill('SyntheticFirstPassword!');
+  await page.locator('#password-vault-entry-notes').fill(notes);
+  await page.getByRole('dialog').getByRole('button', { name: t('pwVaultAddIdentifier'), exact: true }).click();
+  await page.locator('.pw-smart-identifier-row input').last().fill('first-alias');
+  await save(); await expect(cards).toHaveCount(1);
+  await cards.getByRole('button', { name: t('compactAccountCopyNotes'), exact: true }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe(notes);
+  await cards.getByRole('button', { name: t('add'), exact: true }).click();
+  await page.locator('#password-vault-entry-title').fill('Synthetic second');
+  await page.locator('#password-vault-entry-username').fill('second-login');
+  await page.locator('#password-vault-entry-password').fill('SyntheticSecondPassword!');
+  await expect(page.locator('#password-vault-entry-notes')).toHaveValue('');
+  await save(); await expect(cards).toHaveCount(1);
+  const whole = cards.getByRole('button', { name: /^(切换账号|Switch account)/ });
+  // The new account can be initially selected; start deterministically on the first.
+  if ((await cards.locator('[data-login-username]').innerText()) !== 'first-login') await whole.click();
+  await expect(cards.locator('[data-login-username]')).toHaveText('first-login');
+  await cards.getByRole('button', { name: t('pwVaultRevealPassword'), exact: true }).click();
+  await whole.click();
+  await expect(whole).toBeFocused();
+  await expect(cards.locator('[data-login-username]')).toHaveText('second-login');
+  await expect(cards.locator('[data-login-password]')).toHaveText('••••••••••');
+  await expect(cards.locator('[data-login-notes]')).toHaveText(t('compactAccountNoNotes'));
+  await expect(cards.getByRole('button', { name: t('compactAccountCopyNotes'), exact: true })).toBeDisabled();
+  await cards.getByRole('button', { name: t('pwVaultCopyPassword'), exact: true }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('SyntheticSecondPassword!');
+  await cards.getByRole('button', { name: t('edit'), exact: true }).click();
+  await expect(page.locator('#password-vault-entry-username')).toHaveValue('second-login');
+  await page.getByRole('dialog').getByRole('button', { name: t('cancel'), exact: true }).click();
+  for (const width of [390, 768, 1280, 1920]) {
+   await page.setViewportSize({ width, height: 900 });
+   if (width < 768) await expect.poll(() => page.locator('.sidebar').evaluate(el => el.getBoundingClientRect().right)).toBeLessThanOrEqual(1);
+   else await expect.poll(() => page.locator('.sidebar').evaluate(el => el.getBoundingClientRect().left)).toBeGreaterThanOrEqual(0);
+   await expect(cards.locator('.compact-account-row')).toHaveCount(3);
+   const emptyLayout = await cards.evaluate(el => ({ height: el.getBoundingClientRect().height, loginRow: el.querySelector('.compact-account-row')!.getBoundingClientRect().height, noteRow: el.querySelector('[data-login-notes]')!.closest('.compact-account-row')!.getBoundingClientRect().height }));
+   await whole.click();
+   await expect(cards.locator('[data-login-notes]')).toHaveText(notes);
+   const layout = await cards.evaluate(el => ({ height: el.getBoundingClientRect().height, overflow: el.scrollWidth > el.clientWidth, row: el.querySelector('[data-login-notes]')!.getBoundingClientRect().height, loginRow: el.querySelector('.compact-account-row')!.getBoundingClientRect().height, noteRow: el.querySelector('[data-login-notes]')!.closest('.compact-account-row')!.getBoundingClientRect().height }));
+   expect(layout.overflow).toBe(false); expect(layout.noteRow).toBe(emptyLayout.noteRow); expect(layout.height - emptyLayout.height).toBeCloseTo(layout.loginRow - emptyLayout.loginRow, 1); expect(layout.row).toBeLessThan(45);
+   await page.screenshot({ path: `${output}/${language}-${width}-notes.png`, fullPage: true });
+   await cards.locator('.compact-account-switch').click();
+   await expect(cards.locator('[data-login-username]')).toHaveText('first-alias');
+   await whole.click();
+   await expect(cards.locator('[data-login-username]')).toHaveText('second-login');
+  }
+  await page.reload(); await openVaultAccess(page);
+  await page.locator('#password-vault-unlock-master').fill(master);
+  await page.getByRole('button', { name: t('accountUnlockAction'), exact: true }).first().click();
+  await expect(cards).toHaveCount(1);
+  await expect(cards.getByRole('button', { name: /^(切换账号|Switch account)/ })).toBeEnabled();
+ } finally { await context.close(); }
+});

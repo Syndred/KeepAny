@@ -1,5 +1,8 @@
 /** Password vault copy kept separate so the shell can merge it into i18next. */
 export const passwordVaultCopy: Record<string, [string, string]> = {
+	compactAccountNoNotes: ["无备注", "No notes"],
+	compactAccountCopyNotes: ["复制备注", "Copy notes"],
+	compactAccountNextAccount: ["切换账号 · {{index}}/{{total}}", "Switch account · {{index}}/{{total}}"],
 	accountEntryMore: ["更多账号资料", "More account details"],
 	accountEntrySaved: ["账号已保存。", "Account saved."],
 	accountEntryInvalidField: ["请检查：{{field}}。", "Check {{field}}."],
