@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-	Background, BaseEdge, ControlButton, Controls, Handle, MarkerType, MiniMap, Panel, Position,
+	BaseEdge, ControlButton, Controls, Handle, MarkerType, MiniMap, Panel, Position,
 	ReactFlow, ReactFlowProvider, getViewportForBounds, useReactFlow, useStore,
 	useUpdateNodeInternals,
 	type Edge, type EdgeChange, type EdgeProps, type Node, type NodeProps,
@@ -221,7 +221,6 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 				nodesFocusable={false} edgesFocusable onEdgesChange={changeEdges} onPaneClick={() => props.onSelectEdge(null)}
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
 				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={rootId} fitWholeGraph={props.scope === "all" || props.root?.kind !== "account"} restore={restore} onSize={setSize} onReady={setReadyKey} />
-				<Background />
 				{navigationHost && createPortal(<><GraphControls layout={layout} rootId={rootId} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={rootId} />}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>
