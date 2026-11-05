@@ -117,7 +117,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   await expect(page.getByRole("dialog")).toContainText("Video plan");
   await expect(page.getByRole("dialog")).not.toContainText("Overdue plan");
   await page.getByRole("dialog").locator("header").getByRole("button", { name: text("close"), exact: true }).click();
-  await upcoming.locator(".overview-countdown-footer button").click();
+  await upcoming.locator(".overview-countdown-footer button").filter({hasText:/逾期|overdue/i}).click();
   await expect(page.getByRole("dialog").locator(".overview-action-row")).toHaveCount(1);
   await expect(page.getByRole("dialog")).toContainText("Overdue plan"); await page.keyboard.press("Escape");
   const zoom = page.locator(".react-flow__viewport"), original = await zoom.getAttribute("style");

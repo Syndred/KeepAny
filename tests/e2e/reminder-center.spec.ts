@@ -158,6 +158,8 @@ for(const locale of ["zh-CN","en"] as const){
   screenshots.push(await shot(page,info,"all-read"));await center(page).getByRole("tab",{name:/未读|Unread/}).click();screenshots.push(await shot(page,info,"unread-empty"));
   await page.keyboard.press("Escape");await expect(center(page)).toHaveCount(0);await expect(bell(page)).toBeFocused();
   await page.goto("/tasks#task-nr-alone");await expect(center(page)).toContainText("Standalone item");screenshots.push(await shot(page,info,"expanded-item"));
+  await center(page).getByRole("button",{name:t("complete"),exact:true}).click();await expect(center(page).locator(".reminder-center-task-feedback")).toContainText(t("saved"));
+  await expect(center(page).getByRole("button",{name:t("reopen"),exact:true})).toBeVisible();screenshots.push(await shot(page,info,"inline-completed"));
   await receipt(info,["NR01","NR02","NR04","NR07","NR13","NR14"],{locale,width,screenshots});
  });
 }

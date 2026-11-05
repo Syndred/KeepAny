@@ -10,7 +10,7 @@ import { buildReminderCenterItems, reminderReadPreference, resolveReminderTarget
 import { REMINDER_CENTER_EVENT, type ReminderCenterRequest } from "./reminder-navigation";
 import { REMINDER_SETTINGS_ID, readReminderSettings } from "./reminders";
 import { useLocalDay } from "./use-local-day";
-import { date, useAppContext } from "./view-shared";
+import { AppContext, date, useAppContext } from "./view-shared";
 import "./reminder-center.css";
 
 function useSmallReminderScreen() {
@@ -39,7 +39,8 @@ const typeKeys = { task: "reminderCenterTask", renewal: "reminderCenterRenewal",
 
 /** One shell entry, shared by the bell and all retained historical reminder links. */
 export function ReminderCenter() {
-	const { data } = useAppContext();
+	const context = useAppContext();
+	const { data } = context;
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const pathname = useRouterState({ select: state => state.location.pathname });
@@ -53,6 +54,7 @@ export function ReminderCenter() {
 	const [request, setRequest] = useState<ReminderCenterRequest | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
+	const [taskFeedback, setTaskFeedback] = useState("");
 	const inFlight = useRef(false);
 	const interaction = useRef(0);
 	const triggerRef = useRef<HTMLButtonElement>(null);
@@ -74,6 +76,7 @@ export function ReminderCenter() {
 	latest.current = { data, items };
 
 	function show(options: ReminderCenterRequest) {
+		setTaskFeedback("");
 		interaction.current++;
 		setTab(options.filter === "unread" ? "unread" : "all");
 		setScope({ assetId: options.assetId, overdue: options.filter === "overdue" });
@@ -152,7 +155,7 @@ export function ReminderCenter() {
 		if (target) {
 			try { await navigate(target); setOpen(false); }
 			catch { setError(t("reminderCenterLoadFailed")); }
-		} else if (item.task) setSelectedTaskId(item.task.id);
+		} else if (item.task) { setTaskFeedback(""); setSelectedTaskId(item.task.id); }
 	}
 
 	function itemDate(item: ReminderCenterItem) {
@@ -192,7 +195,8 @@ export function ReminderCenter() {
 					<div ref={bodyRef} id={bodyId} data-testid="reminder-list" className="reminder-center-body" role={selectedTaskId === null ? "tabpanel" : undefined} aria-labelledby={selectedTaskId === null ? tab === "all" ? allTabId : unreadTabId : undefined} aria-busy={busy || data.loading}>
 						{data.loading ? <div className="reminder-center-empty" role="status"><Bell size={28} aria-hidden="true" /><strong>{t("loading")}</strong></div> : data.error ? <div className="reminder-center-empty" role="alert"><strong>{t("reminderCenterLoadFailed")}</strong><button type="button" className="button" onClick={() => window.location.reload()}>{t("reminderCenterReload")}</button></div> : selectedTaskId !== null ? <section className="reminder-center-task-detail" aria-label={t("reminderCenterTaskDetail")}>
 							<button type="button" className="reminder-center-back" onClick={() => { setSelectedTaskId(null); setError(""); }}><ArrowLeft size={16} aria-hidden="true" />{t("reminderCenterBackToList")}</button>
-							{selectedTask ? <TaskRow key={selectedTask.id} task={selectedTask} compact /> : <p role="status">{t("reminderCenterMissingTask")}</p>}
+							{taskFeedback && <p className="reminder-center-task-feedback" role="status">{taskFeedback}</p>}
+							{selectedTask ? <AppContext.Provider value={{ ...context, notify: setTaskFeedback }}><TaskRow key={selectedTask.id} task={selectedTask} compact /></AppContext.Provider> : <p role="status">{t("reminderCenterMissingTask")}</p>}
 						</section> : shown.length ? groups.map(group => {
 							const rows = shown.filter(item => item.group === group);
 							return rows.length ? <section className={`reminder-center-group is-${group}`} key={group} aria-label={t(groupKeys[group])}>
