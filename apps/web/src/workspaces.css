@@ -22,6 +22,8 @@
 .workspace-password-only > .password-vault-entry-list { gap: 12px; }
 .workspace-password-only .password-vault-entry.task-card { gap: 8px; }
 .workspace-password-card { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; align-items: start; padding: 16px; color: var(--ink); text-decoration: none; }
+.asset-masonry-container { min-width: 0; position: relative; }
+.asset-masonry-width { position: absolute; inset: 0 0 auto; display: block; height: 0; pointer-events: none; }
 .workspace-asset-grid { --masonry-columns: 4; position: relative; display: grid; grid-template-columns: repeat(var(--masonry-columns),minmax(0,1fr)); align-items: start; gap: 16px; }
 .workspace-asset-grid[data-laid-out="true"] { display: block; }
 .workspace-asset-grid[data-laid-out="true"] > .asset-summary-card { position: absolute; }
