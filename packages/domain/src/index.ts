@@ -1,9 +1,12 @@
+import { currencies } from './currency';
+import { dueOnCycle, parseDateOnly, validDateOnly } from './calendar';
+export { calendarDayDistance, dueOnCycle } from './calendar';
 import { z } from 'zod';
 import { maintenanceScheduleSchema } from './task-repeat';
 import { taskReminderSchema, zonedParts } from './task-reminder';
 export { parseMinorUnits, inputFromMinorUnits, formatMinorUnits } from './money';
 export const kinds = ['project','account','subscription','item','vault'] as const;
-export const currencies = ['CNY','USD','EUR','GBP','JPY'] as const;
+export { currencies } from './currency';
 export const itemLifecycleStatuses = ['inUse','idle','repairing','resold','retired'] as const;
 export const itemWarrantyStatuses = ['unverified','inWarranty','outOfWarranty','notApplicable'] as const;
 // Domain holdings belong to a project record and are included in the same local backup/sync payload.
@@ -27,26 +30,6 @@ export const itemMediaSchema=z.object({
 });
 export type ItemMedia=z.infer<typeof itemMediaSchema>;
 
-// Date-only values are Gregorian calendar dates, independent of the host time zone.
-// Local Date and date-fns calendar operations can skip a date (for example, Apia 2011-12-30).
-function calendarDate(year:number,month:number,day:number){
- const date=new Date(0);
- date.setUTCHours(0,0,0,0);
- date.setUTCFullYear(year,month,day);
- return date;
-}
-function parseDateOnly(value:string){
- if(!/^\d{4}-\d{2}-\d{2}$/.test(value))throw Error('invalid-date');
- const year=Number(value.slice(0,4)),month=Number(value.slice(5,7)),day=Number(value.slice(8,10));
- const date=calendarDate(year,month-1,day);
- if(date.getUTCFullYear()!==year||date.getUTCMonth()!==month-1||date.getUTCDate()!==day)throw Error('invalid-date');
- return date;
-}
-function validDateOnly(value:string){try{parseDateOnly(value);return true;}catch{return false;}}
-function formatDateOnly(date:Date){
- if(!Number.isFinite(date.getTime())||date.getUTCFullYear()<0||date.getUTCFullYear()>9999)throw Error('invalid-date');
- return `${String(date.getUTCFullYear()).padStart(4,'0')}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
-}
 // Operation markers identify committed history pairs even if the asset is edited before journal cleanup.
 export const assetSchema = z.object({
  id:z.string().min(1).max(96), kind:z.enum(kinds), name:z.string().trim().min(1).max(160), category:z.string().max(100).default(''), tags:z.array(z.string().max(60)).max(100).default([]),
@@ -179,7 +162,6 @@ export function effectiveFinanceEntry(entry: History): History {
   amount:correction.amount,currency:correction.currency,billDate:correction.eventDate,deleted:entry.deleted||correction.hidden} : entry;
 }
 export function newAsset(kind:AssetKind):Asset{const now=new Date().toISOString();return assetSchema.parse({id:crypto.randomUUID(),kind,name:'Untitled',...(kind==='project'?{catalogCategoryId:''}:{}),...(kind==='item'?{itemLifecycleStatus:'inUse',itemWarrantyStatus:'unverified'}:{}),createdAt:now,updatedAt:now});}
-export function calendarDayDistance(from:string,to:string){return (parseDateOnly(to).getTime()-parseDateOnly(from).getTime())/86_400_000;}
 export function nextDue(date:string,cycle:Asset['cycle'],interval=1){return dueOnCycle(date,cycle,interval,1);}
 export function monthlyMinorUnits(asset:Asset):bigint{
   const periods=BigInt(asset.interval);
@@ -189,26 +171,6 @@ export function monthlyMinorUnits(asset:Asset):bigint{
   return (2n*numerator+denominator)/(2n*denominator);
 }
 export function monthlyAmount(asset:Asset){return Number(monthlyMinorUnits(asset));}
-// Recalculate from the original anchor, so a January 31 monthly bill returns to March 31 after February.
-export function dueOnCycle(anchor:string,cycle:Asset['cycle'],interval:number,periods:number){
-  if(!Number.isInteger(periods)||periods<0||!Number.isInteger(interval)||interval<1)throw Error('invalid-period');
-  const date=parseDateOnly(anchor);
-  const count=interval*periods;
-  if(!Number.isSafeInteger(count))throw Error('invalid-period');
-  if(cycle==='month'||cycle==='year'){
-    const months=count*(cycle==='year'?12:1);
-    if(!Number.isSafeInteger(months))throw Error('invalid-period');
-    const targetMonth=date.getUTCMonth()+months;
-    const year=date.getUTCFullYear()+Math.floor(targetMonth/12);
-    const month=targetMonth%12;
-    const lastDay=calendarDate(year,month+1,0).getUTCDate();
-    return formatDateOnly(calendarDate(year,month,Math.min(date.getUTCDate(),lastDay)));
-  }
-  const days=count*(cycle==='week'?7:1);
-  if(!Number.isSafeInteger(days))throw Error('invalid-period');
-  date.setUTCDate(date.getUTCDate()+days);
-  return formatDateOnly(date);
-}
 // Estimate for one billing date; this does not confirm that a payment occurred.
 // monthlyAmount remains the undiscounted planning equivalent.
 export function actualCharge(asset:Asset,onDate:string){

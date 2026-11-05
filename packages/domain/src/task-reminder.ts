@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dueOnCycle } from "./index";
+import { dueOnCycle } from "./calendar";
 import { advanceMaintenanceSchedule, repeatRuleSchema, type RepeatRule } from "./task-repeat";
 
 export const timeZoneSchema = z.string().min(1).max(100).refine((value) => {
