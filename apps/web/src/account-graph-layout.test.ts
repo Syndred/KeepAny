@@ -81,6 +81,19 @@ function hasExclusivePointerPatch(layout: AccountGraphLayout, edgeKey: string, z
 afterEach(() => vi.restoreAllMocks());
 
 describe("account graph layout", () => {
+	it("uses explicit label dimensions without reusing fixed-node cached layouts", async () => {
+		const fixture = star(9, "full-labels"), viewport = { width: 1000, height: 500 };
+		const ordinary = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, viewport);
+		const sizes = new Map(fixture.assets.map(row => [row.id, { width: 260, height: row.id === fixture.root ? 196 : 80 }]));
+		const wrapped = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, viewport, sizes);
+		verifyGeometry(wrapped, fixture.relations);
+		expect(wrapped.nodes.get(fixture.root)?.height).toBe(196);
+		expect(wrapped.nodes.get(fixture.root)?.width).toBe(260);
+		expect(ordinary.nodes.get(fixture.root)?.width).toBe(190);
+		expect(snapshot(await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, viewport))).toEqual(snapshot(ordinary));
+		sizes.set(fixture.root, { width: 260, height: 250 });
+		expect((await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, viewport, sizes)).nodes.get(fixture.root)?.height).toBe(250);
+	});
 	it.each([12, 24, 49])("balances a %i-account shared mailbox on both sides with readable fit candidates", async (total) => {
 		const fixture = star(total), viewport = total === 49 ? { width: 1230, height: 740 } : { width: 1100, height: 560 };
 		const layout = await layoutAccountGraph(fixture.root, fixture.assets, fixture.relations, viewport);

@@ -69,6 +69,9 @@ jobs:
       - name: Verify asset reminder removal on the integrated candidate
         run: node scripts/check-unified-local-entry.mjs
         timeout-minutes: 6
+      - name: Verify unified asset details, visible galleries and connection maps
+        run: node scripts/check-unified-asset-details.mjs
+        timeout-minutes: 15
       - name: Matching-dialog pilot in two existing matrix cases
         run: pnpm test:final:links --grep '(zh-CN 390x900|en 1280x900) ' --reporter=line
         timeout-minutes: 7

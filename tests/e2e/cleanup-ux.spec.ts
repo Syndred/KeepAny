@@ -213,7 +213,7 @@ for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 
     await form.getByRole("button", { name: language === "en" ? "Save" : "保存", exact: true }).click();
     await expect(form).toBeHidden();
     await page.locator(".catalog-record-card").filter({ hasText: language === "en" ? "Minimal synthetic project" : "极简虚构项目" }).first().click();
-    await expect(page.locator(".catalog-record-info")).toBeVisible();
+    await expect(page.locator(".unified-detail-info")).toBeVisible();
     await capture(page, `${language}-${width}-project-minimal`);
     await page.locator('.catalog-record-detail').getByRole("button", { name: language === "en" ? "Edit" : "编辑", exact: true }).click();
     await form.locator("#catalog-record-name").fill((language === "en" ? "Long synthetic project name " : "较长的虚构项目名称").repeat(4));

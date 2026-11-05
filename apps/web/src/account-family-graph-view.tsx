@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -20,6 +20,7 @@ type AccountNode = Node<{
 }, "accountCard">;
 type Bookmark = { id: string; zoom: number };
 type Props = {
+	wrapLabels?: boolean;
 	assets: Asset[];
 	relations: Relation[];
 	matches: Set<string>;
@@ -32,6 +33,28 @@ type Props = {
 function accountLabel(asset: Asset) {
 	const username = asset.name.trim() === asset.username.trim() ? "" : asset.username;
 	return { username, text: [asset.name, username].filter(Boolean).join(" · ") };
+}
+
+function wrappedNodeSizes(assets: Asset[], rootId: string) {
+	const context = document.createElement("canvas").getContext("2d");
+	if (!context) return undefined;
+	const family = getComputedStyle(document.body).fontFamily;
+	function lines(text: string, font: string) {
+		context!.font = font;
+		let width = 0, count = 1;
+		for (const char of text) {
+			const next = context!.measureText(char).width;
+			if (char === "\n" || width + next > 232) { count++; width = char === "\n" ? 0 : next; }
+			else width += next;
+		}
+		return count;
+	}
+	return new Map(assets.map(asset => {
+		const username = accountLabel(asset).username;
+		const titleHeight = lines(asset.name, `700 14px ${family}`) * 18;
+		const usernameHeight = username ? lines(username, `400 12px ${family}`) * 16 + 4 : 0;
+		return [asset.id, { width: 260, height: Math.max(asset.id === rootId ? 76 : 64, titleHeight + usernameHeight + (asset.id === rootId ? 16 : 0) + 22) }];
+	}));
 }
 
 function AccountCard({ data }: NodeProps<AccountNode>) {
@@ -157,17 +180,19 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 	const [result, setResult] = useState<{ key: string; layout: AccountGraphLayout | null; error: boolean }>({ key: "", layout: null, error: false });
 	const [readyKey, setReadyKey] = useState("");
 	const rootId = props.root?.id ?? "";
-	const inputKey = JSON.stringify([props.scope, rootId, props.assets.map((asset) => asset.id).sort(), props.relations.map((relation) => [relation.id, relation.from, relation.to, relation.deleted]).sort(), size.width, size.height]);
+	const labelKey = props.wrapLabels ? JSON.stringify(props.assets.map(asset => [asset.id, asset.name, asset.username])) : "";
+	const nodeSizes = useMemo(() => props.wrapLabels ? wrappedNodeSizes(props.assets, rootId) : undefined, [labelKey, props.wrapLabels, rootId]);
+	const inputKey = JSON.stringify([props.scope, rootId, props.assets.map((asset) => asset.id).sort(), props.relations.map((relation) => [relation.id, relation.from, relation.to, relation.deleted]).sort(), size.width, size.height, labelKey]);
 	const requestAssets = useRef(props.assets), requestRelations = useRef(props.relations);
 	requestAssets.current = props.assets; requestRelations.current = props.relations;
 	useEffect(() => {
 		if (!size.width || !size.height) return;
 		let active = true;
-		void (props.scope === "all" ? layoutWorkspaceGraph(requestAssets.current, requestRelations.current, size) : layoutAccountGraph(rootId, requestAssets.current, requestRelations.current, size))
+		void (props.scope === "all" ? layoutWorkspaceGraph(requestAssets.current, requestRelations.current, size) : layoutAccountGraph(rootId, requestAssets.current, requestRelations.current, size, nodeSizes))
 			.then((layout) => { if (active) setResult({ key: inputKey, layout, error: false }); })
 			.catch(() => { if (active) setResult({ key: inputKey, layout: null, error: true }); });
 		return () => { active = false; };
-	}, [inputKey, props.scope, rootId, size]);
+	}, [inputKey, props.scope, rootId, size, nodeSizes]);
 	const layout = result.key === inputKey ? result.layout : null;
 	const ready = !!layout && readyKey === inputKey;
 	const error = result.key === inputKey && result.error;
@@ -212,7 +237,7 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 		if (chosen) props.onSelectEdge(chosen.id);
 		else if (changes.some((change) => change.type === "select" && change.id === props.selectedEdgeId && !change.selected)) props.onSelectEdge(null);
 	}
-	return <section className={`graph account-family-graph${props.scope === "all" ? " workspace-relations-graph" : props.root?.kind !== "account" ? " asset-relations-graph" : ""}${expanded ? " account-family-graph--expanded" : ""}`} aria-label={t("relations")} aria-busy={!ready && !error} data-layout-ready={ready}>
+	return <section className={`graph account-family-graph${props.scope === "all" ? " workspace-relations-graph" : props.root?.kind !== "account" ? " asset-relations-graph" : ""}${props.wrapLabels ? " account-graph-wrap-labels" : ""}${expanded ? " account-family-graph--expanded" : ""}`} aria-label={t("relations")} aria-busy={!ready && !error} data-layout-ready={ready}>
 		<div className="account-graph-view-actions"><div className="account-graph-navigation" ref={setNavigationHost} /></div>
 		<div className={`account-graph-stage${ready ? " is-ready" : ""}`}>
 			<ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}

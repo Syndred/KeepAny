@@ -1089,7 +1089,7 @@ function LegacyAssetDetail() {
   {asset.kind === "item" && <Select aria-label={t("itemPhotosAndEvidence")} value={itemImageRole} onValueChange={value => setItemImageRole(value as ItemImageRole)}><SelectOption value="other">{t("itemOtherImages")}</SelectOption><SelectOption value="coverId">{t("itemCoverPhoto")}</SelectOption><SelectOption value="detailIds">{t("itemDetailPhotos")}</SelectOption><SelectOption value="receiptIds">{t("itemReceiptImages")}</SelectOption></Select>}
   <Button size="small" variant="ghost" disabled={uploading || asset.attachments.length >= 20 && !(itemImageRole === "coverId" && itemMedia.coverId)} onClick={() => chooseImage(itemImageRole, itemImageRole === "coverId" ? itemMedia.coverId : "")}>{t("addPhoto")}</Button>
  </div>}>
-  <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="sr-only" aria-label={t("addPhoto")} onChange={event => { const file=event.target.files?.[0]; event.target.value=""; if(!file)return; if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type)||!file.size||file.size>20*1024*1024||file.name.length>255)notify(t("uploadError")); else {setPendingImageUrl("");setPendingImageStatus("loading");setPendingImage(file);} }}/>
+  <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden tabIndex={-1} aria-label={t("addPhoto")} onChange={event => { const file=event.target.files?.[0]; event.target.value=""; if(!file)return; if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type)||!file.size||file.size>20*1024*1024||file.name.length>255)notify(t("uploadError")); else {setPendingImageUrl("");setPendingImageStatus("loading");setPendingImage(file);} }}/>
   {asset.attachments.length ? <div className="unified-detail-gallery">{asset.attachments.map((id,index)=>{
    const role:ItemImageRole = itemMedia.coverId===id ? "coverId" : itemMedia.detailIds.includes(id) ? "detailIds" : itemMedia.receiptIds.includes(id) ? "receiptIds" : "other";
    const label = asset.kind === "item" ? t(role === "coverId" ? "itemCoverPhoto" : role === "detailIds" ? "itemDetailPhotos" : role === "receiptIds" ? "itemReceiptImages" : "itemOtherImages") : t("detailPhotoNumber",{number:index+1});
@@ -1608,3 +1608,4 @@ function LegacyAssetDetail() {
 		</main>
 	);
 }
+

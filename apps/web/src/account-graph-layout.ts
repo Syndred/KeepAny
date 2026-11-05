@@ -62,7 +62,7 @@ const emptyLayout = (): AccountGraphLayout => ({ nodes: new Map(), edges: new Ma
 const pairKey = (from: string, to: string) => JSON.stringify([from, to]);
 const samePoint = (a: Point, b: Point) => Math.abs(a.x - b.x) < epsilon && Math.abs(a.y - b.y) < epsilon;
 
-function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.length > 24): Model {
+function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.length > 24, nodeSizes?: ReadonlyMap<string, { width: number; height: number }>): Model {
 	const adjacency = new Map(ids.map((id) => [id, new Set<string>()]));
 	for (const pair of pairs) {
 		adjacency.get(pair.from)?.add(pair.to);
@@ -106,8 +106,8 @@ function buildModel(rootId: string, ids: string[], pairs: Pair[], compact = ids.
 		const current = id === rootId;
 		return [id, {
 			id, internalId: `n-${index}`, side: side.get(id) ?? 0, depth: depth.get(id) ?? 0,
-			width: compact ? current ? 180 : 160 : 190,
-			height: current ? 76 : compact ? 60 : 64,
+			width: nodeSizes?.get(id)?.width ?? (compact ? current ? 180 : 160 : 190),
+			height: nodeSizes?.get(id)?.height ?? (current ? 76 : compact ? 60 : 64),
 			ports: new Map(), handles: new Map(),
 		}];
 	}));
@@ -311,7 +311,7 @@ async function calculate(model: Model, viewport: { width: number; height: number
 }
 
 /** Layout direction is only a presentation choice. Returned paths always follow the stored relation. */
-export async function layoutAccountGraph(rootId: string, assets: Asset[], relations: Relation[], viewport: { width: number; height: number }): Promise<AccountGraphLayout> {
+export async function layoutAccountGraph(rootId: string, assets: Asset[], relations: Relation[], viewport: { width: number; height: number }, nodeSizes?: ReadonlyMap<string, { width: number; height: number }>): Promise<AccountGraphLayout> {
 	const live = new Map(assets.filter((asset) => !asset.deleted && asset.id).map((asset) => [asset.id, asset]));
 	if (!live.has(rootId)) return emptyLayout();
 	const family = accountFamilyGraph(rootId, live, relations);
@@ -324,14 +324,14 @@ export async function layoutAccountGraph(rootId: string, assets: Asset[], relati
 		width: Number.isFinite(viewport.width) && viewport.width > 0 ? Math.max(1, Math.round(viewport.width)) : 1100,
 		height: Number.isFinite(viewport.height) && viewport.height > 0 ? Math.max(1, Math.round(viewport.height)) : 560,
 	};
-	const key = JSON.stringify([rootId, ids, pairs.map((pair) => pair.key), size]);
+	const key = JSON.stringify([rootId, ids, pairs.map((pair) => pair.key), size, nodeSizes ? ids.map(id => [id, nodeSizes.get(id)]) : null]);
 	let pending = cache.get(key);
 	if (!pending) {
 		pending = (async () => {
-			const natural = await calculate(buildModel(rootId, ids, pairs), size);
+			const natural = await calculate(buildModel(rootId, ids, pairs, undefined, nodeSizes), size);
 			if (ids.length >= 12 && ids.length <= 24 && readingScale(natural, rootId, size) < 11 / 12) {
 				try {
-					const compact = await calculate(buildModel(rootId, ids, pairs, true), size);
+					const compact = await calculate(buildModel(rootId, ids, pairs, true, nodeSizes), size);
 					if (readingScale(compact, rootId, size) > readingScale(natural, rootId, size) + 0.000001) return compact;
 				} catch { /* Keep the valid natural layout if compact routing fails its audit. */ }
 			}
