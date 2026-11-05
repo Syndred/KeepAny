@@ -28,7 +28,14 @@ async function setup(page:Page,t:T){
  await page.locator(`.compact-account-card[data-account-id="${root}"] .compact-account-title-block`).click();await expect(page.locator(".account-history-card")).toBeVisible();await page.locator(".account-graph-stage.is-ready").waitFor();
  return {root,template,phone,sameName};
 }
-async function screenshot(page:Page,name:string){await waitForAccountGraphLayout(page);const path=join(output,name+".png");await page.screenshot({path});return path}
+async function screenshot(page:Page,name:string){
+ await waitForAccountGraphLayout(page);
+ if(name.startsWith('default-')||name.startsWith('long-')){
+  await page.evaluate(()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>{(document.activeElement as HTMLElement|null)?.blur();scrollTo(0,0);requestAnimationFrame(()=>resolve())}))));
+  await expect.poll(()=>page.evaluate(()=>scrollY)).toBe(0);
+ }
+ const path=join(output,name+".png");await page.screenshot({path});return path;
+}
 async function addRelations(page:Page,t:T,ids:string[]){for(const id of ids){await page.locator("#account-relations").getByRole("button",{name:t("addRelation"),exact:true}).click();await selectChoice(page.locator("#relation-target"),{value:id});await page.locator("#relation-label").fill("Synthetic connection");await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0)}}
 
 for(const language of ["zh-CN","en"] as const){
@@ -70,7 +77,8 @@ for(const language of ["zh-CN","en"] as const){
    shots.push(await screenshot(page,`default-${language}-${width}`));
    const copy=page.locator(".account-login-summary").getByRole("button",{name:t("pwVaultCopyUsername"),exact:true});await copy.scrollIntoViewIfNeeded();await copy.hover();shots.push(await screenshot(page,`hover-${language}-${width}`));await copy.focus();shots.push(await screenshot(page,`focus-${language}-${width}`));const r=await copy.boundingBox();await page.mouse.move(r!.x+r!.width/2,r!.y+r!.height/2);await page.mouse.down();shots.push(await screenshot(page,`pressed-${language}-${width}`));await page.mouse.up();if(await page.getByRole("dialog").count())await page.keyboard.press("Escape");
    const guide=page.locator(".account-graph-guide>summary");await guide.click();shots.push(await screenshot(page,`guide-${language}-${width}`));await guide.click();
-   const details=page.locator(".account-relation-details>summary");await details.click();shots.push(await screenshot(page,`connections-${language}-${width}`));await details.click();
+   const details=page.locator(".account-relation-details>summary");await details.click();shots.push(await screenshot(page,`connections-${language}-${width}`));
+   expect(await page.locator('.account-relation-details').evaluate(e=>e.getBoundingClientRect().bottom<=e.closest('.asset-relations-card')!.getBoundingClientRect().bottom+1)).toBe(true);await details.click();
    const expanded=page.locator(".account-graph-fullscreen");await expanded.click();await expect(expanded).toHaveAttribute("aria-pressed","true");shots.push(await screenshot(page,`fullscreen-${language}-${width}`));await page.keyboard.press("Escape");await expect(expanded).toHaveAttribute("aria-pressed","false");
   }
   await page.setViewportSize({width:1280,height:800});await page.locator(".page-header").getByRole("button",{name:t("edit"),exact:true}).click();await page.locator("#password-vault-entry-notes").fill("Long account notes / 很长的备注\n".repeat(100));await page.locator("#password-vault-entry-url").fill("https://account.example.test/"+"long-path-segment/".repeat(18));await save(page,t);

@@ -119,8 +119,12 @@
 @media(min-width:1001px) and (min-height:720px) {
  .shell:has(.page.asset-detail-account.account-relation-layout) { min-height:calc(100dvh - 4px); }
  .page.asset-detail-account.account-relation-layout { height:calc(100dvh - var(--account-page-top,68px) - 2px); }
- .account-relation-layout .asset-relations-card:has(.account-graph-guide[open],.account-relation-details[open]) .graph.account-family-graph:not(.account-family-graph--expanded) { min-height:150px; }
+ .page.asset-detail-account.account-relation-layout:has(.account-graph-guide[open],.account-relation-details[open],.account-existing-attachments[open],>.reminder-task-context) { height:auto; min-height:calc(100dvh - var(--account-page-top,68px) - 2px); }
+ .account-relation-layout:has(.account-graph-guide[open],.account-relation-details[open],>.reminder-task-context) .graph.account-family-graph:not(.account-family-graph--expanded) { flex:none; height:clamp(320px,42vh,520px); }
 }
+.page.account-relation-layout:has(>.reminder-task-context) { grid-template-rows:auto auto auto; }
+.page.account-relation-layout > .reminder-task-context { grid-column:1 / -1; grid-row:2; margin:0; }
+.page.asset-detail-account.account-relation-layout:has(>.reminder-task-context) > .asset-detail-secondary,.page.asset-detail-account.account-relation-layout:has(>.reminder-task-context) > .account-login-column { grid-row:3; }
 @media(min-width:1001px) and (max-width:1450px) {
  .account-relation-layout .account-graph-toolbar .relation-filter { flex-basis:160px; }
  .account-relation-layout .account-graph-toolbar .actions .button { padding-inline:10px; font-size:12px; }
@@ -144,6 +148,8 @@
  .account-relation-layout .page-header > .actions { gap:6px; }
  .account-login-summary .card-header { flex-wrap:nowrap; }
  .account-note-summary p { max-height:240px; }
+ .page.asset-detail-account.account-relation-layout:has(>.reminder-task-context) > .account-login-column { grid-row:3; }
+ .page.asset-detail-account.account-relation-layout:has(>.reminder-task-context) > .asset-detail-secondary { grid-row:4; }
 }
 @media(max-width:700px) {
  .page.account-relation-layout > .page-header { grid-template-columns:minmax(0,1fr); gap:10px; }
