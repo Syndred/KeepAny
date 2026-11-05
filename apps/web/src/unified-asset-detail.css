@@ -668,3 +668,7 @@
 .unified-detail-project-extras { display: grid; gap: 20px; min-width: 0; }
 .unified-detail-project-extras > .card { min-width: 0; margin: 0; }
 .unified-detail-project-extras .asset-project-costs { grid-column: auto; }
+.unified-detail-extras-region { margin-top: 20px; scroll-margin-top: 88px; }
+.unified-detail-extras-region:focus-visible { outline: 2px solid var(--line); outline-offset: 4px; }
+.unified-detail-extras-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.unified-detail-extras-actions h2 { min-width: 0; margin: 0; font-size: 22px; overflow-wrap: anywhere; }

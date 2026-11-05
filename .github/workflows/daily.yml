@@ -78,7 +78,7 @@ jobs:
       - name: Verify unified asset details, visible galleries and connection maps
         run: node scripts/check-unified-asset-details.mjs
         timeout-minutes: 15
-      - name: Verify sidebar bottom links and responsive candidate evidence
+      - name: Verify unified legacy links, theme backgrounds and natural history height
         run: node scripts/check-detail-followup.mjs
         timeout-minutes: 15
       - name: Verify sidebar bottom links and responsive candidate evidence

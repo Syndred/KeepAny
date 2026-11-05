@@ -94,6 +94,7 @@ for (const locale of ['zh-CN', 'en'] as const) {
   await toggle.focus(); await shot(page, info, `${locale}-focus`);
   await page.keyboard.down('Space'); await shot(page, info, `${locale}-pressed`); await page.keyboard.up('Space');
   await expect(page.locator('#project-detail-extras')).toBeVisible();
+  await expect(page.locator('#project-detail-extras')).toBeFocused();
   await expect(page.locator('.asset-project-costs')).toBeVisible();
   await page.locator('.asset-project-domain-row').getByRole('button', { name: t('edit'), exact: true }).click();
   let dialog = page.getByRole('dialog');
@@ -115,7 +116,9 @@ for (const locale of ['zh-CN', 'en'] as const) {
   await toggle.click();
   await expect(page.locator('.asset-project-domain-row')).toContainText('DF Saved');
   for (const width of [390,768,1280,1920,1976,1986]) { await page.setViewportSize({width,height:1000}); await shot(page,info,`${locale}-${width}-expanded`); expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth+1)).toBe(true); }
-  await toggle.click(); await expect(page.locator('#project-detail-extras')).toBeHidden();
+  await page.locator('#project-detail-extras').getByRole('button', { name: t('close'), exact: true }).click();
+  await expect(page.locator('#project-detail-extras')).toBeHidden();
+  await expect(toggle).toBeFocused();
   for (const hash of ['project-details', 'project-domains', 'project-domain-11111111-1111-4111-8111-111111111111']) {
    await page.goto(`/assets/project/df-ordinary-full#${hash}`);
    await expect(page.locator('.unified-detail-main')).toBeVisible();
