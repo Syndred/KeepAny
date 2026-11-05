@@ -10,6 +10,7 @@ import {
 } from "../../../packages/password-vault/src";
 import {
 	saveAccountEntry,
+	accountFromTemplate,
 	type AccountEntryProgress,
 } from "./account-entry-save";
 
@@ -75,6 +76,23 @@ async function fixture() {
 	return { repository, storage, session };
 }
 describe("single account and optional credential save", () => {
+	it("creates an independent account from only the three template fields", async () => {
+		const source = { ...profile(), ...draft, name: draft.title, username: "source@example.test", notes: "Do not copy" };
+		const first = accountFromTemplate(source), second = accountFromTemplate(source);
+		expect(first.profile.id).not.toBe(source.id);
+		expect(second.profile.id).not.toBe(first.profile.id);
+		expect(first.profile).toMatchObject({ name: source.name, url: source.url, category: source.category, username: "", notes: "", tags: [] });
+		expect(first.draft).toEqual({ title: source.name, url: source.url, username: "", usernameAliases: [], password: "", notes: "", linkedAssetIds: [] });
+		const { repository, session } = await fixture();
+		try {
+			await repository.save("asset", source);
+			const state = progress();
+			await saveAccountEntry({ ...first, draft: { ...first.draft, username: "new@example.test", password: "New synthetic secret" }, session, progress: state, label, repository });
+			expect(await repository.get("asset", source.id)).toMatchObject({ username: "source@example.test", notes: "Do not copy" });
+			expect(await repository.list("asset")).toHaveLength(2);
+			expect(session.getSnapshot().entries[0].linkedAssetIds).toEqual([first.profile.id]);
+		} finally { session.lock(); await repository.close(); }
+	});
 	it("saves every ordinary field and only puts password, aliases and private notes in KDBX", async () => {
 		const { repository, session } = await fixture();
 		try {

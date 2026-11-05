@@ -62,6 +62,7 @@ import {
 } from "./view-shared";
 import { Select, SelectOption } from "./components/ui/select";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
+import { AccountDetailActions } from "./components/AccountDetailActions";
 import { AccountLoginSummary } from "./components/AccountLoginSummary";
 import { accountLoginChoices, preferredAccountLogin, nextAccountLogin } from "./account-login-choices";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./components/ui/dropdown-menu";
@@ -1077,7 +1078,7 @@ function LegacyAssetDetail() {
 					</p>}
 					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 				</div>
-				{kind === "account" ? <div className="actions"><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button size="icon" variant="ghost" aria-label={t("moreActions")} />}><MoreHorizontal size={18} /></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => { setAccountAddingLogin(true); setEdit(true); }}>{t("accountAddLogin")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div> : kind !== "project" && <div className="actions">
+				{kind === "account" ? <div className="actions"><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button><Button onClick={() => { setAccountAddingLogin(true); setEdit(true); }}><Plus size={17} />{t("add")}</Button></div> : kind !== "project" && <div className="actions">
 					{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 					<Button
@@ -1316,7 +1317,7 @@ function LegacyAssetDetail() {
 				</form>
 			</Dialog>}
 			<div className="detail-grid asset-detail-secondary">
-				<DetailDisclosure id="account-relations" className="card asset-relations-card" collapsible={kind === "project"} label={t("projectRelatedDetails")}>
+				<DetailDisclosure id="account-relations" tabIndex={kind === "account" ? -1 : undefined} className="card asset-relations-card" collapsible={kind === "project"} label={t("projectRelatedDetails")}>
 					<div className="card-header">
 						<div>
 							<h2>{t(kind === "account" ? "accountRelationMap" : "relations")}</h2>
@@ -1383,6 +1384,7 @@ function LegacyAssetDetail() {
 			{asset.kind === "project" && <DetailDisclosure className="asset-project-media-disclosure" collapsible label={t("attachments")}>{attachmentSection}</DetailDisclosure>}
 			{asset.kind === "account" && <aside className="account-login-column">
                 <AccountLoginSummary key={`${asset.id}:${currentLogin?.key ?? "empty"}:${currentLogin?.entry.modifiedAt ?? ""}`} asset={asset} current={currentLogin} total={accountChoices.length} index={accountChoices.findIndex(choice => choice.key === currentLogin?.key)} onSwitch={() => { if (currentLogin) setAccountSelection({ assetId: asset.id, key: nextAccountLogin(accountChoices, currentLogin.key)?.key ?? "" }); }} onEdit={() => { setAccountAddingLogin(false); setEdit(true); }} />
+                <AccountDetailActions asset={asset} entry={currentLogin?.entry} />
                 {asset.attachments.length > 0 && <details className="account-existing-attachments"><summary>{t("attachments")}</summary>{attachmentSection}</details>}
 				<details className="card impact-checklist account-impact-details"><summary><Network size={21} /><span>{t("accountImpactTitle")}</span><ChevronRight size={18} /></summary>
 					<div className="card-header">
@@ -1590,7 +1592,7 @@ function LegacyAssetDetail() {
 						</div>
 					}
 				>
-					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={asset} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} newLogin={accountAddingLogin} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
+					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={accountAddingLogin ? undefined : asset} template={accountAddingLogin ? { name: currentLogin?.entry.title ?? asset.name, url: currentLogin?.entry.url || asset.url, category: asset.category } : undefined} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} onSaved={accountAddingLogin ? () => { void navigate({ to: "/accounts" }); } : undefined} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
 						kind={kind}
 						asset={asset}
 						categories={data.categories}

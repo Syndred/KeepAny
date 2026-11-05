@@ -5,6 +5,8 @@ import { newAsset, type Asset } from "../../../../packages/domain/src";
 import { MIN_MASTER_PASSWORD_LENGTH } from "../../../../packages/password-vault/src/policy";
 import {
 	saveAccountEntry,
+	accountFromTemplate,
+	type AccountTemplate,
 	type AccountEntryProgress,
 } from "../account-entry-save";
 import { AccountLinkConflict } from "../vault-account-links";
@@ -22,16 +24,17 @@ import { Select, SelectOption } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import "../account-entry.css";
 
-export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, newLogin = false, linking = false, initialName = "" }: { onClose: () => void; asset?: Asset; entryId?: string; newLogin?: boolean; linking?: boolean; initialName?: string; returnFocusTo?: () => HTMLElement | null }) {
+export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFocusTo, template, linking = false, initialName = "" }: { onClose: () => void; onSaved?: () => void; asset?: Asset; entryId?: string; template?: AccountTemplate; linking?: boolean; initialName?: string; returnFocusTo?: () => HTMLElement | null }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const { snapshot, session, generatePassword } = usePasswordVault();
-	const editing = Boolean(asset || entryId || newLogin);
+	const editing = !template && Boolean(asset || entryId);
+	const [fromTemplate] = useState(() => template ? accountFromTemplate(template) : null);
 	const [originalEntry] = useState(() => entryId && session?.getSnapshot().status === "unlocked" ? session.readEntry(entryId) : null);
-	const [baseProfile] = useState<Asset>(() => asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? initialName, username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
+	const [baseProfile] = useState<Asset>(() => fromTemplate?.profile ?? asset ?? ({ ...newAsset("account"), category: "other", name: originalEntry?.title ?? initialName, username: originalEntry?.username ?? "", url: originalEntry?.url ?? "" }));
 	const [profile, setProfile] = useState(baseProfile);
 	const editProgress = useRef<AccountEditProgress>({ account: asset ?? null, accountChanged: false });
-	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => newLogin ? { ...mergedAccountDraft(asset, null), username: "", usernameAliases: [], password: "", notes: "" } : { ...mergedAccountDraft(asset, originalEntry), ...(!asset && !originalEntry ? { title: initialName } : {}) });
+	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => fromTemplate?.draft ?? { ...mergedAccountDraft(asset, originalEntry), ...(!asset && !originalEntry ? { title: initialName } : {}) });
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const mounted = useRef(true);
@@ -150,7 +153,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 		inputError.current = false;
 		setError("");
 		try {
-            if (editing) await saveMergedAccount({ original: asset, originalEntry, baseProfile, profile, draft, session, progress: editProgress.current, newLogin, label: (kind, identifierKind) => t(`pwConnectKind_${identifierKind ?? kind}`) });
+            if (editing) await saveMergedAccount({ original: asset, originalEntry, baseProfile, profile, draft, session, progress: editProgress.current, label: (kind, identifierKind) => t(`pwConnectKind_${identifierKind ?? kind}`) });
             else {
 			await saveAccountEntry({
 				profile,
@@ -162,6 +165,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 			});
             }
 			onClose();
+			onSaved?.();
 			notify(t("accountEntrySaved"));
 		} catch (failure) {
 			const reason = failure instanceof Error ? failure.message : "";
@@ -212,7 +216,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 	return (
 		<>
 			<Dialog
-				title={t(newLogin ? "accountAddLogin" : editing ? "accountEditUnified" : "workspaceAddAccount")}
+				title={t(editing ? "accountEditUnified" : "workspaceAddAccount")}
                 returnFocusTo={returnFocusTo}
 				className="account-entry-dialog"
 				onClose={close}
@@ -272,7 +276,7 @@ export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, new
 							vaultAccess={
 								<section
 									className="account-entry-access"
-									aria-label={t("pwVaultPasswordOptionalField")}
+									aria-label={t("pwVaultPasswordField")}
 								>
 									<p>{t("accountEntryUnlockHint")}</p>
 									<Field

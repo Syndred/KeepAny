@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff, LockKeyhole, Mail, MoreHorizontal, Pencil, Plus, Smartphone, Trash2, UserRound } from "lucide-react";
+import { ArrowLeftRight, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff, LockKeyhole, Mail, Pencil, Plus, Smartphone, Trash2, UserRound } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
@@ -9,16 +9,15 @@ import { niceCategory } from "../view-shared";
 import type { AccountVaultTools } from "./PasswordVaultPanel";
 import { usePasswordVault, type PasswordVaultEntrySummary } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import "../compact-account.css";
 
-type Props = { asset: Asset; entries: PasswordVaultEntrySummary[]; connectionCount: number; queries: string[]; focusEntryId?: string; tools: AccountVaultTools; onOpen: () => void; onEdit: (asset: Asset, entryId?: string, triggerId?: string, newLogin?: boolean) => void; onDeleteAccount: (asset: Asset) => void; virtual?: boolean };
+type Props = { asset: Asset; entries: PasswordVaultEntrySummary[]; connectionCount: number; queries: string[]; focusEntryId?: string; tools: AccountVaultTools; onOpen: () => void; onCreate: (template: Asset, triggerId: string) => void; onEdit: (asset: Asset, entryId?: string, triggerId?: string) => void; onDeleteAccount: (asset: Asset) => void; virtual?: boolean };
 
 function CompactIcon({ label, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode }) {
 	return <Button type="button" variant="ghost" size="icon" className="compact-account-icon" aria-label={label} title={label} {...props}>{children}</Button>;
 }
 
-function Frame({ asset, connectionCount, onOpen, onEdit, onDelete, url, menu, children, entryId, menuId, editId, busy, virtual }: Pick<Props, "asset" | "connectionCount" | "onOpen" | "virtual"> & { onEdit: () => void; onDelete: () => void; editId?: string; busy: boolean; url: string; menu: ReactNode; children: ReactNode; entryId?: string; menuId?: string }) {
+function Frame({ asset, connectionCount, onOpen, onEdit, onCreate, onDelete, url, children, entryId, createId, editId, busy, virtual }: Pick<Props, "asset" | "connectionCount" | "onOpen" | "virtual"> & { onEdit: () => void; onCreate: () => void; onDelete: () => void; editId?: string; createId?: string; busy: boolean; url: string; children: ReactNode; entryId?: string }) {
 	const { t } = useTranslation();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	const details = virtual
@@ -28,11 +27,9 @@ function Frame({ asset, connectionCount, onOpen, onEdit, onDelete, url, menu, ch
 		<header className="compact-account-heading"><span className="compact-account-avatar"><Icon size={18} /></span>
 			<Link {...details} className="compact-account-title-block" aria-label={asset.name} title={asset.name}><span className="compact-account-title">{asset.name}</span><span className="compact-account-associations" aria-hidden="true">{t("accountConnectionCount", { count: connectionCount })}<ChevronRight size={11} /></span></Link>
 			{url && <a className="compact-account-icon compact-account-url" href={url} target="_blank" rel="noreferrer" aria-label={t("compactAccountOpenUrl")} title={`${t("compactAccountOpenUrl")} · ${url}`}><ExternalLink size={16} /></a>}
-            <CompactIcon id={editId} label={t("edit")} disabled={busy} onClick={onEdit}><Pencil size={16} /></CompactIcon>
-            <CompactIcon label={t(entryId ? "accountDeleteLogin" : "pwVaultDeleteEntry")} disabled={busy} onClick={onDelete}><Trash2 size={16} /></CompactIcon>
 		</header>
 		{children}
-        <footer className="compact-account-footer"><span className="compact-account-meta" title={[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}>{[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}</span><DropdownMenu><DropdownMenuTrigger render={<Button id={menuId} variant="ghost" size="icon" className="compact-account-icon" aria-label={t("moreActions")} title={t("moreActions")} />}><MoreHorizontal size={17} /></DropdownMenuTrigger><DropdownMenuContent align="end">{menu}<DropdownMenuItem render={<Link {...details} />}>{t("accountViewRelations")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></footer>
+        <footer className="compact-account-footer"><span className="compact-account-meta" title={[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}>{[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}</span><span className="compact-account-actions"><CompactIcon id={createId} label={t("add")} disabled={busy} onClick={onCreate}><Plus size={16} /></CompactIcon><CompactIcon id={editId} label={t("edit")} disabled={busy} onClick={onEdit}><Pencil size={16} /></CompactIcon><CompactIcon label={t(entryId ? "accountDeleteLogin" : "pwVaultDeleteEntry")} disabled={busy} onClick={onDelete}><Trash2 size={16} /></CompactIcon></span></footer>
 	</article>;
 }
 
@@ -45,16 +42,15 @@ function LockedCard({ asset, connectionCount, onOpen, tools, onEdit, onDeleteAcc
 	const { snapshot } = usePasswordVault();
 	const loading = snapshot.status === "loading", empty = snapshot.status === "empty", url = accountHttpUrl(asset.url);
 	const [copied, setCopied] = useState(false);
-	const access = t(empty ? "pwVaultCreate" : "pwVaultUnlock");
-	return <Frame asset={asset} connectionCount={connectionCount} onOpen={onOpen} onEdit={() => onEdit(asset)} onDelete={() => onDeleteAccount(asset)} busy={tools.busy} url={url} menu={<>{url && <DropdownMenuItem onClick={() => void tools.copy("pwVaultUrlField", url, false)}>{t("compactAccountCopyUrl")}</DropdownMenuItem>}<DropdownMenuItem disabled={tools.busy || loading} onClick={tools.requestAccess}>{access}</DropdownMenuItem></>}>
+	return <Frame asset={asset} connectionCount={connectionCount} onOpen={onOpen} onCreate={tools.requestAccess} onEdit={() => onEdit(asset)} onDelete={() => onDeleteAccount(asset)} busy={tools.busy || loading} url={url}>
 		<ValueRow label={t("pwVaultAccountShort")} actions={<CompactIcon label={t("pwVaultCopyUsername")} disabled={!asset.username || tools.busy} onClick={() => void tools.copy("pwVaultUsernameField", asset.username, false).then((success) => setCopied(success))}>{copied ? <Check size={16} /> : <Copy size={16} />}</CompactIcon>}><span title={asset.username}>{asset.username || t("pwVaultValueEmpty")}</span></ValueRow>
 		<ValueRow label={t("pwVaultPasswordField")} actions={<Button type="button" className="compact-account-access" size="small" disabled={tools.busy || loading} onClick={tools.requestAccess}>{t(loading ? "loading" : empty ? "compactAccountCreate" : "compactAccountUnlock")}</Button>}><span className="compact-account-muted"><LockKeyhole size={13} />{t(loading ? "loading" : empty ? "pwVaultStatusEmpty" : "pwVaultStatusLocked")}</span></ValueRow>
 	</Frame>;
 }
 
-function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries, focusEntryId, onEdit, onDeleteAccount, virtual }: Props) {
+function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries, focusEntryId, onCreate, onEdit, onDeleteAccount, virtual }: Props) {
 	const { t } = useTranslation();
-	const menuId = useId(), editId = useId();
+	const createId = useId(), editId = useId();
 	const { session, snapshot } = usePasswordVault();
 	const queryKey = JSON.stringify(queries);
 	const [selection, setSelection] = useState({ key: "", queryKey });
@@ -86,12 +82,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 		setSelection({ key: nextAccountLogin(choices, current.key)?.key ?? "", queryKey });
 	}
 	const copiedIcon = (field: string) => copied === `${scope}:${field}` ? <Check size={16} /> : <Copy size={16} />;
-	return <Frame asset={{ ...asset, name: current?.entry.title ?? asset.name }} connectionCount={connectionCount} onOpen={onOpen} onEdit={() => onEdit(asset, current?.entry.id, editId)} onDelete={() => current ? tools.deleteLogin(current.entry, username, virtual ? undefined : asset.id) : onDeleteAccount(asset)} busy={tools.busy} virtual={virtual} url={url} entryId={current?.entry.id} menuId={menuId} editId={editId} menu={<>
-		{current && <DropdownMenuItem disabled={tools.busy} onClick={() => tools.history(current.entry, menuId)}>{t("pwVaultHistory")}</DropdownMenuItem>}
-		<DropdownMenuItem disabled={tools.busy} onClick={() => onEdit(asset, undefined, editId, true)}>{t("pwVaultNewEntry")}</DropdownMenuItem>
-		{current && !virtual && <DropdownMenuItem disabled={tools.busy} onClick={() => tools.unlink(current.entry, asset)}>{t("pwVaultUnlink")}</DropdownMenuItem>}
-		{url && <DropdownMenuItem disabled={tools.busy} onClick={() => void copy("pwVaultUrlField", url, "url", Boolean(current))}>{t("compactAccountCopyUrl")}</DropdownMenuItem>}
-	</>}>
+	return <Frame asset={{ ...asset, name: current?.entry.title ?? asset.name }} connectionCount={connectionCount} onOpen={onOpen} onCreate={() => onCreate({ ...asset, name: current?.entry.title ?? asset.name, url: current?.entry.url || asset.url }, createId)} onEdit={() => onEdit(asset, current?.entry.id, editId)} onDelete={() => current ? tools.deleteLogin(current.entry, username, virtual ? undefined : asset.id) : onDeleteAccount(asset)} busy={tools.busy} virtual={virtual} url={url} entryId={current?.entry.id} createId={createId} editId={editId}>
 		<ValueRow label={t("pwVaultAccountShort")} actions={<>
 			{choices.length > 1 && <CompactIcon label={t("compactAccountNextLogin", { index: position, total: choices.length })} disabled={tools.busy} onClick={advance} className="compact-account-icon compact-account-switch"><ArrowLeftRight size={16} /><small aria-hidden="true">{position}/{choices.length}</small></CompactIcon>}
 			<CompactIcon label={t("pwVaultCopyUsername")} disabled={tools.busy || !username} onClick={() => void copy("pwVaultUsernameField", username, "username", Boolean(current))}>{copiedIcon("username")}</CompactIcon>

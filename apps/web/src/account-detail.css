@@ -1,4 +1,7 @@
 .account-empty-primary { display: none; }
+.account-detail-actions h2 { margin: 0 0 12px; font-size: 1rem; }
+.account-detail-actions .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.account-login-column > .password-vault-panel { margin: 0; min-width: 0; }
 .asset-detail-account .button, .asset-detail-account .task-filters button { min-width: 44px; min-height: 44px; }
 .asset-detail-account .task-filters { gap: 10px; }
 .asset-detail-account .image-item { gap: 10px; }

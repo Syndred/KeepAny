@@ -25,6 +25,7 @@ import "./workspaces.css";
 import { catalogAssets, catalogScope, isManagedAsset, type CatalogScope, type CatalogSort } from "./catalog-view";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
 import { localRepository } from "../../../packages/local-db/src";
+import type { AccountTemplate } from "./account-entry-save";
 import { CompactAccountCard } from "./components/CompactAccountCard";
 
 const AssetEditor = lazy(() => import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })));
@@ -50,7 +51,7 @@ export function AccountsWorkspace() {
 	const { t } = useTranslation();
 	const { snapshot, session } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
-	const [editAccount, setEditAccount] = useState<{ asset?: Asset; entryId?: string; triggerId?: string; newLogin?: boolean; initialName?: string } | null>(null);
+	const [editAccount, setEditAccount] = useState<{ asset?: Asset; entryId?: string; triggerId?: string; template?: AccountTemplate; initialName?: string } | null>(null);
     const [deleteAccount, setDeleteAccount] = useState<{ asset: Asset; vaultRevision: string } | null>(null);
     const [deleteBusy, setDeleteBusy] = useState(false), [deleteError, setDeleteError] = useState("");
     const navigate = useNavigate();
@@ -89,7 +90,7 @@ export function AccountsWorkspace() {
                     accountExtras={virtualAccounts} filterAccountId={filterAccountId}
                     beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
-					renderAccountCard={(asset, context) => <CompactAccountCard asset={asset} entries={virtualEntries.has(asset.id) ? [virtualEntries.get(asset.id)!] : grouped.linked.get(asset.id) ?? []} virtual={virtualEntries.has(asset.id)} onEdit={(asset, entryId, triggerId, newLogin) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId, newLogin })} onDeleteAccount={asset => { const current = session?.getSnapshot(); if (current?.status !== "unlocked" || !current.revision || current.entries.some(entry => entry.linkedAssetIds.includes(asset.id))) return; setDeleteError(""); setDeleteAccount({ asset, vaultRevision: current.revision }); }} {...context} connectionCount={virtualEntries.has(asset.id) ? virtualEntries.get(asset.id)!.linkedAssetIds.filter(id => data.assets.some(asset => asset.id === id && !asset.deleted)).length : context.connectionCount} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
+					renderAccountCard={(asset, context) => <CompactAccountCard asset={asset} entries={virtualEntries.has(asset.id) ? [virtualEntries.get(asset.id)!] : grouped.linked.get(asset.id) ?? []} virtual={virtualEntries.has(asset.id)} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={asset => { const current = session?.getSnapshot(); if (current?.status !== "unlocked" || !current.revision || current.entries.some(entry => entry.linkedAssetIds.includes(asset.id))) return; setDeleteError(""); setDeleteAccount({ asset, vaultRevision: current.revision }); }} {...context} connectionCount={virtualEntries.has(asset.id) ? virtualEntries.get(asset.id)!.linkedAssetIds.filter(id => data.assets.some(asset => asset.id === id && !asset.deleted)).length : context.connectionCount} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
 		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".password-vault-header button")} onClose={() => setEditAccount(null)} /></Suspense>}
