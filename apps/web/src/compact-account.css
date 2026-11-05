@@ -60,6 +60,7 @@
 	.unified-accounts-page .asset-category-scroll,
 	.unified-accounts-page .asset-account-search { grid-column: 1 / -1; width: 100%; }
 	.unified-accounts-page .asset-category-toolbar .list-filters { min-width: 0; }
+	.unified-accounts-page .asset-category-toolbar .themed-select-trigger { padding-inline: 8px; gap: 4px; font-size: 14px; }
 	.unified-accounts-page .asset-category-manage { padding-inline: 8px; }
 	.unified-accounts-page .account-toolbar-actions { gap: 6px; }
 	.unified-accounts-page .compact-account-card { padding: 10px 12px 0; }

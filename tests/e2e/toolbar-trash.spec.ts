@@ -24,7 +24,7 @@ async function trashLogin(page:Page,t:T,index=0) {
 }
 async function accounts(page:Page,t:T){ await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click(); }
 async function unlock(page:Page,t:T){ await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button",{name:t("accountUnlockAction"),exact:true}).click(); await expect(page.locator("#password-vault-unlock-master")).toHaveCount(0); }
-async function shot(page:Page,name:string){await page.screenshot({path:join(output,name+".png"),fullPage:true});}
+async function shot(page:Page,name:string){if(page.viewportSize()!.width<768)await expect.poll(()=>page.locator(".sidebar").evaluate(node=>node.getBoundingClientRect().right)).toBeLessThanOrEqual(1);await page.screenshot({path:join(output,name+".png"),fullPage:true});}
 for (const language of ["zh-CN", "en"] as const) {
  const t = (key: string) => (resources[language].translation as Record<string,string>)[key] ?? key;
  test.describe(language, () => {
