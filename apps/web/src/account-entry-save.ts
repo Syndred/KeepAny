@@ -1,4 +1,4 @@
-import { assetSchema, type Asset } from "../../../packages/domain/src";
+import { assetSchema, newAsset, type Asset } from "../../../packages/domain/src";
 import {
 	localRepository,
 	type LocalRepository,
@@ -21,6 +21,15 @@ export type AccountEntryProgress = {
 	account: Asset | null;
 	needsVault: boolean;
 };
+
+export type AccountTemplate = Pick<Asset, "name" | "url" | "category">;
+
+/** Copy only the service template, never its identity, secrets or connections. */
+export function accountFromTemplate(template: AccountTemplate) {
+	const profile = { ...newAsset("account"), name: template.name, url: template.url, category: template.category };
+	const draft: VaultEntryDraft = { title: template.name, url: template.url, username: "", usernameAliases: [], password: "", notes: "", linkedAssetIds: [] };
+	return { profile, draft };
+}
 
 export function accountFromEntry(
 	profile: Asset,
@@ -51,10 +60,9 @@ export async function saveAccountEntry({
 	label: AccountLinkLabel;
 	repository?: LocalRepository;
 }): Promise<void> {
-	const next = accountFromEntry(profile, draft);
-	if (next.url) {
+	if (draft.url) {
 		try {
-			const url = new URL(next.url);
+			const url = new URL(draft.url);
 			if (
 				!["http:", "https:"].includes(url.protocol) ||
 				url.username ||
@@ -65,6 +73,7 @@ export async function saveAccountEntry({
 			throw Error("account-entry-url");
 		}
 	}
+	const next = accountFromEntry(profile, draft);
 	const hasPrivateFields = !!(
 		draft.password ||
 		draft.notes ||

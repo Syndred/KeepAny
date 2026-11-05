@@ -44,6 +44,7 @@ type PasswordVaultPanelProps = {
 	sampleAccounts?: Asset[];
 	accountCount?: number;
 	renderAccounts?: (tools: AccountVaultTools) => ReactNode;
+	renderDetailActions?: (tools: AccountVaultTools) => ReactNode;
 };
 
 type ManualCopy = { label: string; value: string; privateValue?: boolean };
@@ -117,6 +118,7 @@ export function PasswordVaultPanel({
 	sampleAccounts = [],
 	accountCount,
 	renderAccounts,
+	renderDetailActions,
 }: PasswordVaultPanelProps) {
 	const Heading = embedded ? "h2" : "h1";
 	const { t, i18n } = useTranslation();
@@ -126,6 +128,7 @@ export function PasswordVaultPanel({
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const copyGeneration = useRef(0);
 	const panelElement = useRef<HTMLElement | null>(null);
+	const unlinkOpener = useRef<HTMLElement | null>(null);
 	const toolTrigger = (tool: "smart" | "links") =>
 		panelElement.current?.querySelector<HTMLElement>(`[data-vault-tool-trigger="${tool}"]`)
 		?? panelElement.current?.querySelector<HTMLElement>(".account-options-trigger, .unified-vault-access > summary, #password-vault-unlock-master, #password-vault-master")
@@ -728,7 +731,7 @@ export function PasswordVaultPanel({
 	}
 	const accountTools: AccountVaultTools = { renderEntry,
         history: (entry, triggerId) => void openHistory(entry, triggerId),
-        unlink: (entry, asset) => { const revision = session?.getSnapshot().contentRevision; if (!revision || busy) return; clearMessage(); setEntryActionError(""); setUnlinkTarget({ entryId: entry.id, assetId: asset.id, entryName: entry.title, assetName: asset.name, revision }); },
+        unlink: (entry, asset) => { const revision = session?.getSnapshot().contentRevision; if (!revision || busy) return; unlinkOpener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null; clearMessage(); setEntryActionError(""); setUnlinkTarget({ entryId: entry.id, assetId: asset.id, entryName: entry.title, assetName: asset.name, revision }); },
         deleteLogin: (entry, username, accountId) => {
             if (busy || session?.getSnapshot().status !== "unlocked") return;
             clearMessage(); setEntryActionError("");
@@ -861,6 +864,7 @@ export function PasswordVaultPanel({
 
 	return (
 		<section className="password-vault-panel" ref={panelElement}>
+			{renderDetailActions ? renderDetailActions(accountTools) : <>
 			<PasswordVaultTools
                 linksOpen={accountLinksOpen} smartOpen={smartImportOpen}
                 unlocked={snapshot.status === "unlocked"} lockedElsewhere={notice === "pwVaultLockedElsewhere"}
@@ -888,6 +892,7 @@ export function PasswordVaultPanel({
                 </div></div>}
 				{headerFeedback}
 			</header>
+			</>}
 			{message && (
 				<p className="password-vault-message" role="status">
 					{message}
@@ -901,8 +906,8 @@ export function PasswordVaultPanel({
 					</Button>
 				</div>
 			) : null}
-{renderAccounts ? snapshot.status !== "unlocked" && <div className="account-unlock-gate">{vaultAccess}</div> : vaultAccess}
-			{snapshot.status === "unlocked" && (
+{!renderDetailActions && (renderAccounts ? snapshot.status !== "unlocked" && <div className="account-unlock-gate">{vaultAccess}</div> : vaultAccess)}
+			{!renderDetailActions && snapshot.status === "unlocked" && (
 				<>
 					{!renderAccounts && <div className="password-vault-toolbar">
 						{(!renderAccounts || assetFilter) && <div className="password-vault-search field">
@@ -1072,6 +1077,7 @@ export function PasswordVaultPanel({
 				<Dialog
 					title={t("pwVaultUnlink")}
 					returnFocusTo={() =>
+						unlinkOpener.current?.isConnected ? unlinkOpener.current :
 						[
 							...document.querySelectorAll<HTMLElement>(
 								".password-vault-entry-list .password-vault-entry, .compact-account-card[data-entry-id]",

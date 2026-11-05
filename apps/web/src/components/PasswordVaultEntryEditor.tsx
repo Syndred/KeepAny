@@ -108,7 +108,7 @@ export function EntryEditor({
 				/>
 				{vaultUnlocked ? <div className="field password-vault-password-field password-vault-secret-field">
 					<label htmlFor="password-vault-entry-password">
-						{t("pwVaultPasswordOptionalField")}
+						{t(unified ? "pwVaultPasswordField" : "pwVaultPasswordOptionalField")}
 					</label>
 					<div className="pw-import-input-control">
 						<div className="password-vault-password-input">
@@ -207,7 +207,7 @@ export function EntryEditor({
 						{urlExpanded && (
 							<div className="field">
 								<label htmlFor="password-vault-entry-url">
-									{t("pwVaultUrlOptionalField")}
+									{t(unified ? "pwVaultUrlField" : "pwVaultUrlOptionalField")}
 								</label>
 								<div className="pw-import-input-control">
 									<Input

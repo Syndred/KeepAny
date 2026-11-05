@@ -1,3 +1,4 @@
+import { importVisualKdbxEntries } from "./fixtures/password-smart-import-visual";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, test, type Locator, type Page } from "@playwright/test";
@@ -29,14 +30,9 @@ async function createAccount(page: Page, t: (key: string) => string, name: strin
 	await save(dialog);
 }
 async function addLogin(page: Page, t: (key: string) => string) {
-	await account(page).getByRole("button", { name: t("moreActions"), exact: true }).click();
-	await page.getByRole("menuitem", { name: t("pwVaultNewEntry"), exact: true }).click();
-	const dialog = page.getByRole("dialog").last();
-	await dialog.locator("#password-vault-entry-title").fill("CC secondary login");
-	await dialog.locator("#password-vault-entry-username").fill("backup@example.test");
-	await dialog.locator("#password-vault-entry-password").fill(secondPassword);
-		await dialog.locator("#password-vault-entry-url").fill("https://backup.example.test/login");
-	await save(dialog);
+ // Prepare an existing multi-login account; template creation now produces a new card.
+ const id = await account(page).getAttribute("data-account-id");
+ await importVisualKdbxEntries(page,t,[{title:"CC secondary login",username:"backup@example.test",password:secondPassword,url:"https://backup.example.test/login",linkedAssetIds:[id!]}]);
 }
 async function prepare(page: Page, t: (key: string) => string, aliases: string[] = [], extraLogin = true) {
 	await page.goto("/");
@@ -102,9 +98,10 @@ for (const language of ["zh-CN", "en"] as const) {
 			await change.click();
 			await expect(card.locator("[data-login-username]")).toHaveText("main@example.test");
 			await expect(card.locator("select")).toHaveCount(0);
-			await card.getByRole("button", { name: t("moreActions"), exact: true }).click();
-			await page.getByRole("menuitem", { name: t("compactAccountCopyUrl"), exact: true }).click();
+			await card.locator(".compact-account-title-block").click();
+			await page.locator(".account-detail-actions").getByRole("button", { name: t("compactAccountCopyUrl"), exact: true }).click();
 			await expect.poll(() => clipboard(page)).toBe("https://main.example.test/login");
+            await page.locator(".account-detail-back").click();
 			await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click();
 			await expect(card.locator("[data-login-password]")).toHaveCount(0);
 			await expect(card.getByRole("button", { name: /^(切换登录账号|Next login)/ })).toHaveCount(0);
@@ -123,9 +120,10 @@ for (const language of ["zh-CN", "en"] as const) {
             await expect(edit.locator("#password-vault-entry-username")).toHaveValue("main@example.test");
             await edit.getByRole("button", { name: t("cancel"), exact: true }).click();
             await expect(card.getByRole("button", { name: t("edit"), exact: true })).toBeFocused();
-            await card.getByRole("button", { name: t("moreActions"), exact: true }).click();
-            await page.getByRole("menuitem", { name: t("pwVaultHistory"), exact: true }).click();
+            await card.locator(".compact-account-title-block").click();
+            await page.locator(".account-detail-actions").getByRole("button", { name: t("pwVaultHistory"), exact: true }).click();
             await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
+            await page.locator(".account-detail-back").click();
 			await page.reload(); await openVaultAccess(page);
 			await page.locator("#password-vault-unlock-master").fill(master);
 			await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).first().click();

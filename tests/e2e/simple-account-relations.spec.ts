@@ -1,5 +1,4 @@
 import { openBackupPage } from "./helpers/backup-restore";
-import { openProjectDetails } from "./helpers/project-details";
 import { mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { expect, test, type Page } from "@playwright/test";
@@ -41,7 +40,7 @@ async function create(page: Page, t: T, name: string, alias = false) {
 }
 async function unlock(page: Page, t: T) { await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(page.locator(".account-login-summary,.password-vault-toolbar").first()).toBeVisible(); expect(await page.getByText(t("pwVaultStatusUnlocked"), { exact: true }).count()).toBeLessThanOrEqual(1); }
 async function connect(page: Page, t: T, name: string) {
- await openProjectDetails(page);
+ await expect(page.locator("main.asset-detail-account")).toBeVisible();
  await page.getByRole("button", { name: t("addRelation"), exact: true }).click();
  await expect(page.getByRole("dialog").getByRole("button", { name: t("save"), exact: true })).toBeDisabled();
  await selectChoice(page.locator("#relation-target"), { label: name });
@@ -92,7 +91,7 @@ for (const language of ["zh-CN", "en"] as const) {
    await page.getByRole("button", { name: t("pwVaultRevealPassword"), exact: true }).click(); await expect(page.locator("[data-login-password]")).toHaveText("SyntheticSimple!2026");
    await page.locator(".account-detail-switch").click(); await expect(page.locator("[data-login-username]")).toHaveText("alias@example.test"); await expect(page.locator("[data-login-password]")).toHaveText("••••••••••");
    await page.getByRole("button", { name: t("pwVaultCopyPassword"), exact: true }).click(); expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("SyntheticSimple!2026");
-   await openProjectDetails(page);
+   await expect(page.locator("main.asset-detail-account")).toBeVisible();
    await page.getByRole("button", { name: t("addRelation"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("close"), exact: true }).click();
    await connect(page, t, "SR B service"); await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 });
    await page.getByRole("button", { name: t("accountGraphFamily"), exact: true }).click(); await waitForAccountGraphLayout(page, { nodes: 3, edges: 2 });
@@ -144,7 +143,7 @@ for (const language of ["zh-CN", "en"] as const) {
    await setup(page, t); await create(page, t, "SR ordinary asset");
    await importVisualKdbxEntries(page, t, [{ title: "SR private import", username: "private@example.test", password: "PrivateOnly!2026", notes: "Single imported note", usernameAliases: ["private-alias@example.test"] }]);
    await card(page, "SR private import").locator(".compact-account-title-block").click(); await expect(page.locator(".account-login-summary")).toBeVisible(); await expect(page.locator(".account-note-summary")).toContainText("Single imported note");
-   await openProjectDetails(page);
+   await expect(page.locator("main.asset-detail-account")).toBeVisible();
    await page.getByRole("button", { name: t("addRelation"), exact: true }).click(); await expect(page.locator("#account-entry-category")).toHaveCount(0); await page.locator("#password-vault-entry-asset").click(); await page.getByRole("option",{name:`SR ordinary asset · ${t("account")}`,exact:true}).click(); await expect(page.locator(".password-vault-linked-chip")).toContainText("SR ordinary asset"); await save(page, t); await waitForAccountGraphLayout(page, { nodes: 2, edges: 1 }); await shot(page, `private-detail-${language}`);
    const edge = page.locator(".react-flow__edge"); await edge.focus(); await edge.press("Enter"); await page.locator(".account-graph-selection-panel").getByRole("button", { name: t("deleteRelation"), exact: true }).click(); await page.getByRole("dialog").getByRole("button", { name: t("pwVaultUnlink"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0); await waitForAccountGraphLayout(page, { nodes: 1, edges: 0 });
    await page.reload(); await unlock(page, t); await expect(page.locator(".account-login-summary")).toBeVisible(); await page.getByRole("link", { name: t("accountBack"), exact: true }).click(); await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(1); await expect(card(page, "SR private import")).toHaveAttribute("data-private-only", "true");
