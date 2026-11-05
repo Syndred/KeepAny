@@ -20,15 +20,18 @@ const run=spawnSync(process.execPath,['node_modules/@playwright/test/cli.js','te
 const result={schema:'keepany.account-detail-approved-check.v1',candidate,automatedCoverage:['AS01','AS02','AS03','AS04','AS05','AS08','AS09','AS10','AS11'],manual:{AS06:'Reminder integration checked separately',AS07:'Independent review and controller experience separate',visual:'Actual image inspection separate'},status:'incomplete',exitCode:run.status};
 try{
  if(run.error||run.status!==0)throw Error(run.error?.message??'Compiled UI checks failed');
- const data=JSON.parse(readFileSync(report,'utf8'));if(data.stats.unexpected||data.stats.flaky||data.stats.skipped||data.stats.expected!==6)throw Error('Missing, skipped, flaky, or failing contract case');
+ const data=JSON.parse(readFileSync(report,'utf8'));if(data.stats.unexpected||data.stats.flaky||data.stats.skipped||data.stats.expected!==8)throw Error('Missing, skipped, flaky, or failing contract case');
  for(const locale of ['zh-CN','en']){
   const functional=JSON.parse(readFileSync(join(evidence,`functional-${locale}.json`),'utf8')),visual=JSON.parse(readFileSync(join(evidence,`visual-${locale}.json`),'utf8'));
   if(['AS01','AS02','AS05','AS08','AS09','AS10','AS11'].some(id=>!functional.ids?.includes(id))||['AS02','AS03','AS04'].some(id=>!visual.ids?.includes(id)))throw Error('Missing frozen coverage ID');
   if(functional.candidate.release.sourceCommit!==candidate.sourceCommit||visual.candidate.release.sourceCommit!==candidate.sourceCommit)throw Error('Source versions differ between results');
   if(functional.candidate.indexSha256!==visual.candidate.indexSha256||candidate.indexSha256&&candidate.indexSha256!==functional.candidate.indexSha256)throw Error('Candidate versions differ between results');
-  const expected=['default','hover','focus','pressed','guide','connections','fullscreen','long'].flatMap(state=>[390,768,1280,1920,1991].map(width=>`${state}-${locale}-${width}.png`));
+  const removal=JSON.parse(readFileSync(join(evidence,`removals-${locale}.json`),'utf8'));
+  if(['RE01','RE02','RE03'].some(id=>!removal.ids?.includes(id))||removal.status!=='passed'||removal.candidate.release.sourceCommit!==candidate.sourceCommit||removal.candidate.indexSha256!==functional.candidate.indexSha256)throw Error('Missing or mismatched removal coverage');
+  const expected=['default','hover','focus','pressed','fullscreen','long'].flatMap(state=>[390,768,1280,1920,1991].map(width=>`${state}-${locale}-${width}.png`));
   const manifest=expected.map(name=>{const bytes=readFileSync(join(evidence,name));if(bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')throw Error('Invalid PNG: '+name);return{name,sha256:hash(bytes)}});
   if(visual.screenshots.length!==expected.length)throw Error('Missing visual state receipt');
+  for(const name of [`removed-controls-${locale}.png`,`history-end-${locale}.png`]){const bytes=readFileSync(join(evidence,name));if(bytes.subarray(0,8).toString('hex')!=='89504e470d0a1a0a')throw Error('Invalid removal PNG: '+name);manifest.push({name,sha256:hash(bytes)});}
   writeFileSync(join(output,`screenshots-${locale}.json`),JSON.stringify(manifest,null,2));
  }
  result.status='automated checks passed; manual conclusions separate';

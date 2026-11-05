@@ -159,7 +159,6 @@ function LegacyAssetDetail() {
 	const relationInFlight = useRef(false);
 	const [relationError, setRelationError] = useState("");
 	const [relationFilter, setRelationFilter] = useState("");
-	const [relationDetailsOpen, setRelationDetailsOpen] = useState(false);
 	const [graphScope, setGraphScope] = useState<"direct" | "family">("direct");
 	const [selectedGraphEdgeId, setSelectedGraphEdgeId] = useState<string | null>(null);
 	const centerId = asset?.id;
@@ -174,7 +173,7 @@ function LegacyAssetDetail() {
 		void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id } });
 	}
 	useEffect(() => {
-		if (centerId) { setRelationFilter(""); setRelationDetailsOpen(false); setSelectedGraphEdgeId(null); }
+		if (centerId) { setRelationFilter(""); setSelectedGraphEdgeId(null); }
 	}, [centerId]);
 	function changeGraphScope(scope: "direct" | "family") {
 		setSelectedGraphEdgeId(null);
@@ -945,7 +944,7 @@ function LegacyAssetDetail() {
 			type="search"
 			placeholder={kind === "account" ? t("accountGraphSearch") : undefined}
 			value={relationFilter}
-			onChange={(event) => { setRelationFilter(event.target.value); if (event.target.value.trim()) setRelationDetailsOpen(true); }}
+			onChange={(event) => setRelationFilter(event.target.value)}
 		/>
 		{kind === "account" && normalizedFilter && <small role="status">{t("accountGraphSearchMatches", { count: graphMatches.size })}</small>}
 	</div>;
@@ -1271,13 +1270,9 @@ function LegacyAssetDetail() {
                                     <AccountDetailActions asset={asset} entry={currentLogin?.entry} />
 								</div>
 								{relationSearch}
-								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
 							</div> : relations.length >= 5 ? relationSearch : null}
 							{kind === "account" && <Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph fitAllOnOpen root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? visibleRelations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense>}
-							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
-								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
-								{relationList}
-							</details> : relationList}
+							{kind !== "account" && relationList}
 						</>
 					) : (
 						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
