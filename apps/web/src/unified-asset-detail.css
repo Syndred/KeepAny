@@ -75,7 +75,7 @@
 	padding: 4px 12px;
 	border: 1px solid var(--line-soft);
 	border-radius: 20px;
-	background: var(--blue-soft, var(--paper-soft));
+	background: var(--accent);
 	overflow-wrap: anywhere;
 }
 .unified-detail-labels .unified-detail-state {
@@ -228,7 +228,7 @@
 }
 .unified-detail-tags > span {
 	padding: 3px 10px;
-	border: 1px solid var(--yellow);
+	border: 1px solid var(--line);
 	border-radius: 10px;
 	background: var(--yellow-soft);
 }
@@ -415,7 +415,7 @@
 	overflow-wrap: anywhere;
 }
 .unified-detail-event-type.is-loan {
-	background: var(--blue-soft, var(--paper-soft));
+	background: var(--accent);
 }
 .unified-detail-event-content {
 	min-width: 0;
@@ -669,5 +669,5 @@
 .unified-detail-project-info dd .button, .unified-detail-project-info dt .button { min-height: 32px; padding: 4px 8px; vertical-align: middle; }
 .unified-detail-domains { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
 .unified-detail-domains > span { display: inline-flex; align-items: center; min-width: 0; gap: 4px; }
-.unified-detail-domains a { overflow-wrap: anywhere; }
+.unified-detail-domains a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 3px; overflow-wrap: anywhere; }
 .unified-detail-record-fields :focus-visible, .button.primary:focus-visible { outline-color: var(--line); }

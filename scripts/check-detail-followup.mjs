@@ -23,7 +23,7 @@ else {
  if(data.errors?.length||tests.length!==6||tests.some(test=>test.status!=='expected'||test.results.length!==1||test.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried contract.');
  const attachments=tests.flatMap(test=>test.results[0].attachments??[]);
  const receipts=attachments.filter(a=>a.name==='contract-results.json').map(a=>JSON.parse(a.path?readFileSync(a.path,'utf8'):Buffer.from(a.body,'base64').toString()));
- for(const locale of ['zh-CN','en'])for(const id of ['DF01','DF02','DF03','DF04','DF05','TM01','TM02','TM03','TM04','TM06'])if(!receipts.some(r=>r.locale===locale&&r.ids.includes(id)&&r.candidate===identity&&r.result==='passed'))throw Error(`Missing ${locale}/${id}`);
+ for(const locale of ['zh-CN','en'])for(const id of ['DF01','DF02','DF03','DF04','DF05','TM01','TM02','TM03','TM04','TM05','TM06'])if(!receipts.some(r=>r.locale===locale&&r.ids.includes(id)&&r.candidate===identity&&r.result==='passed'))throw Error(`Missing ${locale}/${id}`);
  const images=attachments.filter(a=>a.contentType==='image/png');
  for(const locale of ['zh-CN','en'])for(const width of [390,768,1280,1920,1976,1986])for(const state of ['ordinary-full','item-full','subscription-full','wallet-full','ordinary-minimal','ordinary-long','merged'])if(!images.some(a=>a.name===`${locale}-${width}-${state}.png`))throw Error(`Missing ${locale}/${width}/${state}`);
  if(images.some(a=>!a.path||!existsSync(a.path)))throw Error('Missing evidence.');

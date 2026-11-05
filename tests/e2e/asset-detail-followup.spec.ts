@@ -84,7 +84,7 @@ for (const locale of ['zh-CN', 'en'] as const) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
    }
   }
-  await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['DF01','DF02','DF05'], candidate: identity(), locale, result: 'passed' }), contentType: 'application/json' });
+  await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['DF01','DF02','DF05','TM05'], candidate: identity(), locale, result: 'passed' }), contentType: 'application/json' });
  });
 
  test(`${locale} DF03 DF04 TM02 TM03 TM04 merged original data and domain edits`, async ({ page }, info) => {
@@ -125,6 +125,18 @@ for (const locale of ['zh-CN', 'en'] as const) {
    await expect(page.locator('.unified-detail-project-info')).toBeVisible();
    if(hash.startsWith('project-domain-'))await expect(page.locator('.unified-detail-project-info')).toContainText('DF Saved');
   }
+  await page.goto('/records/asset:df-ordinary-full');
+  await page.getByRole('button',{name:t('projectAddDomain'),exact:true}).click();
+  const addedName=`new-${locale.toLowerCase()}.example.test`;
+  await page.getByRole('dialog').getByRole('textbox',{name:t('projectDomain'),exact:true}).fill(addedName);
+  await page.getByRole('dialog').getByRole('button',{name:t('save'),exact:true}).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await page.locator('.unified-detail-domains a').filter({hasText:addedName}).click();
+  await expect(page.getByRole('heading',{level:1})).toHaveText(addedName);
+  await page.getByRole('button',{name:t('projectEditDomain'),exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:t('projectDomainDelete'),exact:true}).click();
+  await expect(page.getByRole('heading',{level:1})).toHaveText('DF ordinary full');await page.reload();
+  await expect(page.locator('.unified-detail-domains a').filter({hasText:addedName})).toHaveCount(0);
   await info.attach('contract-results.json',{body:JSON.stringify({ids:['DF03','DF04','TM02','TM03','TM04'],candidate:identity(),locale,result:'passed'}),contentType:'application/json'});
  });
  test(`${locale} TM01 TM06 global accent color and shared consumers`, async ({page},info)=>{

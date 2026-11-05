@@ -438,6 +438,7 @@ function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domain
 			await storeDomains(projectDomains.filter((entry) => entry.id !== domainEditing));
 			setDomainEditing(null);
 			notify(t("saved"));
+			if (domainId === domainEditing && asset) void navigate({ to: "/records/$id", params: { id: `asset:${asset.id}` }, replace: true });
 		} catch (error) {
 			setDomainError(t(error instanceof Error && error.message === "asset-stale" ? "assetStale" : "error"));
 		} finally { setDomainBusy(false); }
@@ -1172,7 +1173,7 @@ function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domain
     {relatedSubscriptions.length > 0 && <div><dt>{t("projectMonthlyCost")}</dt><dd>{formatTotals(monthlyByCurrency)}{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</dd></div>}
     {nextRenewal && <div><dt>{t("projectNextRenewal")}</dt><dd>{date(nextRenewal, i18n.language)}</dd></div>}
     <div><dt>{t("projectDomain")} <Button size="small" variant="ghost" aria-label={t("projectAddDomain")} onClick={() => openDomain()}><Plus size={15}/></Button></dt><dd className="unified-detail-domains">{projectDomains.length ? projectDomains.map(domain => <span key={domain.id}><Link to="/records/$id" params={{id:`domain:${asset.id}:${domain.id}`}}>{domain.catalog?.name ?? domain.name}</Link><Button size="small" variant="ghost" aria-label={`${t("projectEditDomain")}: ${domain.name}`} onClick={() => openDomain(domain)}><Pencil size={15}/></Button></span>) : t("none")}</dd></div>
-    {relatedSubscriptions.length > 0 && <div><dt>{t("projectLinkedSubscriptions")}</dt><dd className="unified-detail-domains">{relatedSubscriptions.map(linked => <Link key={linked.id} to="/assets/$kind/$id" params={{kind:"subscription",id:linked.id}}>{linked.name}</Link>)}</dd></div>}
+    {relatedSubscriptions.length > 0 && <div><dt>{t("projectLinkedSubscriptions")}</dt><dd className="unified-detail-domains">{relatedSubscriptions.map(linked => <Link key={linked.id} to="/assets/$kind/$id" params={{kind:"subscription",id:linked.id}} onClick={event=>{event.preventDefault();visitRelation(linked);}}>{linked.name}</Link>)}</dd></div>}
    </>}
   </dl>
   {domainDialog}
