@@ -1,3 +1,4 @@
+import { readSubscriptionRates, subscriptionCny, subscriptionRatesId } from "./subscription-cny";
 import { Textarea } from "./components/ui/textarea";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -44,15 +45,18 @@ export function AssetEditor({
 				category: kind === "account" ? "other" : categoryOptions[kind][0],
 			},
 	);
-	const [amount, setAmount] = useState(
-		kind === "item" && !asset?.itemPurchasePriceKnown
+	const rates = readSubscriptionRates(data.preferences.find(p => p.id === subscriptionRatesId)?.value);
+ const displaySubscription = asset?.kind === 'subscription' ? subscriptionCny(asset, rates) : null;
+ const foreignSubscription = kind === 'subscription' && draft.currency !== 'CNY';
+ const [amount, setAmount] = useState(
+		foreignSubscription ? displaySubscription ? inputFromMinorUnits(displaySubscription.amount, "CNY") : "" : kind === "item" && !asset?.itemPurchasePriceKnown
 			? ""
 			: asset?.amount != null
 			? inputFromMinorUnits(asset.amount, asset.currency)
 			: "0",
 	);
 	const [discount, setDiscount] = useState(
-		asset?.discountAmount != null
+		foreignSubscription ? displaySubscription ? inputFromMinorUnits(displaySubscription.discountAmount, "CNY") : "0" : asset?.discountAmount != null
 			? inputFromMinorUnits(asset.discountAmount, asset.currency)
 			: "0",
 	);
@@ -83,8 +87,9 @@ export function AssetEditor({
 			if (current) {
 				originalRef.current = current;
 				setDraft(current);
-				setAmount(inputFromMinorUnits(current.amount, current.currency));
-				setDiscount(inputFromMinorUnits(current.discountAmount, current.currency));
+				const display = current.kind === 'subscription' ? subscriptionCny(current,rates) : current;
+                setAmount(display ? inputFromMinorUnits(display.amount,display.currency) : '');
+                setDiscount(display ? inputFromMinorUnits(display.discountAmount,display.currency) : '0');
 				setTagsInput(current.tags.join(", "));
 			}
 			if (abandon) { setProjectId(""); setAccountId(""); }
@@ -103,8 +108,11 @@ export function AssetEditor({
 	async function submit(e: React.FormEvent) {
 		e.preventDefault();
 		if (inFlight.current || pendingConnections || checkingConnections) return;
-		const parsedAmount = kind === "item" && !amount.trim() ? 0 : parseMinorUnits(amount, draft.currency);
-		const parsedDiscount = kind === "subscription" ? parseMinorUnits(discount, draft.currency) : draft.discountAmount;
+		const parsedCnyAmount = foreignSubscription && amount.trim() ? parseMinorUnits(amount, "CNY") : null;
+  const parsedCnyDiscount = foreignSubscription ? parseMinorUnits(discount, "CNY") : null;
+  if (foreignSubscription && ((amount.trim() && (!Number.isSafeInteger(parsedCnyAmount) || parsedCnyAmount! < 0)) || (!Number.isSafeInteger(parsedCnyDiscount) || parsedCnyDiscount! < 0) || (parsedCnyAmount !== null && parsedCnyDiscount! > parsedCnyAmount))) { setErrors({amount:t("invalid"),discountAmount:t("invalid")}); return; }
+  const parsedAmount = foreignSubscription ? draft.amount : kind === "item" && !amount.trim() ? 0 : parseMinorUnits(amount, draft.currency);
+		const parsedDiscount = foreignSubscription ? draft.discountAmount : kind === "subscription" ? parseMinorUnits(discount, draft.currency) : draft.discountAmount;
 		const scheduleChanged =
 			kind === "subscription" &&
 			original !== undefined &&
@@ -117,6 +125,7 @@ export function AssetEditor({
 			name: draft.name.trim(),
 			subscriptionPaymentMethod: kind === "subscription" ? draft.subscriptionPaymentMethod.trim() : draft.subscriptionPaymentMethod,
 			amount: parsedAmount,
+            ...(foreignSubscription && parsedCnyAmount !== null && (amount !== (displaySubscription ? inputFromMinorUnits(displaySubscription.amount,'CNY') : '') || discount !== (displaySubscription ? inputFromMinorUnits(displaySubscription.discountAmount,'CNY') : '0')) ? {subscriptionCny:{amount:parsedCnyAmount,discountAmount:parsedCnyDiscount,sourceAmount:draft.amount,sourceDiscountAmount:draft.discountAmount,sourceCurrency:draft.currency,confirmedAt:new Date().toISOString()}} : {}),
 			itemPurchasePriceKnown: kind === "item" ? !!amount.trim() : draft.itemPurchasePriceKnown,
 			discountAmount: parsedDiscount,
 			billingAnchor:
@@ -318,27 +327,13 @@ export function AssetEditor({
 							<small>{t("subscriptionPaymentHint")}</small>
 							<Field
 								name="amount"
-								label={t("amount")}
+								label={t("subscriptionCnyAmount")}
 								value={amount}
 								type="number"
 								onChange={setAmount}
 								error={errors.amount}
 							/>
-							<Field name="currency" label={t("currency")}>
-								<Select
-									id="currency"
-									value={draft.currency}
-									onValueChange={(selectValue) =>
-										set("currency", selectValue as Asset["currency"])
-									}
-								>
-									{["CNY", "USD", "EUR", "GBP", "JPY"].map((v) => (
-										<SelectOption key={v} value={v}>
-											{v}
-										</SelectOption>
-									))}
-								</Select>
-							</Field>
+                            {foreignSubscription && <small>{t('subscriptionCnyLegacy')}</small>}
 							<Field name="cycle" label={t("cycle")}>
 								<Select
 									id="cycle"
@@ -380,7 +375,7 @@ export function AssetEditor({
 							/>
 							<Field
 								name="discountAmount"
-								label={t("discountAmount")}
+								label={t("subscriptionCnyDiscount")}
 								value={discount}
 								type="number"
 								onChange={setDiscount}

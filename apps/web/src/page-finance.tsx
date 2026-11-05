@@ -1,3 +1,4 @@
+import { readSubscriptionRates, subscriptionCny, subscriptionMonthlyCny, subscriptionRatesId } from "./subscription-cny";
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
@@ -59,8 +60,10 @@ export function FinancePage() {
 	const [sourceFilter, setSourceFilter] = useState("all");
 	const [draft, setDraft] = useState<EntryDraft>(() => ({ action: "expense", assetId: "", title: "", amount: "", currency: "CNY", eventDate: today(), source: "", note: "" }));
 	const thisMonth = today().slice(0, 7);
-	const planned = groupedMoney(subscriptions.filter((asset) => asset.status === "active")
-		.map((asset) => ({ currency: asset.currency, amount: monthlyMinorUnits(asset) })));
+ const subscriptionRates = readSubscriptionRates(data.preferences.find(p=>p.id === subscriptionRatesId)?.value);
+ const plannedRows = subscriptions.filter(asset=>asset.status === 'active').map(asset=>subscriptionMonthlyCny(asset,subscriptionRates));
+ const planned = groupedMoney(plannedRows.flatMap(amount=>amount === null ? [] : [{currency:'CNY',amount}]));
+ const missingCny = plannedRows.filter(amount=>amount===null).length;
 	const confirmed = groupedMoney(records.filter((entry) =>
 		(entry.action === "expense" && entry.eventDate?.startsWith(thisMonth)) ||
 		(entry.action === "renew" && entry.billDate?.startsWith(thisMonth)))
@@ -151,7 +154,7 @@ export function FinancePage() {
 		<PageTitle eyebrow={t("financeEyebrow")} title={t("financeTitle")} subtitle={t("financeSubtitle")}
 			action={<Button variant="primary" onClick={() => openRecord()}><Plus size={16}/>{t("financeAddRecord")}</Button>} />
 		<div className="finance-summary">
-			<section className="card"><span>{t("financeMonthlyPlan")}</span><MoneyLines totals={planned} language={i18n.language} empty={t("financeNoPlan")}/><small>{t("financePlanHint")}</small></section>
+			<section className="card"><span>{t("financeMonthlyPlan")}</span><MoneyLines totals={planned} language={i18n.language} empty={t("financeNoPlan")}/><small>{t("financePlanHint")}</small>{missingCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingCny})}</small>}</section>
 			<section className="card"><span>{t("financeConfirmedSpent")}</span><MoneyLines totals={confirmed} language={i18n.language} empty={t("financeNoRecords")}/><small>{t("financeConfirmedHint")}</small></section>
 			<section className="card"><span>{t("financeBalances")}</span><MoneyLines totals={balances} language={i18n.language} empty={t("financeNoBalance")}/><small>{t("financeBalanceHint")}</small></section>
 		</div>
@@ -161,7 +164,7 @@ export function FinancePage() {
 				const related = relatedAssets(asset.id);
 				const source = latestRecordedSource(asset.id);
 				return <article className="finance-linked-row" key={asset.id}>
-					<div className="finance-linked-top"><Link className="finance-subscription" to="/assets/$kind/$id" params={{kind:"subscription",id:asset.id}}><strong>{asset.name}</strong></Link><strong>{formatMinorUnits(asset.amount,asset.currency,i18n.language)} / {asset.interval} {t(asset.cycle)}</strong><Button size="small" onClick={() => setEditSubscription(asset)}>{t("edit")}</Button></div>
+					<div className="finance-linked-top"><Link className="finance-subscription" to="/assets/$kind/$id" params={{kind:"subscription",id:asset.id}}><strong>{asset.name}</strong></Link><strong>{subscriptionCny(asset,subscriptionRates) ? formatMinorUnits(subscriptionCny(asset,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {asset.interval} {t(asset.cycle)}</strong><Button size="small" onClick={() => setEditSubscription(asset)}>{t("edit")}</Button></div>
 					<div className="finance-linked-tags">{related.length ? related.map((neighbor) => <Link key={neighbor.id} to="/assets/$kind/$id" params={{kind:neighbor.kind,id:neighbor.id}}>{neighbor.name} ↗</Link>) : <span>{t("financeNoLinkedAssets")}</span>}</div>
 					<small>{asset.dueDate ? `${t("dueDate")}: ${date(asset.dueDate,i18n.language)} · ` : ""}{t(asset.status)} · {t("subscriptionPaymentMethod")}: {asset.subscriptionPaymentMethod || t("accountNotRecorded")} · {t("financeLatestSource")}: {source || t("financeNoSource")}</small>
 				</article>;

@@ -175,7 +175,7 @@ for (const locale of ["zh-CN", "en"] as const)
 		).toBeVisible();
 		await page.getByRole("button", { name: t("edit"), exact: true }).click();
 		const editor = page.getByRole("dialog");
-		await expect(editor.locator(".form-grid > .field")).toHaveCount(6);
+		await expect(editor.locator(".form-grid > .field")).toHaveCount(7);
 		await expect(editor.getByText(t("contact"), { exact: true })).toHaveCount(
 			0,
 		);

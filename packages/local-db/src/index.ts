@@ -966,7 +966,7 @@ export class LocalRepository {
       next.dueDate !== dueOnCycle(anchor, expected.cycle, expected.interval, next.renewalCount) ||
       !unchanged ||
       event.action !== 'renew' || event.assetId !== expected.id || event.deleted ||
-      event.billDate !== expected.dueDate || event.amount === undefined || event.currency !== expected.currency) {
+      event.billDate !== expected.dueDate || event.amount === undefined || (event.currency !== expected.currency && event.currency !== 'CNY')) {
       throw Error('renewal-invalid');
     }
     await this.recordHistoryPair(expected, next, event, 'renewal');

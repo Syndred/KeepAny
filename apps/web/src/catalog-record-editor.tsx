@@ -39,7 +39,7 @@ export function CatalogRecordEditor({
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const categories = catalogCategories(data.categories);
-	function change(key: "name" | "url" | "dueDate", value: string) {
+	function change(key: "name" | "url" | "dueDate" | "description", value: string) {
 		setDraft((current) => ({ ...current, [key]: value }));
 		setErrors((current) => ({ ...current, [key]: "" }));
 	}
@@ -115,6 +115,7 @@ export function CatalogRecordEditor({
 							onChange={(value) => change("name", value)}
 							error={errors.name}
 						/>
+                        {!original?.domain && <Field name="catalog-record-description" label={t('description')} value={draft.description} onChange={value=>change('description',value)} error={errors.description}/>}
 						<Field name="catalog-record-category" label={t("category")}>
 							<Select
 								id="catalog-record-category"

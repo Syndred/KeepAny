@@ -1,3 +1,4 @@
+import { readSubscriptionRates, subscriptionRatesId } from './subscription-cny';
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { buildWorkspaceSummary } from "./workspace-summary";
@@ -13,6 +14,6 @@ export function useWorkspaceSummary() {
 		document.addEventListener("visibilitychange", update);
 		return () => { clearInterval(timer); window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); };
 	}, []);
-	return useMemo(() => buildWorkspaceSummary({ assets: data.assets, tasks: data.tasks, history: data.history, relations: data.relations, today }),
-		[data.assets, data.tasks, data.history, data.relations, today]);
+	return useMemo(() => buildWorkspaceSummary({ assets: data.assets, tasks: data.tasks, history: data.history, relations: data.relations, today, subscriptionRates: readSubscriptionRates(data.preferences.find(p => p.id === subscriptionRatesId)?.value) }),
+		[data.assets, data.tasks, data.history, data.relations, data.preferences, today]);
 }

@@ -1,3 +1,4 @@
+import { cnyMinor, readSubscriptionRates, subscriptionCny, subscriptionRatesId } from "./subscription-cny";
 import { Textarea } from "./components/ui/textarea";
 import { CatalogRecordPage } from './page-catalog-record';
 import { Input } from "./components/ui/input";
@@ -398,23 +399,30 @@ function LegacyAssetDetail() {
 		</main>
 	);
     if (asset.kind === "account" && snapshot.status !== "unlocked") return <main className="page unified-accounts-page"><TextLink asChild><Link to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink><Suspense fallback={<p role="status">{t("loading")}</p>}><PasswordVaultPanel assets={data.assets} renderAccounts={() => null} notify={notify} /></Suspense></main>;
+    const subscriptionRates = readSubscriptionRates(data.preferences.find(p=>p.id === subscriptionRatesId)?.value);
+    const cnySubscription = asset.kind === 'subscription' ? subscriptionCny(asset, subscriptionRates) : null;
+    const subscriptionMoney = (value: number | bigint, currency = asset.currency) => {
+        const converted = cnyMinor(value, currency, subscriptionRates);
+        return converted === null ? t('subscriptionCnyMissing') : money(converted,'CNY',i18n.language);
+    };
 	const dueCharge =
-		asset.kind === "subscription" && asset.dueDate
-			? actualCharge(asset, asset.dueDate)
+		asset.kind === "subscription" && asset.dueDate && cnySubscription
+			? actualCharge(cnySubscription, asset.dueDate)
 			: null;
 	const projectDomains = asset.kind === "project" ? (asset.projectDomains ?? []) : [];
 	const itemMedia = asset.itemMedia ?? emptyItemMedia;
 	const assignedItemImages = new Set([itemMedia.coverId, ...itemMedia.detailIds, ...itemMedia.receiptIds].filter(Boolean));
 	const visibleAttachmentIds = asset.kind === "item" ? asset.attachments.filter((id) => !assignedItemImages.has(id)) : asset.attachments;
 	const monthlyByCurrency = new Map<string, bigint>();
-	for (const linked of relatedSubscriptions) monthlyByCurrency.set(linked.currency, (monthlyByCurrency.get(linked.currency) ?? 0n) + monthlyMinorUnits(linked));
+	let missingSubscriptionCny = 0;
+ for (const linked of relatedSubscriptions) { const cny = subscriptionCny(linked,subscriptionRates); if (!cny) missingSubscriptionCny++; else monthlyByCurrency.set('CNY',(monthlyByCurrency.get('CNY') ?? 0n)+monthlyMinorUnits(cny)); }
 	const annualByCurrency = new Map<string, bigint>();
 	for (const [currency, value] of monthlyByCurrency) annualByCurrency.set(currency, value * 12n);
 	for (const domain of projectDomains) if (domain.annualAmount !== null) annualByCurrency.set(domain.currency, (annualByCurrency.get(domain.currency) ?? 0n) + BigInt(domain.annualAmount));
 	const formatTotals = (totals: Map<string, bigint>) => totals.size ? Array.from(totals, ([currency, amount]) => money(amount, currency, i18n.language)).join(" + ") : "—";
 	const today = localCalendarDay(new Date());
 	const nextRenewal = [...projectDomains.map((domain) => domain.expiryDate), ...relatedSubscriptions.map((linked) => linked.dueDate)].filter((value) => value && value >= today).sort()[0] ?? "";
-	const incompleteCost = projectDomains.some((domain) => domain.annualAmount === null);
+	const incompleteCost = missingSubscriptionCny > 0 || projectDomains.some((domain) => domain.annualAmount === null);
 	function openDomain(domain?: ProjectDomain) {
 		const next = domain ?? { id: crypto.randomUUID(), name: "", registrar: "", accountId: "", expiryDate: "", annualAmount: null, currency: "CNY", autoRenew: "unknown" } as ProjectDomain;
 		setDomainDraft(next);
@@ -643,10 +651,10 @@ function LegacyAssetDetail() {
 		if (action === "renew" && asset.dueDate) {
 			const anchor = asset.billingAnchor || asset.dueDate;
 			const count = (asset.renewalCount || 0) + 1;
-			const charge = actualCharge(asset, asset.dueDate);
+			const charge = cnySubscription ? actualCharge(cnySubscription, asset.dueDate) : null;
 			if (charge === null) throw Error("renewal-inactive");
 			const entered = renewalAmount.trim();
-			const recordedAmount = entered ? parseMinorUnits(entered, asset.currency) : charge;
+			const recordedAmount = entered ? parseMinorUnits(entered, "CNY") : charge;
 			if (!Number.isSafeInteger(recordedAmount) || recordedAmount < 0) throw Error("renewal-amount-invalid");
 			const historyId = crypto.randomUUID();
 			update = {
@@ -662,7 +670,7 @@ function LegacyAssetDetail() {
 				action: "renew",
 				billDate: asset.dueDate,
 				amount: recordedAmount,
-				currency: asset.currency,
+				currency: "CNY",
 				note,
 				createdAt: now,
 				deleted: false,
@@ -1164,12 +1172,12 @@ function LegacyAssetDetail() {
 							<>
 								<div>
 									<dt>{t("amount")}</dt>
-									<dd>{money(asset.amount, asset.currency, i18n.language)}</dd>
+									<dd>{cnySubscription ? money(cnySubscription.amount, "CNY", i18n.language) : t("subscriptionCnyMissing")}</dd>
 								</div>
 								<div>
 									<dt>{t("monthly")}</dt>
 									<dd>
-										{money(monthlyMinorUnits(asset), asset.currency, i18n.language)}
+										{cnySubscription ? money(monthlyMinorUnits(cnySubscription), "CNY", i18n.language) : t("subscriptionCnyMissing")}
 									</dd>
 								</div>
 								<div>
@@ -1187,7 +1195,7 @@ function LegacyAssetDetail() {
 									<dd>
 										{dueCharge === null
 											? "—"
-											: money(dueCharge, asset.currency, i18n.language)}
+											: money(dueCharge, "CNY", i18n.language)}
 									</dd>
 								</div>
 								{asset.trialEndsAt && (
@@ -1201,11 +1209,7 @@ function LegacyAssetDetail() {
 										<dt>{t("discountUntil")}</dt>
 										<dd>
 											{date(asset.discountUntil, i18n.language)} ·{" "}
-											{money(
-												asset.discountAmount,
-												asset.currency,
-												i18n.language,
-											)}
+											{cnySubscription ? money(cnySubscription.discountAmount,"CNY",i18n.language) : t("subscriptionCnyMissing")}
 										</dd>
 									</div>
 								)}
@@ -1296,12 +1300,12 @@ function LegacyAssetDetail() {
 			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
 				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
 				<div className="asset-project-cost-grid">
-					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small></div>
+					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small>{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</div>
 					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
 					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
 				</div>
 				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
-				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{money(linked.amount, linked.currency, i18n.language)} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
+				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{subscriptionCny(linked,subscriptionRates) ? money(subscriptionCny(linked,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
 			</section>}
 			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
 				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
@@ -1425,7 +1429,7 @@ function LegacyAssetDetail() {
 					<div><strong>{entry.title || (entry.action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${entry.action[0].toUpperCase()}${entry.action.slice(1)}`))}</strong>
 						<small>{date(entry.eventDate || entry.billDate || entry.createdAt.slice(0, 10), i18n.language)}{entry.source ? ` · ${entry.source}` : ""}{entry.note ? ` · ${entry.note}` : ""}</small>
 						<small>{historyAssetIds(entry).map(id => data.assets.find(value => value.id === id)?.name ?? t("financeMissingAsset")).join(" · ")}</small>
-					</div>{entry.amount !== undefined && entry.currency && <b>{money(entry.amount, entry.currency, i18n.language)}</b>}
+					</div>{entry.amount !== undefined && entry.currency && <b>{asset.kind === "subscription" ? `${subscriptionMoney(entry.amount,entry.currency)}${entry.currency !== "CNY" ? ` · ${t("subscriptionCnyEstimate")}` : ""}` : money(entry.amount, entry.currency, i18n.language)}</b>}
 				</div>)}</div>
 			</section>}
 			{(asset.kind === "item" || asset.kind === "subscription") && (
@@ -1439,7 +1443,7 @@ function LegacyAssetDetail() {
 					{asset.kind === "subscription" ? (
 						<div className="toolbar">
 							<Button
-								disabled={asset.status !== "active" || !asset.dueDate || renewalBusy}
+								disabled={asset.status !== "active" || !asset.dueDate || !cnySubscription || renewalBusy}
 								onClick={() => void recordRenewalAction()}
 							>
 								{t("renew")}
@@ -1451,15 +1455,15 @@ function LegacyAssetDetail() {
 								aria-label={t("notes")}
 							/>
 							<label className="renewal-amount-field">
-								<span>{t("recordedAmount")} ({asset.currency})</span>
+								<span>{t("recordedAmount")} (CNY)</span>
 								<Input
 									type="number"
 									min="0"
-									step={asset.currency === "JPY" ? "1" : "0.01"}
+									step="0.01"
 									value={renewalAmount}
 									onChange={(event) => { setRenewalAmount(event.target.value); setRenewalAmountError(""); }}
 									aria-invalid={!!renewalAmountError}
-									placeholder={dueCharge === null ? "" : inputFromMinorUnits(dueCharge, asset.currency)}
+									placeholder={dueCharge === null ? "" : inputFromMinorUnits(dueCharge, "CNY")}
 								/>
 								{renewalAmountError && <small role="alert">{renewalAmountError}</small>}
 							</label>
@@ -1531,7 +1535,7 @@ function LegacyAssetDetail() {
 													dateStyle: "medium",
 												}).format(new Date(h.createdAt))}
 											{h.action === "renew" && h.billDate && h.amount !== undefined && h.currency
-												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${money(h.amount, h.currency, i18n.language)}`
+												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${subscriptionMoney(h.amount, h.currency)}${h.currency !== "CNY" ? ` · ${t("subscriptionCnyEstimate")}` : ""}`
 												: ""}
 											{h.borrower ? ` · ${t("borrower")}: ${h.borrower}` : ""}
 											{h.expectedReturnDate ? ` · ${t("itemExpectedReturnDate")}: ${date(h.expectedReturnDate, i18n.language)}` : ""}
