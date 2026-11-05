@@ -37,7 +37,7 @@ export function AccountHistory({ entry, asset }: { entry?: PasswordVaultEntrySum
             if (session.getSnapshot().status === "unlocked") setError(t(cause instanceof Error && ["vault-stale", "stale"].includes(cause.message) ? "pwVaultConflict" : "pwVaultError"));
         } finally { inFlight.current = false; setBusy(false); }
     }
-    return <section className="card account-history-card" aria-labelledby="account-history-title">
+    return <section className={`card account-history-card${history.rows.length ? "" : " is-empty"}`} aria-labelledby="account-history-title">
         <header><h2 id="account-history-title" ref={heading} tabIndex={-1}>{t("accountHistoryTitle")}</h2><History size={19} aria-hidden="true"/></header>
         {history.failed ? <p role="alert" className="field-error">{t("pwVaultError")}</p> : history.rows.length ? <div className="account-history-list" tabIndex={0} role="region" aria-label={t("accountHistoryTitle")}>
             {history.rows.map(row => <div className="account-history-row" key={`${row.index}:${row.at}`}><div><strong>{formatTime(row.at)}</strong><small>{row.username || t("pwVaultValueEmpty")}</small><small>{t("pwVaultHistoryVersion", { count: row.index + 1 })}</small></div><Button size="small" disabled={busy} aria-label={`${t("accountHistoryRestoreAction")} · ${formatTime(row.at)}`} onClick={event => { if (!snapshot.contentRevision) return; opener.current = event.currentTarget; progress.current = { account: asset ?? null, accountChanged: false }; setError(""); setSelected({ index: row.index, at: row.at, contentRevision: snapshot.contentRevision, asset }); }}><RotateCcw size={15}/>{t("accountHistoryRestoreAction")}</Button></div>)}
