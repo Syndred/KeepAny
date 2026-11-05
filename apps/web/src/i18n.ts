@@ -424,7 +424,7 @@ const copy: Record<string, [string, string]> = {
 		"Records changed. These changes could not be completed.",
 	],
 	categoryEditStale: [
-		"资料已变化，请收起后重新编辑。",
+		"资料已变化，请关闭后重新编辑。",
 		"Records changed. Close this editor and open it again.",
 	],
 	categoryNameInvalid: [
