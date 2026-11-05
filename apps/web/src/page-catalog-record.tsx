@@ -1,4 +1,6 @@
 import { AssetCardContent } from "./components/AssetSummaryCard";
+import { WalletCardFace } from './components/WalletCardFace';
+import { readCatalogRecordReturn } from './workspace-return';
 import { useEffect, useRef, useState } from "react";
 import "./workspaces.css";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -142,22 +144,7 @@ export function CatalogRecordPage({ recordId }: { recordId?: string } = {}) {
 			</main>
 		);
 	const current = record;
-	let backCategoryId: string | undefined;
-	try {
-		const saved = JSON.parse(
-			sessionStorage.getItem("keepany-catalog-record-return") ?? "null",
-		);
-		if (
-			saved?.recordId === current.id &&
-			typeof saved.categoryId === "string" &&
-			catalogCategories(data.categories).some(
-				(category) => category.id === saved.categoryId,
-			)
-		)
-			backCategoryId = saved.categoryId;
-	} catch {
-		/* Invalid return hints fall back to All. */
-	}
+	const {categoryId:backCategoryId,wallet:backWallet} = readCatalogRecordReturn(current.id,catalogCategories(data.categories),!!current.asset.walletCard);
 	const linked = data.relations.filter(
 		(relation) =>
 			!relation.deleted &&
@@ -194,13 +181,13 @@ export function CatalogRecordPage({ recordId }: { recordId?: string } = {}) {
 				<div>
 					<Link
 						className="back-link"
-						to={backCategoryId ? "/assets/category/$categoryId" : "/assets"}
+						to={backCategoryId ? "/assets/category/$categoryId" : backWallet ? "/cards" : "/assets"}
 						params={backCategoryId ? { categoryId: backCategoryId } : {}}
 					>
 						{t("back")}
 					</Link>
 					<div className="eyebrow">
-						{category
+						{current.asset.walletCard ? t('wallet') : category
 							? catalogCategoryLabel(category, t)
 							: t("catalogUnclassified")}
 					</div>
@@ -231,7 +218,9 @@ export function CatalogRecordPage({ recordId }: { recordId?: string } = {}) {
 				</p>
 			)}
 			<section className="card catalog-record-info">
+				{current.asset.walletCard && <WalletCardFace asset={current.asset}/>}
 				<dl>
+					{current.asset.walletCard && <><dt>{t('walletType')}</dt><dd>{t(`walletType_${current.asset.walletCard.type}`)}</dd></>}
 					<dt>{t("category")}</dt>
 					<dd>
 						{category
@@ -257,7 +246,7 @@ export function CatalogRecordPage({ recordId }: { recordId?: string } = {}) {
 					<dd>{current.asset.tags.join(" · ") || t("none")}</dd>
 					<dt>{t("status")}</dt>
 					<dd>{t(current.asset.status)}</dd>
-					<dt>{t("catalogDate")}</dt>
+					<dt>{t(current.asset.walletCard ? "walletExpiry" : "catalogDate")}</dt>
 					<dd>{date(current.asset.dueDate, i18n.language)}</dd>
 				</dl>
 				<h2>{t("notes")}</h2>

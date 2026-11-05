@@ -10,6 +10,7 @@ import { daysBetween } from '../workspace-summary';
 import { cardPeriod } from '../card-period';
 import { readSubscriptionRates, subscriptionCny, subscriptionRatesId } from '../subscription-cny';
 import './asset-summary-card.css';
+import { WalletCardFace } from './WalletCardFace';
 
 export function AssetCardContent({ asset, categoryName }: { asset: Asset; categoryName?: string }) {
  const { t, i18n } = useTranslation();
@@ -19,7 +20,7 @@ export function AssetCardContent({ asset, categoryName }: { asset: Asset; catego
  const today = format(new Date(), 'yyyy-MM-dd');
  const progress = cardPeriod(asset, today);
  const cover = asset.kind === 'item' ? asset.itemMedia?.coverId : '';
- const label = categoryName ?? (asset.category ? niceCategory(asset.category, t) : t(asset.kind));
+ const label = asset.walletCard ? t(`walletType_${asset.walletCard.type}`) : categoryName ?? (asset.category ? niceCategory(asset.category, t) : t(asset.kind));
  const state = asset.kind === 'item' && asset.status === 'active' ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t('active') : t(asset.status);
  const stateClass = asset.kind === 'item' && asset.status === 'active' ? asset.itemLifecycleStatus ?? 'active' : asset.status;
  let domain = asset.url;
@@ -39,11 +40,12 @@ export function AssetCardContent({ asset, categoryName }: { asset: Asset; catego
     <div className="summary-card-labels"><span className="summary-card-tags" title={[label, ...asset.tags].join(' · ')}>{[label,...asset.tags].filter(Boolean).join(' · ')}</span><span className={`summary-card-state state-${stateClass}`}><i aria-hidden="true"/>{state}</span></div>
    </div>
   </div>
+  {asset.walletCard && <WalletCardFace asset={asset}/>}
   {facts.length > 0 && <div className="summary-card-facts">{facts}</div>}
   <div className="summary-card-footer">
    {asset.kind === 'subscription' && asset.dueDate ? <div><span><CalendarDays aria-hidden="true"/>{t('dueDate')}</span><RemainingDays days={daysBetween(today,asset.dueDate)}/></div>
     : asset.kind === 'item' && asset.warrantyDate ? <div><span><ShieldCheck aria-hidden="true"/>{t('warrantyDate')}</span><span>{date(asset.warrantyDate,i18n.language)}{daysBetween(today,asset.warrantyDate)! < 0 ? ` · ${t('cardExpired')}` : ''}</span></div>
-    : <div>{asset.purchaseDate && asset.kind === 'item' ? <span><CalendarDays aria-hidden="true"/>{date(asset.purchaseDate,i18n.language)}</span> : asset.dueDate ? <span><CalendarDays aria-hidden="true"/>{date(asset.dueDate,i18n.language)}</span> : null}<span className="summary-card-updated"><Clock3 aria-hidden="true"/>{date(asset.updatedAt.slice(0,10),i18n.language)}</span></div>}
+    : <div>{asset.purchaseDate && asset.kind === 'item' ? <span><CalendarDays aria-hidden="true"/>{date(asset.purchaseDate,i18n.language)}</span> : asset.dueDate ? <span><CalendarDays aria-hidden="true"/>{asset.walletCard ? `${t('walletExpiry')} · ` : ''}{date(asset.dueDate,i18n.language)}</span> : null}<span className="summary-card-updated"><Clock3 aria-hidden="true"/>{date(asset.updatedAt.slice(0,10),i18n.language)}</span></div>}
    {progress !== null && <progress max={100} value={progress} aria-label={t(asset.kind === 'item' ? 'warrantyDate' : 'dueDate')}/>}
   </div>
  </>;

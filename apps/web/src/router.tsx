@@ -3,6 +3,7 @@ import {
 	createRoute,
 	createRouter,
 	lazyRouteComponent,
+ redirect,
 } from "@tanstack/react-router";
 import { AppShell } from "./AppShell";
 import { RouteLoadError } from "./RouteLoadError";
@@ -68,10 +69,11 @@ const collectionDetailRoute = createRoute({
 	path: "/collections/$id",
 	component: lazyRouteComponent(() => import("./page-collections"), "CollectionsPage"),
 });
+const cardsWorkspaceRoute = createRoute({getParentRoute:()=>rootRoute,path:'/cards',component:lazyRouteComponent(()=>import('./page-workspaces'),'CardsWorkspaceRoute')});
 const financeRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: "/finance",
-	component: lazyRouteComponent(() => import("./page-workspaces"), "FinanceWorkspaceRoute"),
+ beforeLoad: () => { throw redirect({to:'/assets',replace:true}); },
 });
 const intakeRoute = createRoute({
 	getParentRoute: () => rootRoute,
@@ -111,6 +113,7 @@ const routeTree = rootRoute.addChildren([
 	collectionsRoute,
 	collectionDetailRoute,
 	financeRoute,
+ cardsWorkspaceRoute,
 	intakeRoute,
 	backupRoute,
 	trashRoute,

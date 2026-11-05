@@ -31,6 +31,9 @@
   --field-radius: 9px;
   --yellow: #ffd24c;
   --yellow-soft: #fff0b8;
+  --wallet-membership: #e8efed;
+  --wallet-count-pass: #f2e9df;
+  --wallet-gift: #efebf4;
   --accent: var(--yellow);
   --accent-soft: var(--yellow-soft);
   --accent-hover: #ffe084;
