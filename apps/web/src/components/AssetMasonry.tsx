@@ -12,6 +12,8 @@ export function AssetMasonry({ children, label }: { children: ReactNode; label: 
    if (disposed) return;
    const width = element.clientWidth;
    if (!width) return;
+   // Measure in the final positioning mode; grid stretch can otherwise give stale first-frame heights.
+   element.dataset.laidOut = 'true';
    const columns = Number(getComputedStyle(element).getPropertyValue('--masonry-columns')) || 1;
    const gap = 16;
    const cardWidth = (width - gap * (columns - 1)) / columns;
@@ -26,7 +28,6 @@ export function AssetMasonry({ children, label }: { children: ReactNode; label: 
     heights[column] += sizes[index] + gap;
    }
    element.style.height = `${Math.max(0, ...heights) - (cards.length ? gap : 0)}px`;
-   element.dataset.laidOut = 'true';
   };
   const schedule = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(layout); };
   const observer = new ResizeObserver(schedule);

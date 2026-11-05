@@ -161,6 +161,7 @@ export function AppShell() {
 	const workspaceReturn = detailAssetId && !hasRelationReturn ? readWorkspaceReturn(detailAssetId) : null;
  let catalogRecordId = '';
  try {catalogRecordId = /^\/records\/([^/]+)\/?$/.exec(pathname)?.[1] ?? '';catalogRecordId=decodeURIComponent(catalogRecordId);}catch{/* Invalid record routes fall back to Assets. */}
+ if(!catalogRecordId && detailKind === 'project' && data.assets.some(a=>a.id===detailAssetId && !!a.walletCard))catalogRecordId=`asset:${detailAssetId}`;
  const catalogReturn = catalogRecordId ? readCatalogRecordReturn(catalogRecordId,catalogCategories(data.categories),!!data.assets.find(a=>`asset:${a.id}`===catalogRecordId)?.walletCard) : null;
 	function selectCategory(kind: string, category: string, categoryId: string) {
 		sessionStorage.setItem(`keepany-category-${kind}`, category);
@@ -326,7 +327,10 @@ export function AppShell() {
 						<div className="search-results">{matches.length ? matches.map((result) => {
 							const content = <><span className="global-search-result-text"><strong>{result.title}</strong><small>{result.secondary}</small></span><small className="global-search-result-source">{searchLabels.sources[result.source]}</small></>;
 							const target = result.target;
-							if (target.type === "asset") return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
+							if (target.type === "asset") {
+                            if(data.assets.some(a=>a.id===target.assetId && !!a.walletCard))return <Link key={result.key} to="/records/$id" params={{id:`asset:${target.assetId}`}} onClick={()=>{let categoryId:string|null=null;try{categoryId=/^\/assets\/category\/([^/]+)/.exec(pathname)?.[1] ?? null;categoryId=categoryId?decodeURIComponent(categoryId):null;}catch{/* Unknown category falls back to wallet. */}sessionStorage.setItem('keepany-catalog-record-return',JSON.stringify({recordId:`asset:${target.assetId}`,categoryId,wallet:pathname!=='/assets'&&!categoryId}));closeSearch();}}>{content}</Link>;
+                            return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
+                        }
 							const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : `task-${target.taskId}`;
 							return <Link key={result.key} to={target.type === "finance" ? "/assets" : target.type === "intake" ? "/intake" : "/tasks"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
 						}) : <p>{t("none")}</p>}</div>
