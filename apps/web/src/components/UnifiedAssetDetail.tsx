@@ -280,8 +280,9 @@ export function UnifiedDetailTasks({ assetId }: { assetId: string }) {
 	const tasks = data.tasks.filter(
 		(task) => task.assetId === assetId && !task.deleted && !task.purged,
 	);
+	const hasTaskFragment = hash.startsWith("reminder-task-");
 	let selected = "";
-	if (hash.startsWith("reminder-task-")) {
+	if (hasTaskFragment) {
 		try {
 			selected = decodeURIComponent(hash.slice(14));
 		} catch {
@@ -290,14 +291,14 @@ export function UnifiedDetailTasks({ assetId }: { assetId: string }) {
 	}
 	const targetExists = tasks.some((task) => task.id === selected);
 	useEffect(() => {
-		if (!selected || data.loading) return;
+		if (!hasTaskFragment || data.loading) return;
 		const target = document.getElementById(
 			targetExists ? `task-${selected}` : `asset-detail-tasks-${assetId}`,
 		);
 		target?.scrollIntoView({ block: "center", behavior: "instant" });
 		target?.setAttribute("tabindex", "-1");
 		target?.focus({ preventScroll: true });
-	}, [selected, assetId, targetExists, data.loading]);
+	}, [hash, hasTaskFragment, selected, assetId, targetExists, data.loading]);
 	return (
 		<section
 			className="card unified-detail-tasks"
@@ -315,7 +316,7 @@ export function UnifiedDetailTasks({ assetId }: { assetId: string }) {
 					{t("add")}
 				</Button>
 			</header>
-			{selected && !targetExists && !data.loading && (
+			{hasTaskFragment && !targetExists && !data.loading && (
 				<p role="status" className="unified-detail-empty">
 					{t("reminderEntryMissing")}
 				</p>

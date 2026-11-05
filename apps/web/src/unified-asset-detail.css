@@ -301,7 +301,7 @@
 	color: var(--ink);
 }
 .unified-detail-photo figcaption {
-	min-height: 40px;
+	min-height: 44px;
 	padding: 5px 38px 0 0;
 	color: var(--muted);
 	font-size: 12px;
