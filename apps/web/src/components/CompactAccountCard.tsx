@@ -90,7 +90,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 		<ValueRow label={t("pwVaultPasswordField")} actions={hasPassword ? <>
 			<CompactIcon label={t(reveal ? "pwVaultHidePasswordValue" : "pwVaultRevealPassword")} aria-pressed={reveal} disabled={tools.busy} onClick={() => setRevealedKey(reveal ? "" : scope)}>{reveal ? <EyeOff size={16} /> : <Eye size={16} />}</CompactIcon>
 			<CompactIcon label={t("pwVaultCopyPassword")} disabled={tools.busy} onClick={() => { if (current && session?.getSnapshot().status === "unlocked") void copy("pwVaultPasswordField", session.readEntry(current.entry.id).password, "password"); }}>{copiedIcon("password")}</CompactIcon>
-		</> : <Button type="button" size="small" className="compact-account-access" disabled={tools.busy} onClick={() => onEdit(asset, current?.entry.id, editId)}><Plus size={13} />{t("compactAccountAddPassword")}</Button>}><span className={hasPassword ? "compact-account-secret" : "compact-account-muted"} data-login-password>{hasPassword ? reveal ? draft?.password : "••••••••••" : t("pwVaultNoPassword")}</span></ValueRow>
+		</> : <CompactIcon label={t("compactAccountAddPassword")} disabled={tools.busy} onClick={() => onEdit(asset, current?.entry.id, editId)}><Plus size={16} /></CompactIcon>}><span className={hasPassword ? "compact-account-secret" : "compact-account-muted"} data-login-password>{hasPassword ? reveal ? draft?.password : "••••••••••" : t("pwVaultNoPassword")}</span></ValueRow>
 		<span className="sr-only" role="status">{current && choices.length > 1 ? t("compactAccountLoginPosition", { index: position, total: choices.length, username }) : ""}</span>
 	</Frame>;
 }
