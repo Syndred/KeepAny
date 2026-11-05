@@ -638,7 +638,9 @@ async function screenshot(page: Page, info: TestInfo, name: string) {
 	if (/^(ordinary|item|subscription|wallet)-editor$/.test(name)) {
 		await expect(page.getByRole("dialog").locator("#name, #catalog-record-name")).toBeVisible();
 	}
-	await expect.poll(() => page.evaluate(() => document.getAnimations().filter(animation => animation.playState === "running" && animation.effect?.getTiming().iterations !== Infinity).length)).toBe(0);
+	await expect.poll(() => page.locator(".unified-detail-header,.ui-menu,.dialog").evaluateAll(elements => elements.flatMap(element => element.getAnimations({ subtree: true })).filter(animation => animation.playState === "running" && animation.effect?.getTiming().iterations !== Infinity).length)).toBe(0);
+	const taskForms = page.locator(".unified-detail-tasks form");
+	if (await taskForms.count()) await taskForms.last().scrollIntoViewIfNeeded();
 	await expect.poll(() => page.locator(".unified-detail-tasks form").evaluateAll((forms) => forms.every(form => {
 		for (let current: Element | null = form; current; current = current.parentElement) {
 			if (Number(getComputedStyle(current).opacity) < 0.999) return false;
