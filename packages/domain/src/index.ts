@@ -136,6 +136,7 @@ export const historySchema=z.object({
  itemStatusBefore:z.enum(itemLifecycleStatuses).nullable().optional(),itemStatusAfter:z.enum(itemLifecycleStatuses).optional(),
  eventDate:z.string().refine(validDateOnly,'date').optional(),billDate:z.string().refine(validDateOnly,'date').optional(),
  amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),currency:z.enum(currencies).optional(),
+ financeCny:z.object({amount:z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),sourceAmount:z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),sourceCurrency:z.enum(currencies),confirmedAt:z.string().datetime()}).optional(),
  financeCorrection:z.object({
   title:z.string().trim().max(160).optional(),source:z.string().trim().max(300).optional(),note:z.string(),
   eventDate:z.string().refine(validDateOnly,'date'),amount:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),

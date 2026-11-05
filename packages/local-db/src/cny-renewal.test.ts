@@ -12,8 +12,10 @@ it('records an explicitly entered CNY receipt for a legacy foreign subscription 
   const next={...original,dueDate:'2028-01-26',renewalCount:1,lastRenewalId:receipt.id};
   await expect(db.recordRenewal(original,next,{...receipt,currency:'EUR'})).rejects.toThrow('renewal-invalid');
   await db.recordRenewal(original,next,receipt);
+  const expense=historySchema.parse({id:'foreign-manual-receipt',assetId:original.id,action:'expense',title:'Original bill',amount:4900,currency:'USD',eventDate:'2026-11-05',note:'',createdAt:new Date().toISOString(),financeCny:{amount:33000,sourceAmount:4900,sourceCurrency:'USD',confirmedAt:'2026-11-05T00:00:00.000Z'}});await db.save('history',expense);
   await restored.restoreArchive(await db.exportArchive());
   expect(await restored.get<Asset>('asset',original.id)).toMatchObject({amount:4900,currency:'USD',subscriptionCny:original.subscriptionCny});
+  expect(await restored.get<History>('history',expense.id)).toEqual(expense);
   expect(await restored.get<History>('history',receipt.id)).toMatchObject({currency:'CNY',amount:32830});
  } finally {await db.close();await restored.close();}
 });

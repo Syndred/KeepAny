@@ -1,4 +1,4 @@
-import { cnyMinor, readSubscriptionRates, subscriptionCny, subscriptionRatesId } from "./subscription-cny";
+import { historyCny, readSubscriptionRates, subscriptionCny, subscriptionRatesId } from "./subscription-cny";
 import { Textarea } from "./components/ui/textarea";
 import { CatalogRecordPage } from './page-catalog-record';
 import { Input } from "./components/ui/input";
@@ -401,10 +401,7 @@ function LegacyAssetDetail() {
     if (asset.kind === "account" && snapshot.status !== "unlocked") return <main className="page unified-accounts-page"><TextLink asChild><Link to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink><Suspense fallback={<p role="status">{t("loading")}</p>}><PasswordVaultPanel assets={data.assets} renderAccounts={() => null} notify={notify} /></Suspense></main>;
     const subscriptionRates = readSubscriptionRates(data.preferences.find(p=>p.id === subscriptionRatesId)?.value);
     const cnySubscription = asset.kind === 'subscription' ? subscriptionCny(asset, subscriptionRates) : null;
-    const subscriptionMoney = (value: number | bigint, currency = asset.currency) => {
-        const converted = cnyMinor(value, currency, subscriptionRates);
-        return converted === null ? t('subscriptionCnyMissing') : money(converted,'CNY',i18n.language);
-    };
+
 	const dueCharge =
 		asset.kind === "subscription" && asset.dueDate && cnySubscription
 			? actualCharge(cnySubscription, asset.dueDate)
@@ -1429,7 +1426,7 @@ function LegacyAssetDetail() {
 					<div><strong>{entry.title || (entry.action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${entry.action[0].toUpperCase()}${entry.action.slice(1)}`))}</strong>
 						<small>{date(entry.eventDate || entry.billDate || entry.createdAt.slice(0, 10), i18n.language)}{entry.source ? ` · ${entry.source}` : ""}{entry.note ? ` · ${entry.note}` : ""}</small>
 						<small>{historyAssetIds(entry).map(id => data.assets.find(value => value.id === id)?.name ?? t("financeMissingAsset")).join(" · ")}</small>
-					</div>{entry.amount !== undefined && entry.currency && <b>{asset.kind === "subscription" ? `${subscriptionMoney(entry.amount,entry.currency)}${entry.currency !== "CNY" ? ` · ${t("subscriptionCnyEstimate")}` : ""}` : money(entry.amount, entry.currency, i18n.language)}</b>}
+					</div>{entry.amount !== undefined && entry.currency && <b>{asset.kind === "subscription" ? `${historyCny(entry,subscriptionRates) === null ? t("subscriptionCnyMissing") : money(historyCny(entry,subscriptionRates)!,"CNY",i18n.language)}${entry.currency !== "CNY" ? ` · ${t("subscriptionCnyEstimate")}` : ""}` : money(entry.amount, entry.currency, i18n.language)}</b>}
 				</div>)}</div>
 			</section>}
 			{(asset.kind === "item" || asset.kind === "subscription") && (
@@ -1535,7 +1532,7 @@ function LegacyAssetDetail() {
 													dateStyle: "medium",
 												}).format(new Date(h.createdAt))}
 											{h.action === "renew" && h.billDate && h.amount !== undefined && h.currency
-												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${subscriptionMoney(h.amount, h.currency)}${h.currency !== "CNY" ? ` · ${t("subscriptionCnyEstimate")}` : ""}`
+												? ` · ${date(h.billDate, i18n.language)} · ${t("recordedAmount")}: ${historyCny(h,subscriptionRates) === null ? t("subscriptionCnyMissing") : money(historyCny(h,subscriptionRates)!,"CNY",i18n.language)}${h.currency !== "CNY" ? ` · ${t("subscriptionCnyEstimate")}` : ""}`
 												: ""}
 											{h.borrower ? ` · ${t("borrower")}: ${h.borrower}` : ""}
 											{h.expectedReturnDate ? ` · ${t("itemExpectedReturnDate")}: ${date(h.expectedReturnDate, i18n.language)}` : ""}

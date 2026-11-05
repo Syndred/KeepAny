@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
-import { assetSchema, newAsset } from '../../../packages/domain/src';
-import { cnyMinor, readSubscriptionRates, subscriptionCny, subscriptionMonthlyCny } from './subscription-cny';
+import { assetSchema, historySchema, newAsset } from '../../../packages/domain/src';
+import { cnyMinor, historyCny, readSubscriptionRates, subscriptionCny, subscriptionMonthlyCny } from './subscription-cny';
 import { buildWorkspaceSummary } from './workspace-summary';
 
 it('uses explicit exact rates, handles JPY major units, rounds once and never relabels foreign amounts',()=>{
@@ -29,4 +29,11 @@ it('reports missing conversions alongside a CNY subtotal instead of silently dro
  const converted=buildWorkspaceSummary({...input,subscriptionRates:{USD:'6.7'}});
  expect(converted.monthlyCny.get('CNY')).toBe(5236n); expect(converted.unconvertedSubscriptions).toBe(0);
  expect(converted.monthly.get('USD')).toBe(408n);
+});
+
+it('keeps foreign historical receipts intact when a user supplies a CNY display amount',()=>{
+ const entry=historySchema.parse({id:'receipt',assetId:'subscription',action:'expense',title:'Original receipt',amount:4900,currency:'USD',eventDate:'2026-11-05',note:'',createdAt:'2026-11-05T00:00:00Z',financeCny:{amount:33000,sourceAmount:4900,sourceCurrency:'USD',confirmedAt:'2026-11-05T00:00:00.000Z'}});
+ expect(historyCny(entry,{})).toBe(33000n);
+ expect(historyCny({...entry,amount:5000},{})).toBeNull();
+ expect(historySchema.parse(JSON.parse(JSON.stringify(entry)))).toMatchObject({amount:4900,currency:'USD',financeCny:{amount:33000}});
 });

@@ -1,4 +1,4 @@
-import { readSubscriptionRates, subscriptionCny, subscriptionMonthlyCny, subscriptionRatesId } from "./subscription-cny";
+import { historyCny, readSubscriptionRates, subscriptionCny, subscriptionMonthlyCny, subscriptionRatesId } from "./subscription-cny";
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { lazy, Suspense, useRef, useState, type FormEvent } from "react";
@@ -64,11 +64,20 @@ export function FinancePage() {
  const plannedRows = subscriptions.filter(asset=>asset.status === 'active').map(asset=>subscriptionMonthlyCny(asset,subscriptionRates));
  const planned = groupedMoney(plannedRows.flatMap(amount=>amount === null ? [] : [{currency:'CNY',amount}]));
  const missingCny = plannedRows.filter(amount=>amount===null).length;
-	const confirmed = groupedMoney(records.filter((entry) =>
+	const isSubscriptionRecord = (entry: History) => historyAssetIds(entry).some(id=>assetsById.get(id)?.kind === 'subscription');
+ const draftCnyOnly = [draft.assetId,...(draft.assetIds ?? [])].some(id=>assetsById.get(id)?.kind === 'subscription');
+ const displayEntry = (entry: History): {currency:string;amount:number|bigint}[] => {
+  if (entry.amount === undefined || !entry.currency) return [];
+  if (!isSubscriptionRecord(entry)) return [{currency:entry.currency,amount:entry.amount}];
+  const amount = historyCny(entry,subscriptionRates);
+  return amount === null ? [] : [{currency:'CNY',amount}];
+ };
+ const pendingHistoryCny = records.filter(entry=>isSubscriptionRecord(entry) && entry.amount !== undefined && historyCny(entry,subscriptionRates) === null).length;
+ const confirmed = groupedMoney(records.filter((entry) =>
 		(entry.action === "expense" && entry.eventDate?.startsWith(thisMonth)) ||
 		(entry.action === "renew" && entry.billDate?.startsWith(thisMonth)))
 		.filter((entry): entry is History & { amount: number; currency: string } => entry.amount !== undefined && !!entry.currency)
-		.map((entry) => ({ currency: entry.currency, amount: entry.amount })));
+		.flatMap(displayEntry));
 	const latestBalances = new Map<string, History>();
 	for (const entry of records.filter((item) => item.action === "balance" && item.currency && item.amount !== undefined)) {
 		const key = `${entry.assetId}:${entry.currency}`;
@@ -76,7 +85,7 @@ export function FinancePage() {
 		if (!previous || `${entry.eventDate}:${entry.createdAt}` > `${previous.eventDate}:${previous.createdAt}`) latestBalances.set(key, entry);
 	}
 	const balances = groupedMoney([...latestBalances.values()].flatMap((entry) =>
-		entry.currency && entry.amount !== undefined ? [{ currency: entry.currency, amount: entry.amount }] : []));
+		displayEntry(entry)));
 	const sources = [...new Set(records.map((entry) => entry.source?.trim()).filter((source): source is string => !!source))].sort((a, b) => a.localeCompare(b));
 	const hasEmptySource = records.some((entry) => !entry.source?.trim());
 	const filtered = records.filter((entry) => (typeFilter === "all" || entry.action === typeFilter) && (!assetFilter || historyAssetIds(entry).includes(assetFilter))
@@ -97,13 +106,15 @@ export function FinancePage() {
 	}
 	function openRecord(entry?: History) {
 		const target = targets[0];
+        const convert = entry && isSubscriptionRecord(entry);
+        const converted = convert ? historyCny(entry,subscriptionRates) : null;
 		const original = entry ? data.history.find(value => value.id === entry.id) ?? null : null;
 		setEditingRecord(original);
 		recordId.current = original?.id ?? crypto.randomUUID();
 		setDraft(entry ? { action: entry.action as LedgerAction, assetId: historyAssetIds(entry)[0], assetIds: historyAssetIds(entry),
-			title: entry.title || historyLabel(entry), amount: inputFromMinorUnits(entry.amount ?? 0, entry.currency ?? "CNY"), currency: entry.currency ?? "CNY",
+			title: entry.title || historyLabel(entry), amount: convert ? converted === null || converted > BigInt(Number.MAX_SAFE_INTEGER) ? "" : inputFromMinorUnits(Number(converted),"CNY") : inputFromMinorUnits(entry.amount ?? 0, entry.currency ?? "CNY"), currency: convert ? "CNY" : entry.currency ?? "CNY",
 			eventDate: entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), source: entry.source ?? "", note: entry.note }
-			: { action: "expense", assetId: target?.id ?? "", assetIds: target ? [target.id] : [], title: "", amount: "", currency: target?.currency ?? "CNY", eventDate: today(), source: "", note: "" });
+			: { action: "expense", assetId: target?.id ?? "", assetIds: target ? [target.id] : [], title: "", amount: "", currency: target?.kind === "subscription" ? "CNY" : target?.currency ?? "CNY", eventDate: today(), source: "", note: "" });
 		setError("");
 		setRecordOpen(true);
 	}
@@ -119,8 +130,10 @@ export function FinancePage() {
 				eventDate: draft.eventDate, source: draft.source.trim(), note: draft.note, assetIds, hidden: false },
 		} : {
 			...(editingRecord ?? {}), id: recordId.current, assetId: draft.assetId, assetIds, action: draft.action,
-			title: draft.title.trim(), amount, currency: draft.currency,
-			eventDate: draft.eventDate, source: draft.source.trim(), note: draft.note,
+			title: draft.title.trim(), amount: editingRecord && editingRecord.currency !== 'CNY' && draftCnyOnly ? editingRecord.amount : amount,
+            currency: editingRecord && editingRecord.currency !== 'CNY' && draftCnyOnly ? editingRecord.currency : draft.currency,
+            ...(editingRecord?.amount !== undefined && editingRecord.currency && editingRecord.currency !== 'CNY' && draftCnyOnly ? {financeCny:{amount,sourceAmount:editingRecord.amount,sourceCurrency:editingRecord.currency,confirmedAt:new Date().toISOString()}} : {}),
+            eventDate: draft.eventDate, source: draft.source.trim(), note: draft.note,
 			createdAt: editingRecord?.createdAt ?? new Date().toISOString(), deleted: false,
 		});
 		if (!candidate.success || !draft.title.trim()) { setError(t("financeInvalidRecord")); return; }
@@ -155,7 +168,7 @@ export function FinancePage() {
 			action={<Button variant="primary" onClick={() => openRecord()}><Plus size={16}/>{t("financeAddRecord")}</Button>} />
 		<div className="finance-summary">
 			<section className="card"><span>{t("financeMonthlyPlan")}</span><MoneyLines totals={planned} language={i18n.language} empty={t("financeNoPlan")}/><small>{t("financePlanHint")}</small>{missingCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingCny})}</small>}</section>
-			<section className="card"><span>{t("financeConfirmedSpent")}</span><MoneyLines totals={confirmed} language={i18n.language} empty={t("financeNoRecords")}/><small>{t("financeConfirmedHint")}</small></section>
+			<section className="card"><span>{t("financeConfirmedSpent")}</span><MoneyLines totals={confirmed} language={i18n.language} empty={pendingHistoryCny ? "—" : t("financeNoRecords")}/><small>{t("financeConfirmedHint")}</small>{pendingHistoryCny > 0 && <small>{t("subscriptionCnyPartial",{count:pendingHistoryCny})}</small>}</section>
 			<section className="card"><span>{t("financeBalances")}</span><MoneyLines totals={balances} language={i18n.language} empty={t("financeNoBalance")}/><small>{t("financeBalanceHint")}</small></section>
 		</div>
 		<section className="card finance-linked-card" aria-labelledby="finance-linked-heading">
@@ -175,7 +188,7 @@ export function FinancePage() {
 				<div className="finance-filters"><label htmlFor="finance-filter-type" className="field">{t("financeFilterType")}<Select id="finance-filter-type" value={typeFilter} onValueChange={(selectValue) => setTypeFilter(selectValue as LedgerAction | "all")}><SelectOption value="all">{t("all")}</SelectOption>{(["expense","topup","refund","balance","renew"] as const).map((action) => <SelectOption key={action} value={action}>{action === "renew" ? t("financeRenewalRecorded") : t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></label><label htmlFor="finance-filter-asset" className="field">{t("financeFilterAsset")}<Select id="finance-filter-asset" value={assetFilter} onValueChange={(selectValue) => setAssetFilter(selectValue)}><SelectOption value="">{t("all")}</SelectOption>{[...new Set(records.flatMap(historyAssetIds))].map((id) => <SelectOption key={id} value={id}>{assetsById.get(id)?.name ?? t("financeMissingAsset")}</SelectOption>)}</Select></label><label htmlFor="finance-filter-source" className="field">{t("financeFilterSource")}<Select id="finance-filter-source" value={sourceFilter} onValueChange={(selectValue) => setSourceFilter(selectValue)}><SelectOption value="all">{t("all")}</SelectOption>{hasEmptySource && <SelectOption value="empty">{t("financeNoSource")}</SelectOption>}{sources.map((source) => <SelectOption key={source} value={`source:${source}`}>{source}</SelectOption>)}</Select></label></div>
 				{filtered.length ? <div className="list">{filtered.map((entry) => <div className="list-row finance-entry" key={entry.id} id={`finance-entry-${entry.id}`} tabIndex={-1}>
 					<div className="finance-entry-content"><strong>{entry.title || assetsById.get(entry.assetId)?.name || historyLabel(entry)}</strong><small>{historyLabel(entry)} · {historyAssetIds(entry).map(id => assetsById.get(id)?.name ?? t("financeMissingAsset")).join(" · ")} · {date(entry.eventDate || entry.billDate || entry.createdAt.slice(0,10), i18n.language)} · {entry.source?.trim() || t("financeNoSource")}{entry.note ? ` · ${entry.note}` : ""}</small></div>
-					{entry.amount !== undefined && entry.currency && <b>{formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}
+					{entry.amount !== undefined && entry.currency && <b>{isSubscriptionRecord(entry) ? historyCny(entry,subscriptionRates) === null ? t('subscriptionCnyMissing') : <>{formatMinorUnits(historyCny(entry,subscriptionRates)!,'CNY',i18n.language)}{entry.currency !== 'CNY' && <small> · {t('subscriptionCnyEstimate')}</small>}</> : formatMinorUnits(entry.amount,entry.currency,i18n.language)}</b>}
 					<div className="finance-entry-actions"><Button size="small" onClick={() => openRecord(entry)}>{t("edit")}</Button><Button size="small" onClick={() => { setDeletingRecord(data.history.find(value => value.id === entry.id) ?? null); setError(""); }}>{t("financeDeleteAction")}</Button></div>
 				</div>)}</div> : <p>{t("financeNoRecords")}</p>}
 			</section>
@@ -185,7 +198,12 @@ export function FinancePage() {
 			{targets.length ? <form className="finance-form" onSubmit={(event) => void saveRecord(event)}>
 				<div className="field"><label htmlFor="finance-action">{t("financeRecordType")}</label><Select id="finance-action" value={draft.action} disabled={busy || !!editingRecord} onValueChange={(selectValue) => { setDraft({...draft,action:selectValue as ManualAction});setError(""); }}>{editingRecord?.action === "renew" && <SelectOption value="renew">{t("financeRenewalRecorded")}</SelectOption>}{financeActions.map((action) => <SelectOption key={action} value={action}>{t(`financeAction${action[0].toUpperCase()}${action.slice(1)}`)}</SelectOption>)}</Select></div>
 				{editingRecord?.action === "renew" && <p className="finance-renewal-hint">{t("financeRenewalCorrectionHint")}</p>}
-				<FinanceEntryFields draft={draft} targets={targets} disabled={busy} idPrefix="finance" allowMultiple preserveCurrency={!!editingRecord} onChange={(change) => { setDraft({ ...draft, ...change }); setError(""); }} />
+				{editingRecord && editingRecord.currency !== 'CNY' && draftCnyOnly && <p>{t('subscriptionCnyEstimate')} · {t('subscriptionCnyLegacy')}</p>}
+                <FinanceEntryFields draft={draft} targets={targets} disabled={busy} idPrefix="finance" allowMultiple preserveCurrency={!!editingRecord} cnyOnly={draftCnyOnly} cnySubscriptions onChange={(change) => {
+ const next={...draft,...change}; const cnyOnly=[next.assetId,...(next.assetIds ?? [])].some(id=>assetsById.get(id)?.kind==='subscription');
+ if(cnyOnly && next.currency !== 'CNY') {next.currency='CNY';next.amount='';}
+ else if(next.currency !== draft.currency) next.amount='';
+ setDraft(next);setError(''); }} />
 				{error && <p role="alert" className="field-error">{error}</p>}
 				<div className="actions"><Button variant="primary" type="submit" disabled={busy}>{busy?t("loading"):t("financeSaveRecord")}</Button><Button type="button" disabled={busy} onClick={closeRecord}>{t("cancel")}</Button></div>
 			</form> : <div className="finance-no-target"><p>{t("financeNoTarget")}</p><div className="actions"><Button asChild><Link to="/assets/$kind" params={{kind:"subscription"}}>{t("financeGoSubscriptions")}</Link></Button><Button asChild><Link to="/assets/$kind" params={{kind:"account"}}>{t("financeGoAccounts")}</Link></Button></div></div>}

@@ -1,4 +1,4 @@
-import { monthlyMinorUnits, type Asset } from '../../../packages/domain/src';
+import { monthlyMinorUnits, type Asset, type History } from '../../../packages/domain/src';
 
 export const subscriptionRatesId = 'subscriptionCnyRatesV1';
 export type SubscriptionRates = Record<string, string>;
@@ -28,4 +28,11 @@ export function subscriptionCny(asset: Asset, rates: SubscriptionRates): Asset |
 export function subscriptionMonthlyCny(asset: Asset, rates: SubscriptionRates) {
  const value = subscriptionCny(asset, rates);
  return value ? monthlyMinorUnits(value) : null;
+}
+
+export function historyCny(entry: History, rates: SubscriptionRates): bigint | null {
+ if (entry.currency === "CNY") return entry.amount === undefined ? null : BigInt(entry.amount);
+ const quote = entry.financeCny;
+ if (quote && quote.sourceAmount === entry.amount && quote.sourceCurrency === entry.currency) return BigInt(quote.amount);
+ return entry.amount !== undefined && entry.currency ? cnyMinor(entry.amount,entry.currency,rates) : null;
 }

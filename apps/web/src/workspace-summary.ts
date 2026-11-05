@@ -1,4 +1,4 @@
-import { cnyMinor, subscriptionMonthlyCny, type SubscriptionRates } from './subscription-cny';
+import { historyCny, subscriptionMonthlyCny, type SubscriptionRates } from './subscription-cny';
 import { calendarDayDistance, effectiveFinanceEntry, historyAssetIds, monthlyMinorUnits, type Asset, type History, type Relation, type Task } from "../../../packages/domain/src";
 import type { VaultEntrySummary } from "../../../packages/password-vault/src";
 
@@ -53,7 +53,7 @@ export function buildWorkspaceSummary(input: {
 		}
 		add(spending, entry.currency, BigInt(entry.amount));
         if (owners.some(id => byId.get(id)?.kind === 'subscription') && entry.currency !== 'CNY') {
-            const converted = cnyMinor(entry.amount,entry.currency,input.subscriptionRates ?? {});
+            const converted = historyCny(entry,input.subscriptionRates ?? {});
             if (converted === null) unconvertedSpending++; else add(displaySpending,'CNY',converted);
         } else add(displaySpending,entry.currency,BigInt(entry.amount));
 	}
