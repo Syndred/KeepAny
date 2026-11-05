@@ -118,7 +118,7 @@
 .account-existing-attachments > summary { min-height:44px; cursor:pointer; }
 @media(min-width:1001px) and (min-height:720px) {
  .shell:has(.page.asset-detail-account.account-relation-layout) { min-height:calc(100dvh - 4px); }
- .page.asset-detail-account.account-relation-layout { height:calc(100dvh - var(--account-page-top,68px) - 2px); }
+ .page.asset-detail-account.account-relation-layout { height:auto; min-height:calc(100dvh - var(--account-page-top,68px) - 2px); grid-template-rows:auto minmax(min-content,1fr); }
  .page.asset-detail-account.account-relation-layout:has(.account-graph-guide[open],.account-relation-details[open],.account-existing-attachments[open],>.reminder-task-context) { height:auto; min-height:calc(100dvh - var(--account-page-top,68px) - 2px); }
  .account-relation-layout:has(.account-graph-guide[open],.account-relation-details[open],>.reminder-task-context) .graph.account-family-graph:not(.account-family-graph--expanded) { flex:none; height:clamp(320px,42vh,520px); }
 }
