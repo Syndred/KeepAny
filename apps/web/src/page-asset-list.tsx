@@ -305,7 +305,10 @@ function CategoryStrip({
 				<div className="actions"><Button variant="primary" disabled={categoryBusy} onClick={() => void resolveEdit(false)}>{t(pending.phase === "rolling-back" ? "categoryEditFinishCancel" : "categoryEditRetry")}</Button>{pending.phase !== "rolling-back" && <Button disabled={categoryBusy} onClick={() => void resolveEdit(true)}>{t("categoryEditCancel")}</Button>}</div>
 			</section>}
 			{manage && (
-				<Dialog title={editingCategory ? t("categoryEdit") : manage === "new" ? t("newCategory") : t("categoryManage")} closeDisabled={categoryBusy} onClose={closeManager}>
+				<Dialog title={editingCategory ? t("categoryEdit") : manage === "new" ? t("newCategory") : t("categoryManage")} closeDisabled={categoryBusy} onClose={closeManager} onKeyDown={(event) => {
+					// The active keyboard drag must reach dnd-kit's document listener.
+					if (["ArrowLeft", "ArrowRight"].includes(event.key) && event.target instanceof Element && event.target.closest('.asset-category-order .drag-handle[aria-pressed="true"]')) event.preventBaseUIHandler();
+				}}>
 				<div className="asset-category-inline">
 					{(!memberCategory || editingCategory) && <div className="field">
 						<label htmlFor={categoryFieldId}>{t("categoryName")}</label>
