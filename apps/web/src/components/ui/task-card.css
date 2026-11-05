@@ -9,6 +9,15 @@
 	.task-card.list-row.impact-task-row { flex-wrap: wrap; }
 	.task-card .impact-task-actions { flex: 0 0 100%; display: flex; flex-wrap: wrap; align-items: center; padding-left: 0; }
 }
-.asset-tasks-card .task-card.account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center; gap: 8px; min-height: 58px; margin: 0; padding: 6px 0; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; box-shadow: none; }
+.task-card.list-row.account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.asset-tasks-card .task-card.account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 58px; margin: 0; padding: 6px 0; border: 0; border-bottom: 1px solid var(--line-soft); border-radius: 0; box-shadow: none; }
 .asset-tasks-card .account-compact-task > .impact-task-info { min-width: 0; }
 .asset-tasks-card .account-compact-task .impact-task-info > strong { overflow-wrap: anywhere; }
+.account-compact-task > .task-complete-toggle, .compact-task-actions .button.icon { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+.compact-task-actions { display: flex; align-items: center; gap: 4px; }
+.compact-task-actions .button svg { width: 18px; height: 18px; }
+.account-compact-task .task-status-check { display: grid; place-items: center; width: 20px; height: 20px; border: 2px solid var(--line); border-radius: 5px; color: var(--ink); background: var(--paper); }
+.account-compact-task .task-complete-toggle[aria-pressed="true"] .task-status-check { background: var(--accent); }
+.account-compact-task .task-complete-toggle:hover:not(:disabled) .task-status-check { background: var(--accent-soft); }
+.account-compact-task .task-complete-toggle[aria-pressed="true"]:hover:not(:disabled) .task-status-check { background: var(--accent-hover); }
+.account-compact-task > .task-editor-loading { grid-column: 2 / -1; color: var(--muted); }

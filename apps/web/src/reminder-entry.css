@@ -3,7 +3,7 @@
 .reminder-task-context > header h2 { margin: 0; }
 .reminder-task-context .task-card { min-width: 0; width: 100%; }
 .reminder-task-context .impact-task-info { min-width: 0; overflow-wrap: anywhere; }
-.reminder-task-context .account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; align-items: center; }
+.reminder-task-context .account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
 .reminder-task-context .account-compact-task .button { min-width: 44px; min-height: 44px; }
 button.overview-action-row { width: 100%; border: 0; background: transparent; color: inherit; font: inherit; text-align: start; cursor: pointer; }
 button.overview-action-row:hover, button.overview-action-row:focus-visible { background: var(--cream, var(--paper)); }
