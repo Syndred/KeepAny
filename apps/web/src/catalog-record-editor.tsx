@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { assetSchema } from "../../../packages/domain/src";
+import { assetSchema, parseMinorUnits, inputFromMinorUnits } from "../../../packages/domain/src";
+import { newWalletCard, walletTypes } from './wallet-cards';
 import { localRepository } from "../../../packages/local-db/src";
 import {
 	applyCatalogEdit,
@@ -20,20 +21,24 @@ import { useAppContext } from "./view-shared";
 export function CatalogRecordEditor({
 	record,
 	categoryId = "",
+	wallet = false,
 	onClose,
 }: {
 	record?: CatalogRecord;
 	categoryId?: string;
+	wallet?: boolean;
 	onClose: () => void;
 }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const [original] = useState(() => record && structuredClone(record));
 	const [draft, setDraft] = useState(
-		() => original?.asset ?? newCatalogAsset(categoryId),
+		() => original?.asset ?? (wallet ? newWalletCard() : newCatalogAsset(categoryId)),
 	);
 	const [chosen, setChosen] = useState(original?.categoryId ?? categoryId);
 	const [tags, setTags] = useState(draft.tags.join(", "));
+	const [balance, setBalance] = useState(() => draft.walletCard?.balanceMinor == null ? '' : inputFromMinorUnits(draft.walletCard.balanceMinor,'CNY'));
+	const [uses, setUses] = useState(() => draft.walletCard?.remainingUses == null ? '' : String(draft.walletCard.remainingUses));
 	const [error, setError] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const [busy, setBusy] = useState(false);
@@ -50,8 +55,14 @@ export function CatalogRecordEditor({
 		// An unchanged legacy domain can exceed the ordinary asset's 160-character name limit.
 		const legacyLongName =
 			!!original?.domain && name === original.domain.name && name.length > 160;
+		const balanceMinor = balance.trim() ? parseMinorUnits(balance,'CNY') : null;
+		const remainingUses = uses.trim() ? (/^\d+$/.test(uses.trim()) ? Number(uses.trim()) : NaN) : null;
+		if (draft.walletCard && ((balanceMinor !== null && !Number.isSafeInteger(balanceMinor)) || (remainingUses !== null && !Number.isSafeInteger(remainingUses)))) {
+			setErrors({ balance: balanceMinor !== null && !Number.isSafeInteger(balanceMinor) ? t('invalid') : '', uses: remainingUses !== null && !Number.isSafeInteger(remainingUses) ? t('invalid') : '' }); return;
+		}
 		const parsed = assetSchema.safeParse({
 			...draft,
+			...(draft.walletCard ? {walletCard:{...draft.walletCard,balanceMinor,remainingUses}} : {}),
 			name: legacyLongName ? name.slice(0, 160) : name,
 			tags: tags
 				.split(",")
@@ -63,7 +74,7 @@ export function CatalogRecordEditor({
 			setErrors(
 				Object.fromEntries(
 					parsed.error.issues.map((issue) => [
-						String(issue.path[0]),
+						String(issue.path[0] === 'walletCard' ? issue.path[1] ?? 'walletCard' : issue.path[0]),
 						t("invalid"),
 					]),
 				),
@@ -101,7 +112,7 @@ export function CatalogRecordEditor({
 	}
 	return (
 		<Dialog
-			title={t(original ? "edit" : "newRecord")}
+			title={t(original ? "edit" : wallet ? "walletNew" : "newRecord")}
 			onClose={onClose}
 			closeDisabled={busy}
 		>
@@ -116,6 +127,13 @@ export function CatalogRecordEditor({
 							error={errors.name}
 						/>
                         {!original?.domain && <Field name="catalog-record-description" label={t('description')} value={draft.description} onChange={value=>change('description',value)} error={errors.description}/>}
+						{draft.walletCard && <>
+							<Field name="wallet-type" label={t('walletType')}><Select id="wallet-type" value={draft.walletCard.type} onValueChange={value=>setDraft(current=>({...current,walletCard:{...current.walletCard!,type:value as typeof walletTypes[number]}}))}>{walletTypes.map(type=><SelectOption key={type} value={type}>{t(`walletType_${type}`)}</SelectOption>)}</Select></Field>
+							<Field name="wallet-issuer" label={t('walletIssuer')} value={draft.walletCard.issuer} error={errors.issuer} onChange={issuer=>setDraft(current=>({...current,walletCard:{...current.walletCard!,issuer}}))}/>
+							<Field name="wallet-last-four" label={t('walletLastFour')} value={draft.walletCard.lastFour} error={errors.lastFour} onChange={lastFour=>setDraft(current=>({...current,walletCard:{...current.walletCard!,lastFour}}))}/>
+							<Field name="wallet-balance" label={t('walletBalance')} value={balance} error={errors.balance} onChange={value=>{setBalance(value);setErrors(current=>({...current,balance:''}));}}/>
+							<Field name="wallet-uses" label={t('walletRemaining')} value={uses} error={errors.uses} onChange={value=>{setUses(value);setErrors(current=>({...current,uses:''}));}}/>
+						</>}
 						<Field name="catalog-record-category" label={t("category")}>
 							<Select
 								id="catalog-record-category"
@@ -172,12 +190,12 @@ export function CatalogRecordEditor({
 						</Field>
 						<Field
 							name="catalog-record-date"
-							label={t("catalogDate")}
+							label={t(draft.walletCard ? "walletExpiry" : "catalogDate")}
 							error={errors.dueDate}
 						>
 							<DatePicker
 								id="catalog-record-date"
-								aria-label={t("catalogDate")}
+								aria-label={t(draft.walletCard ? "walletExpiry" : "catalogDate")}
 								value={draft.dueDate}
 								onValueChange={(value) => change("dueDate", value)}
 							/>

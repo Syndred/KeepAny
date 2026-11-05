@@ -82,6 +82,7 @@ export function catalogRecords(
 					categoryId: resolve(domain.catalog?.categoryId, "domains"),
 					asset: {
 						...owner,
+						walletCard: undefined,
 						id: domain.id,
 						name: domain.catalog?.name ?? domain.name,
 						url: domain.catalog?.url ?? `https://${domain.name}`,

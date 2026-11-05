@@ -283,7 +283,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				.locator(".catalog-record-card")
 				.filter({ hasText: "Minimal keepsake" }),
 		).toContainText(t("catalogUnclassified"));
-		for (const key of ["item", "subscription", "workspaceLedger"]) {
+		for (const key of ["item", "subscription", "wallet"]) {
 			await page
 				.locator(".workspace-navigation")
 				.getByRole("link", { name: t(key), exact: true })
@@ -404,12 +404,12 @@ for (const locale of ["zh-CN", "en"] as const)
 			});
 			await page.goto("/");
 			await expect(
-				page.getByRole("heading", { name: t("catalogMyRecords"), exact: true }),
+				page.getByRole("heading", { name: t("overviewAllRelations"), exact: true }),
 			).toBeVisible();
 			await noOverflow(page);
 			await page.screenshot({
 				path: info.outputPath("overview-records.png"),
-				fullPage: true,
+				fullPage: false,
 			});
 			await info.attach("contract-results.json", {
 				body: JSON.stringify({

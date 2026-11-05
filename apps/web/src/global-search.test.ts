@@ -18,6 +18,7 @@ import {
 import type { ReviewedCandidate } from "../../../packages/local-db/src/intake-review";
 
 const labels: GlobalSearchLabels = {
+	walletKind: 'Card wallet',
 	assetKinds: { project: "Project", account: "Account", subscription: "Subscription", item: "Item", vault: "Vault" },
 	financeActions: { expense: "Expense", topup: "Top-up", refund: "Refund", balance: "Balance", renew: "Recorded renewal" },
 	sources: { asset: "Asset", finance: "Finance", intake: "Intake", task: "Task" },
@@ -427,3 +428,9 @@ describe("global search public projection", () => {
 	});
 
 });
+
+ it('uses the wallet label for a wallet asset without changing its stored kind',()=>{
+  const wallet=asset('project',{name:'Transit',walletCard:{type:'storedValue',issuer:'City',lastFour:'0826',balanceMinor:8600,remainingUses:null}});
+  const rows=buildGlobalSearchIndex({assets:[wallet],history:[],tasks:[],reviewedCandidates:[],reviewedCandidatesLoaded:true,locale:'en',labels});
+  expect(rows[0].secondary).toContain('Card wallet');expect(wallet.kind).toBe('project');
+ });

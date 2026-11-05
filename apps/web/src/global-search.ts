@@ -52,6 +52,7 @@ export function projectGlobalSearchCandidate(row: ReviewedCandidate): GlobalSear
 
 export interface GlobalSearchLabels {
 	assetKinds: Readonly<Record<AssetKind, string>>;
+	walletKind?: string;
 	financeActions: Readonly<Record<GlobalSearchFinanceAction, string>>;
 	sources: Readonly<Record<GlobalSearchSource, string>>;
 	taskStates: Readonly<{ pending: string; done: string }>;
@@ -169,7 +170,7 @@ export function buildGlobalSearchIndex(input: GlobalSearchInput): readonly Globa
 		// Legacy archives can contain accepted PDF assets without their review receipt.
 		const allowDescription = input.reviewedCandidatesLoaded && !pdfAssetIds.has(asset.id)
 			&& !/^pdf-[a-f0-9]{48}$/.test(asset.id);
-		const kind = labels.assetKinds[asset.kind];
+		const kind = (asset.walletCard ? labels.walletKind : undefined) ?? labels.assetKinds[asset.kind];
 		result.push(entry({
 			key: `asset:${asset.id}`, source: "asset", title: publicText(asset.name),
 			secondary: joinText([kind, publicUrl(asset.url), asset.username, asset.location]),

@@ -688,9 +688,9 @@ export function AiWorkspaceDialog({
 								>
 									<span>{result.title}</span>
 								</Link></TextLink>
-							) : (
+							) : result.task ? (
 								<TextLink asChild><Link
-									to={result.task ? "/tasks" : "/finance"}
+									to="/tasks"
 									hash={`${result.task ? "task-" : "finance-entry-"}${result.id}`}
 									onClick={() => {
 										requestSearchLocation(
@@ -701,7 +701,7 @@ export function AiWorkspaceDialog({
 								>
 									<span>{result.title}</span>
 								</Link></TextLink>
-							)}
+							) : <span>{result.title}</span>}
 							{result.asset?.dueDate && <small>{result.asset.dueDate}</small>}
 						</div>
 					))}
