@@ -83,7 +83,7 @@ async function enter(page:Page,kind:Kind,variant:'normal'|'minimal'|'long'='norm
  await page.goto(paths[kind]);
  const needle=variant==='normal'?names[kind]:variant==='minimal'?`UD Minimal ${kind}`:`UD Long ${kind}`;
  const card=page.locator('.asset-summary-card').filter({hasText:needle});await expect(card).toHaveCount(1);await card.focus();await page.keyboard.press('Enter');
- await expect(page.getByRole('heading',{level:1})).toContainText(needle);await expect(page.locator('.topbar-back-link')).toHaveAttribute('href',paths[kind]);return page.locator('main.unified-asset-detail');
+ await expect(page.getByRole('heading',{level:1})).toContainText(needle);await expect(page.locator('.topbar-back-link')).toHaveAttribute('href',paths[kind]);const main=page.locator('main.unified-asset-detail');if(await main.count())await expect(main.locator('.graph')).toHaveAttribute('data-layout-ready','true');return main;
 }
 async function screenshot(page:Page,info:TestInfo,name:string){
  const file=info.outputPath(`${name}.png`);await page.screenshot({path:file,fullPage:false});await info.attach(`${name}.png`,{path:file,contentType:'image/png'});return file;
@@ -98,9 +98,11 @@ async function geometry(page:Page){
  const result=await page.evaluate(()=>{
   const main=document.querySelector('main.unified-asset-detail')!;
   const boxes=Array.from(main.querySelectorAll('.unified-detail-info,.unified-detail-description,.unified-detail-relations,.unified-detail-history')).map(el=>{const b=el.getBoundingClientRect();return {class:el.className,x:b.x,y:b.y,w:b.width,h:b.height,right:b.right};});
-  return {scrollWidth:document.documentElement.scrollWidth,width:innerWidth,boxes,details:main.querySelectorAll('details,summary').length,text:main.textContent};
+  const clippedLabels=Array.from(main.querySelectorAll('.asset-graph-label')).filter(el=>el.scrollWidth>el.clientWidth+1||el.scrollHeight>el.clientHeight+1).map(el=>({text:el.textContent,width:el.clientWidth,scrollWidth:el.scrollWidth,height:el.clientHeight,scrollHeight:el.scrollHeight}));
+  return {scrollWidth:document.documentElement.scrollWidth,width:innerWidth,boxes,details:main.querySelectorAll('details,summary').length,text:main.textContent,clippedLabels};
  });
  expect(result.scrollWidth).toBeLessThanOrEqual(result.width+1);expect(result.details).toBe(0);
+ expect(result.clippedLabels).toEqual([]);await expect(page.locator('.unified-detail-header')).toHaveCSS('border-top-width','0px');
  expect(result.boxes).toHaveLength(4);for(const box of result.boxes){expect(box.w).toBeGreaterThan(200);expect(box.x).toBeGreaterThanOrEqual(-1);expect(box.right).toBeLessThanOrEqual(result.width+1);}
  return result;
 }
@@ -234,7 +236,7 @@ for(const locale of ['zh-CN','en'] as const){
   const t=tFor(locale);await start(page,locale);await enter(page,'subscription');const main=page.locator('.unified-asset-detail');
   await main.getByRole('button',{name:t('renew'),exact:true}).click();let dialog=page.getByRole('dialog');await dialog.getByRole('textbox',{name:t('notes'),exact:true}).fill('UD cancelled renewal');await dialog.getByRole('button',{name:t('close'),exact:true}).click();await expect(main.locator('.unified-detail-history')).not.toContainText('UD cancelled renewal');
   await main.getByRole('button',{name:t('renew'),exact:true}).click();dialog=page.getByRole('dialog');await dialog.locator('.renewal-amount-field input').fill('-1');await dialog.getByRole('button',{name:t('renew'),exact:true}).click();await expect(dialog.getByRole('alert')).toBeVisible();await screenshot(page,info,'renewal-invalid');await dialog.locator('.renewal-amount-field input').fill('29.25');await dialog.getByRole('textbox',{name:t('notes'),exact:true}).fill('UD actual local renewal');await dialog.getByRole('button',{name:t('renew'),exact:true}).click();await expect(dialog).toBeHidden();await page.reload();await expect(main.locator('.unified-detail-history')).toContainText('UD actual local renewal');await expect(main.locator('.unified-detail-history')).toContainText('29.25');await expect(main.locator('.unified-detail-info')).toContainText('2026');
-  for(const name of ['UD Foreign pending','UD Cancelled subscription']){await page.goto('/assets/subscription');if(name==='UD Cancelled subscription'){await page.getByRole('combobox',{name:t('assetStatusView'),exact:true}).click();await page.getByRole('option',{name:t('all'),exact:true}).click();}await page.locator('.asset-summary-card').filter({hasText:name}).click();await page.getByRole('button',{name:t('renew'),exact:true}).click();dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:t('renew'),exact:true})).toBeDisabled();await screenshot(page,info,name==='UD Foreign pending'?'renewal-no-cny':'renewal-cancelled');await dialog.getByRole('button',{name:t('close'),exact:true}).click();}
+  for(const name of ['UD Foreign pending','UD Cancelled subscription']){await page.goto('/assets/subscription');if(name==='UD Cancelled subscription'){await page.getByRole('combobox',{name:t('assetStatusView'),exact:true}).click();await page.getByRole('option',{name:t('all'),exact:true}).click();}await page.locator('.asset-summary-card').filter({hasText:name}).click();await expect(page.getByRole('button',{name:t('renew'),exact:true})).toBeDisabled();await screenshot(page,info,name==='UD Foreign pending'?'renewal-no-cny':'renewal-cancelled');}
   const rows=await exportRows(page,locale);const subscription=rows.find(row=>row.type==='asset'&&row.value.id===ids.subscription)!.value as Asset;expect(subscription.dueDate).toBe('2026-12-28');expect(subscription.renewalCount).toBe(1);expect(rows.filter(row=>row.type==='history'&&row.value.assetId===ids.subscription&&row.value.note==='UD actual local renewal')).toHaveLength(1);await receipt(info,['UD09'],{locale});
  });
 }
