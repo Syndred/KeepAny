@@ -8,6 +8,7 @@ export default defineConfig({
  testDir: './tests/e2e',
  testMatch: ['unified-asset-details.spec.ts'],
  retries: 0,
+ fullyParallel: true,
  workers: 2,
  timeout: 150_000,
  outputDir: process.env.KEEPANY_EVIDENCE_DIR ?? 'test-results/unified-asset-details',
