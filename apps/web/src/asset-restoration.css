@@ -205,7 +205,7 @@
 	height: 40px;
 	border: 2px solid var(--line);
 	border-radius: 12px;
-	background: #ffe38b;
+	background: var(--accent);
 }
 .asset-account-phone .asset-account-avatar {
 	background: #a9dfca;
@@ -250,7 +250,7 @@
 	gap: 10px;
 	height: 100px;
 	overflow: hidden;
-	background: #ffe7a2;
+	background: var(--accent);
 	border-bottom: 2px solid var(--line);
 }
 .asset-library-card:nth-child(3n + 2) .asset-library-cover {
@@ -304,7 +304,7 @@
 	padding: 4px 8px;
 	border: 1px solid var(--line);
 	border-radius: 999px;
-	background: #fff0b8;
+	background: var(--accent);
 	font-size: 10px;
 	font-weight: 750;
 	overflow-wrap: anywhere;
@@ -466,7 +466,7 @@
 	padding: 8px 9px; border: 1px solid var(--line-soft); border-radius: 9px;
 	color: var(--ink); text-decoration: none;
 }
-.asset-project-related-card:hover { background: #fff2cf; }
+.asset-project-related-card:hover { background: var(--accent); }
 .asset-project-related-card > span:nth-child(2) { min-width: 0; }
 .asset-project-related-card strong, .asset-project-related-card small { display: block; overflow-wrap: anywhere; }
 .asset-project-related-card small { color: var(--muted); font-size: 11px; }
@@ -481,7 +481,7 @@
 .asset-project-reminder-row strong, .asset-project-reminder-row small { display: block; }
 .asset-project-reminder-row strong { font-size: 12px; }
 .asset-project-reminder-row small { color: var(--muted); font-size: 11px; }
-.asset-project-reminder-symbol { display: grid; place-items: center; flex: 0 0 31px; height: 31px; border: 1px solid var(--line); border-radius: 9px; background: #ffe094; font-weight: 900; }
+.asset-project-reminder-symbol { display: grid; place-items: center; flex: 0 0 31px; height: 31px; border: 1px solid var(--line); border-radius: 9px; background: var(--accent); font-weight: 900; }
 .asset-project-reminder-static { cursor: default; }
 .asset-project-cost-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 9px; }
 .asset-project-cost-grid > div { display: grid; align-content: start; gap: 5px; min-width: 0; padding: 12px; border: 1px solid var(--line-soft); border-radius: 11px; background: #fffaf0; }
@@ -619,7 +619,7 @@
 }
 .graph .react-flow__node-default.asset-graph-center {
 	width: 220px;
-	background: #ffdd73;
+	background: var(--accent);
 	font-weight: 800;
 	border: 2px solid var(--line);
 	border-radius: 12px;

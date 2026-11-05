@@ -121,11 +121,10 @@ export function AssetDetail() {
  }
  return <LegacyAssetDetail key={`${route.params?.kind}:${route.params?.id}:${route.hash.startsWith('project-')}`}/>;
 }
-export function ProjectDetailExtras({ projectId, onReady }: { projectId: string; onReady?: () => void }) {
- useEffect(() => { onReady?.(); }, [onReady]);
- return <LegacyAssetDetail projectId={projectId} />;
+export function ProjectDetailInfo({ projectId, domainId }: { projectId: string; domainId?: string }) {
+ return <LegacyAssetDetail projectId={projectId} domainId={domainId} />;
 }
-function LegacyAssetDetail({ projectId }: { projectId?: string } = {}) {
+function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domainId?: string } = {}) {
 	const routeParams = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
 		{}) as { kind?: string; id?: string };
  const params = projectId ? { kind: "project", id: projectId } : routeParams;
@@ -1130,17 +1129,7 @@ function LegacyAssetDetail({ projectId }: { projectId?: string } = {}) {
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					</>;
- const projectControls = <>			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
-				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
-				<div className="asset-project-cost-grid">
-					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small>{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</div>
-					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
-					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
-				</div>
-				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
-				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{subscriptionCny(linked,subscriptionRates) ? money(subscriptionCny(linked,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
-			</section>}
-			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
+ const domainDialog = <>			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
 				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
 					<label className="field">{t("projectDomain")}<Input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
 					<label className="field">{t("projectRegistrar")}<Input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
@@ -1152,13 +1141,42 @@ function LegacyAssetDetail({ projectId }: { projectId?: string } = {}) {
 					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
 				</form>
 			</Dialog>}
-</>;
- if (projectId) return <div className="unified-detail-project-extras">
-  <ProjectProfile asset={asset} accounts={relatedAccounts} onVisit={visitRelation} onEdit={() => setEdit(true)} />
-  {asset.projectInspectionDate && <section className="card"><div className="card-header"><h2>{t("projectNextInspection")}</h2></div><p>{date(asset.projectInspectionDate, i18n.language)}</p></section>}
-  {projectControls}
-  {edit && <Suspense fallback={<p role="status">{t("loading")}</p>}><AssetEditor kind="project" asset={asset} categories={data.categories} onClose={() => setEdit(false)} /></Suspense>}
- </div>;
+
+ </>;
+
+ const projectControls = <>			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
+				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
+				<div className="asset-project-cost-grid">
+					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small>{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</div>
+					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
+					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
+				</div>
+				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
+				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{subscriptionCny(linked,subscriptionRates) ? money(subscriptionCny(linked,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
+			</section>}
+{domainDialog}</>;
+
+ const selectedDomain = projectDomains.find(domain => domain.id === domainId);
+ if (projectId) return <>
+  <dl className="unified-detail-project-info">
+   {selectedDomain ? <>
+    <div><dt>{t("projectRegistrar")}</dt><dd>{selectedDomain.registrar || t("none")} <Button size="small" variant="ghost" aria-label={t("projectEditDomain")} onClick={() => openDomain(selectedDomain)}><Pencil size={15}/></Button></dd></div>
+    <div><dt>{t("projectAnnualFee")}</dt><dd>{selectedDomain.annualAmount === null ? t("itemStatusUnrecorded") : `${money(selectedDomain.annualAmount, selectedDomain.currency, i18n.language)} / ${t("year")}`}</dd></div>
+    <div><dt>{t("projectAutoRenew")}</dt><dd>{t(selectedDomain.autoRenew === "on" ? "projectAutoRenewOn" : selectedDomain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</dd></div>
+   </> : <>
+    {asset.category && <div><dt>{t("projectType")}</dt><dd>{niceCategory(asset.category, t)}</dd></div>}
+    {asset.projectLaunchMonth && <div><dt>{t("projectLaunchMonth")}</dt><dd>{new Intl.DateTimeFormat(i18n.language, { year:"numeric",month:"long",timeZone:"UTC" }).format(new Date(`${asset.projectLaunchMonth}-01T12:00:00Z`))}</dd></div>}
+    {asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
+    {asset.projectInspectionDate && <div><dt>{t("projectNextInspection")}</dt><dd>{date(asset.projectInspectionDate, i18n.language)}</dd></div>}
+    {(projectDomains.length > 0 || relatedSubscriptions.length > 0) && <div><dt>{t("projectAnnualEstimate")}</dt><dd>{formatTotals(annualByCurrency)}{incompleteCost && <small>{t("projectCostPartial")}</small>}</dd></div>}
+    {relatedSubscriptions.length > 0 && <div><dt>{t("projectMonthlyCost")}</dt><dd>{formatTotals(monthlyByCurrency)}{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</dd></div>}
+    {nextRenewal && <div><dt>{t("projectNextRenewal")}</dt><dd>{date(nextRenewal, i18n.language)}</dd></div>}
+    <div><dt>{t("projectDomain")} <Button size="small" variant="ghost" aria-label={t("projectAddDomain")} onClick={() => openDomain()}><Plus size={15}/></Button></dt><dd className="unified-detail-domains">{projectDomains.length ? projectDomains.map(domain => <span key={domain.id}><Link to="/records/$id" params={{id:`domain:${asset.id}:${domain.id}`}}>{domain.catalog?.name ?? domain.name}</Link><Button size="small" variant="ghost" aria-label={`${t("projectEditDomain")}: ${domain.name}`} onClick={() => openDomain(domain)}><Pencil size={15}/></Button></span>) : t("none")}</dd></div>
+    {relatedSubscriptions.length > 0 && <div><dt>{t("projectLinkedSubscriptions")}</dt><dd className="unified-detail-domains">{relatedSubscriptions.map(linked => <Link key={linked.id} to="/assets/$kind/$id" params={{kind:"subscription",id:linked.id}}>{linked.name}</Link>)}</dd></div>}
+   </>}
+  </dl>
+  {domainDialog}
+ </>;
 
 	return (
 		<main ref={accountViewport} className={unified ? "page unified-asset-detail" : `page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>

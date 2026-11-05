@@ -30,13 +30,13 @@
   --field-border-width: 1.5px;
   --field-radius: 9px;
   --yellow: #ffd24c;
-  --yellow-soft: #fff0b8;
+  --yellow-soft: var(--yellow);
   --wallet-membership: #e8efed;
   --wallet-count-pass: #f2e9df;
   --wallet-gift: #efebf4;
   --accent: var(--yellow);
-  --accent-soft: var(--yellow-soft);
-  --accent-hover: #ffe084;
+  --accent-soft: var(--accent);
+  --accent-hover: var(--accent);
   --green: #246b50;
   --green-soft: #dff2e5;
   --peach: #ffe1d5;
@@ -291,9 +291,9 @@ p { line-height: 1.5; }
 .table-wrap { width: 100%; min-width: 0; overflow-x: auto; overscroll-behavior-inline: contain; border: 2px solid var(--line); border-radius: 15px; background: var(--paper); box-shadow: var(--shadow); }
 .table-wrap table { width: 100%; min-width: 650px; border-collapse: collapse; table-layout: fixed; }
 .table-wrap th, .table-wrap td { padding: 11px 12px; border-bottom: 1px solid var(--line-soft); font-size: 12px; line-height: 1.45; text-align: left; vertical-align: middle; overflow-wrap: anywhere; }
-.table-wrap th { background: #fff1ca; color: #435063; font-weight: 800; }
+.table-wrap th { background: var(--accent); color: #435063; font-weight: 800; }
 .table-wrap tr:last-child td { border-bottom: 0; }
-.table-wrap tbody tr:hover { background: #fff7e5; }
+.table-wrap tbody tr:hover { background: var(--accent); }
 .table-wrap td small { display: block; color: var(--muted); }
 
 .empty { display: grid; justify-items: center; gap: 6px; min-width: 0; padding: 18px 12px; color: var(--muted); text-align: center; }
