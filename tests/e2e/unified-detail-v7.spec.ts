@@ -1,3 +1,5 @@
+import { createMaintenanceSchedule } from "../../packages/domain/src/task-repeat";
+import { buildProjectWorkflowTasks } from "../../packages/domain/src/project-workflow";
 import { detailHistoryRows } from "../../apps/web/src/unified-detail-data";
 import { test, expect, type Page, type TestInfo } from "@playwright/test";
 import { createHash } from "node:crypto";
@@ -511,6 +513,54 @@ test.beforeAll(async ({}, info) => {
 						deleted: false,
 					});
 			}
+			const complexItem = {
+				...base("item", "v7-complex-item", "V7 complex maintenance camera"),
+			};
+			const complexProject = {
+				...base("project", "v7-complex-project", "V7 complex workflow project"),
+				catalogCategoryId: category.id,
+			};
+			await db.save("asset", complexItem);
+			await db.save("asset", complexProject);
+			await db.save("task", {
+				id: "v7-complex-maintenance",
+				name: "V7 recurring lens inspection",
+				assetId: complexItem.id,
+				dueDate: "2026-11-08",
+				done: false,
+				completedAt: "",
+				createdAt: stamp,
+				dedupeKey: "v7-complex-maintenance",
+				deleted: false,
+				maintenancePlan: {
+					active: true,
+					schedule: createMaintenanceSchedule({
+						dueDate: "2026-11-08",
+						leadDays: 2,
+						rule: { mode: "fixed", every: 1, unit: "month" },
+					}),
+					records: [],
+					deferredUntil: "",
+				},
+			});
+			const workflow = buildProjectWorkflowTasks({
+				project: complexProject,
+				assets: [complexProject],
+				relations: [],
+				submissions: [],
+				kind: "brand",
+				proposal: {
+					proposedName: "V7 proposed fictional brand",
+					proposedDescription: "",
+					proposedUrl: "",
+					changeNote: "V7 fictional verification",
+				},
+				roundId: "v7-complex-brand-round",
+				at: stamp,
+				title: (step, name) => `V7 workflow ${step} ${name}`,
+			});
+			for (const task of workflow)
+				await db.save("task", { ...task, dueDate: "2026-11-08" });
 			return {
 				categoryId: category.id,
 				domainId: domain.id,
@@ -1366,6 +1416,19 @@ for (const locale of ["zh-CN", "en"] as const) {
 			page.getByText(t("reminderEntryMissing"), { exact: true }),
 		).toBeVisible();
 		await screenshot(page, info, "missing-task");
+		for (const fragment of [
+			"reminder-task-%E0%A4%A",
+			"reminder-task-v7-task-wallet-0",
+		]) {
+			await page.goto(`/assets/subscription/ud-subscription#${fragment}`);
+			await expect(
+				page.getByText(t("reminderEntryMissing"), { exact: true }),
+			).toBeVisible();
+			await expect(
+				page.locator("#asset-detail-tasks-ud-subscription"),
+			).toBeFocused();
+		}
+
 		const rows = await exportRows(page, locale);
 		expect(
 			rows.find(
@@ -1948,3 +2011,104 @@ test("V702 V708 renewal history records local day and immutable extended due dat
 	});
 	await receipt(info, ["V702", "V708"]);
 });
+
+for (const locale of ["zh-CN", "en"] as const)
+	test(`${locale} V706 V707 V710 complex maintenance and workflow preserve layouts and settled focus`, async ({
+		page,
+	}, info) => {
+		const t = tFor(locale);
+		await start(page, locale);
+		for (const width of [390, 768, 1280, 1920]) {
+			await page.setViewportSize({ width, height: 1080 });
+			await page.goto("/assets/item");
+			await page
+				.locator(".asset-summary-card")
+				.filter({ hasText: "V7 complex maintenance camera" })
+				.click();
+			const maintenance = page.locator("#task-v7-complex-maintenance");
+			await expect(maintenance).toHaveCSS("display", "block");
+			for (let count = 0; count < 2; count++) {
+				await page.locator("#reminder-bell").click();
+				await page
+					.locator('[data-reminder-id="task-v7-complex-maintenance"]')
+					.click();
+				await expect(page.getByTestId("reminder-center")).toBeHidden();
+				await expect(maintenance).toBeFocused();
+				await expect
+					.poll(() =>
+						page.evaluate(() => ({
+							active: document.activeElement?.id,
+							popup: !!document.querySelector(
+								'[data-testid="reminder-center"]',
+							),
+						})),
+					)
+					.toEqual({ active: "task-v7-complex-maintenance", popup: false });
+			}
+			await maintenance
+				.locator(".maintenance-task-actions")
+				.first()
+				.getByRole("button")
+				.first()
+				.click();
+			await expect(
+				maintenance.locator(".maintenance-action-form"),
+			).toBeVisible();
+			await screenshot(page, info, `maintenance-expanded-${width}`);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+			).toBeLessThanOrEqual(width + 1);
+			await maintenance
+				.locator(".maintenance-action-form")
+				.getByRole("button", { name: t("cancel"), exact: true })
+				.click();
+			await page.goto("/assets");
+			await page
+				.locator(".asset-summary-card")
+				.filter({ hasText: "V7 complex workflow project" })
+				.click();
+			const workflow = page.locator(".project-workflow-task").first();
+			const id = await workflow.getAttribute("id");
+			await page.locator("#reminder-bell").click();
+			await page.locator(`[data-reminder-id="${id}"]`).click();
+			await expect(page.getByTestId("reminder-center")).toBeHidden();
+			await expect(workflow).toBeFocused();
+			await expect(workflow).toHaveCSS("display", "grid");
+			await workflow.locator(".project-workflow-task-footer button").click();
+			await expect(workflow.locator("textarea")).toBeVisible();
+			await screenshot(page, info, `workflow-expanded-${width}`);
+			expect(
+				await page.evaluate(() => document.documentElement.scrollWidth),
+			).toBeLessThanOrEqual(width + 1);
+			await workflow
+				.getByRole("button", { name: t("cancel"), exact: true })
+				.click();
+		}
+		await page.goto("/assets/item");
+		await page
+			.locator(".asset-summary-card")
+			.filter({ hasText: "V7 complex maintenance camera" })
+			.click();
+		const maintenance = page.locator("#task-v7-complex-maintenance");
+		await maintenance
+			.locator(".maintenance-task-actions")
+			.first()
+			.getByRole("button")
+			.first()
+			.click();
+		await maintenance.locator("textarea").fill("V7 verified lens service");
+		await maintenance
+			.locator(".maintenance-action-form button[type=submit]")
+			.click();
+		await expect(maintenance.locator("textarea")).toHaveCount(0);
+		await page.reload();
+		await maintenance.locator(".maintenance-history > summary").click();
+		await expect(maintenance.locator(".maintenance-history")).toContainText(
+			"V7 verified lens service",
+		);
+		await screenshot(page, info, "maintenance-saved-history");
+		await receipt(info, ["V706", "V707", "V710", "V711"], {
+			locale,
+			complex: true,
+		});
+	});
