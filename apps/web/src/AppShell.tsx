@@ -1,5 +1,6 @@
 import { Input } from "./components/ui/input";
-import { catalogCategoryLabel } from './catalog-records';
+import { catalogCategories, catalogCategoryLabel } from './catalog-records';
+import { readCatalogRecordReturn } from './workspace-return';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -107,7 +108,7 @@ export function AppShell() {
 		taskStates: { pending: t("pending"), done: t("done") }, intakeAccepted: t("reviewStatusAccepted"),
 	}), [t]);
 	const searchIndex = useMemo(() => buildGlobalSearchIndex({
-		assets: data.assets, history: data.history, tasks: data.tasks,
+		assets: data.assets, history: [], tasks: data.tasks,
 		reviewedCandidates: data.reviewedCandidates, reviewedCandidatesLoaded: data.reviewedCandidatesLoaded,
 		locale: i18n.language, labels: searchLabels,
 	}), [data.assets, data.history, data.tasks, data.reviewedCandidates, data.reviewedCandidatesLoaded, i18n.language, searchLabels]);
@@ -158,6 +159,9 @@ export function AppShell() {
 	let detailAssetId: string | undefined;
 	try { detailAssetId = detailMatch ? decodeURIComponent(detailMatch[2]) : undefined; } catch { /* Malformed links have no saved return target. */ }
 	const workspaceReturn = detailAssetId && !hasRelationReturn ? readWorkspaceReturn(detailAssetId) : null;
+ let catalogRecordId = '';
+ try {catalogRecordId = /^\/records\/([^/]+)\/?$/.exec(pathname)?.[1] ?? '';catalogRecordId=decodeURIComponent(catalogRecordId);}catch{/* Invalid record routes fall back to Assets. */}
+ const catalogReturn = catalogRecordId ? readCatalogRecordReturn(catalogRecordId,catalogCategories(data.categories),!!data.assets.find(a=>`asset:${a.id}`===catalogRecordId)?.walletCard) : null;
 	function selectCategory(kind: string, category: string, categoryId: string) {
 		sessionStorage.setItem(`keepany-category-${kind}`, category);
 		sessionStorage.setItem(`keepany-category-id-${kind}`, categoryId);
@@ -299,7 +303,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" ? { kind: workspaceReturn.view } : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 							<kbd>⌘ K</kbd>
@@ -310,6 +314,7 @@ export function AppShell() {
                            <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" variant="ghost" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
                             <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
                             {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={<Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "catalogRecords", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
+                            <DropdownMenuItem render={<Link to="/cards" hash="new" />}>{t('walletNew')}</DropdownMenuItem>
                             <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
                             <DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
                            </DropdownMenuContent></DropdownMenu>
@@ -323,7 +328,7 @@ export function AppShell() {
 							const target = result.target;
 							if (target.type === "asset") return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
 							const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : `task-${target.taskId}`;
-							return <Link key={result.key} to={target.type === "finance" ? "/finance" : target.type === "intake" ? "/intake" : "/tasks"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
+							return <Link key={result.key} to={target.type === "finance" ? "/assets" : target.type === "intake" ? "/intake" : "/tasks"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
 						}) : <p>{t("none")}</p>}</div>
 						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
 					</div>}

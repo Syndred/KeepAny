@@ -15,8 +15,10 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 import { cleanupUxCopy } from "./cleanup-ux-copy";
 import { catalogCopy } from "./catalog-copy";
+import { walletCopy } from "./wallet-copy";
 
 const copy: Record<string, [string, string]> = {
+ ...walletCopy,
  ...catalogCopy,
  ...cleanupUxCopy,
  accountLoginInfo: ["登录信息", "Login information"],

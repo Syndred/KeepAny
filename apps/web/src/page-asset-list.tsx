@@ -574,7 +574,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 				subtitle={t(kind === "project" ? "projectListSubtitle" : kind === "account" ? "workspaceAccountSubtitle" : kind === "item" ? "itemListSubtitle" : "summary")}
 				action={
 					<>
-						{kind === "subscription" && <Button asChild><Link to="/finance">{t("financeViewLedger")}</Link></Button>}
+
 						<Button variant="primary" disabled={data.pendingCategoryEdits.some((pending) => pending.kind === kind)} onClick={() => setEdit(true)}>
 							<Plus size={17} />
 							{t("add")}

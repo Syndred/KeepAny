@@ -51,19 +51,8 @@ for(const locale of ['zh-CN','en'] as const) {
   await expect(dialog).toBeHidden();await expect(cards.filter({hasText:'Annual document subscription'})).toContainText('328.30');
   await expect(page.locator('.catalog-summary-bar')).toContainText('52.36');
   await expect(page.locator('.workspace-catalog')).not.toContainText(/US\$|USD|\$49/);
-  await page.locator('.workspace-navigation').getByRole('link',{name:t('workspaceLedger'),exact:true}).click();
-  await expect(page.locator('.finance-entry')).not.toContainText(/US\$|USD|\$49/);
-  await expect(page.locator('.finance-entry')).toContainText('328.30');
-  await page.locator('.finance-entry').getByRole('button',{name:t('edit'),exact:true}).click();
-  await expect(page.getByRole('dialog').locator('#finance-amount')).toHaveValue('328.30');
-  await expect(page.getByRole('dialog').locator('#finance-currency')).toContainText('CNY');
-  await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
-  await page.getByRole('button',{name:t('financeAddRecord'),exact:true}).click();
-  const transaction=page.getByRole('dialog');
-  await transaction.locator('#finance-currency').click();await page.getByRole('option',{name:'USD',exact:true}).click();await transaction.locator('#finance-amount').fill('49');
-  await transaction.locator('#finance-asset').click();await page.getByRole('option').filter({hasText:'Annual document subscription'}).click();
-  await expect(transaction.locator('#finance-amount')).toHaveValue('');await expect(transaction.locator('#finance-currency')).toContainText('CNY');
-  await transaction.getByRole('button',{name:t('cancel'),exact:true}).click();
+  // 2026-11-05: the approved wallet replaces the ledger UI. Original receipts are checked in the backup below.
+  await expect(page.locator('a[href="/finance"]')).toHaveCount(0);
   await page.locator('.workspace-navigation a[href="/assets"]').click();
   await expect(page.locator('.asset-view-toggle')).toHaveCount(0);await expect(page.locator('.reminder-runtime-banner')).toHaveCount(0);await expect(page.locator('.workspace-catalog > .page-header')).toHaveCount(0);
   await expect(cards.filter({hasText:'Photography course'}).locator('progress')).toHaveCount(0);await expect(cards.filter({hasText:'Expired warranty'}).locator('progress')).toHaveCount(0);
@@ -87,7 +76,7 @@ for(const locale of ['zh-CN','en'] as const) {
   await restoreCompletionArchive(page,password,resolve(fixture,'fixture.ka1'));await page.goto('/assets');await expect(page.locator('.workspace-asset-grid > a')).toHaveCount(8);
   await page.getByRole('button',{name:t('subscriptionRates'),exact:true}).click();await page.getByRole('dialog').getByRole('textbox').first().fill('6.7');await page.getByRole('dialog').getByRole('button',{name:t('save'),exact:true}).click();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  if(width>=1920)expect(await page.locator('.workspace-asset-grid').evaluate(n=>getComputedStyle(n).gridTemplateColumns.split(' ').length)).toBe(4);
+  if(width>=1920)expect(await page.locator('.workspace-asset-grid').evaluate(n=>Number(getComputedStyle(n).getPropertyValue('--masonry-columns')))).toBe(4);
   await page.screenshot({path:info.outputPath('populated.png'),fullPage:true});await page.locator('.asset-summary-card').first().hover();await page.screenshot({path:info.outputPath('hover.png'),fullPage:true});await page.getByRole('searchbox',{name:t('workspaceSearch')}).focus();await page.screenshot({path:info.outputPath('focus.png'),fullPage:true});
   for(const kind of ['item','subscription']) {await page.locator(`.workspace-navigation a[href="/assets/${kind}"]`).click();await page.screenshot({path:info.outputPath(`${kind}.png`),fullPage:true});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);}
   await page.getByRole('button',{name:t('workspaceAddAsset'),exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('dialog').locator('#name')).toHaveAttribute('aria-invalid','true');await page.screenshot({path:info.outputPath('editor-error.png'),fullPage:true});await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();

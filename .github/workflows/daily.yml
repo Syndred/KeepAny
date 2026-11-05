@@ -60,6 +60,9 @@ jobs:
       - name: Verify approved asset cards and explicit CNY conversion on the same candidate
         run: node scripts/check-assets-approved.mjs
         timeout-minutes: 6
+      - name: Verify natural-height masonry and card wallet on the same candidate
+        run: node scripts/check-masonry-wallet.mjs
+        timeout-minutes: 6
       - name: Matching-dialog pilot in two existing matrix cases
         run: pnpm test:final:links --grep '(zh-CN 390x900|en 1280x900) ' --reporter=line
         timeout-minutes: 7
