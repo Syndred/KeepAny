@@ -574,9 +574,21 @@ test.beforeAll(async ({}, info) => {
 });
 
 async function start(page: Page, locale: Locale) {
-	await page.clock.setFixedTime(new Date("2026-11-05T04:00:00Z"));
 	await page.addInitScript(
-		(language) => localStorage.setItem("keepany-language", language),
+		(language) => {
+			localStorage.setItem("keepany-language", language);
+			// Keep natural browser performance/rAF/DocumentTimeline clocks aligned.
+			// Playwright's clock retained performance time across full navigations,
+			// placing native WAAPI startTime many seconds in the future.
+			const Original = Date;
+			let fixed = Original.parse("2026-11-05T04:00:00Z");
+			Object.assign(window, { __keepanyV7SetNow: (next: number) => { fixed = next; } });
+			window.Date = new Proxy(Original, {
+				construct(target, args, newTarget) { return Reflect.construct(target, args.length ? args : [fixed], newTarget); },
+				apply(target) { return new target(fixed).toString(); },
+				get(target, key, receiver) { return key === "now" ? () => fixed : Reflect.get(target, key, receiver); },
+			});
+		},
 		locale,
 	);
 	await page.goto("/assets");
@@ -2030,7 +2042,7 @@ test("V702 V708 renewal history records local day and immutable extended due dat
 	const t = tFor("en");
 	await start(page, "en");
 	await enter(page, "subscription");
-	await page.clock.setFixedTime(new Date("2026-11-04T16:30:00Z"));
+	await page.evaluate(timestamp => (window as Window & { __keepanyV7SetNow(value: number): void }).__keepanyV7SetNow(timestamp), new Date("2026-11-04T16:30:00Z").getTime());
 	await page
 		.locator(".unified-detail-header")
 		.getByRole("button", { name: t("renew"), exact: true })
