@@ -91,7 +91,7 @@ for (const language of ["zh-CN", "en"] as const) {
    await page.locator(".asset-category-add").click();await shot(page,`category-${language}-${width}`);await page.getByRole("button",{name:t("categoryCollapse"),exact:true}).click();
   }
   await page.setViewportSize({width:1280,height:1000});await page.locator(".sidebar-trash").click();
-  for(const width of [390,768,1280,1810,1920,2262]){await page.setViewportSize({width,height:1000});await page.locator(".password-vault-entry-trash").getByRole("button",{name:t("deletePermanently"),exact:true}).click();await shot(page,`purge-${language}-${width}`);expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();}
+  for(const width of [390,768,1280,1810,1920,2262]){await page.setViewportSize({width,height:1000});await shot(page,`trash-${language}-${width}`);expect((await page.locator(".password-vault-section-title > small").boundingBox())!.height).toBeLessThan(60);await page.locator(".password-vault-entry-trash").getByRole("button",{name:t("deletePermanently"),exact:true}).click();await shot(page,`purge-${language}-${width}`);expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();}
   writeFileSync(join(output,`matrix-${language}.json`),JSON.stringify({ids:["TT02","TT06","TT08"],candidate:portableCandidate(),matrix},null,2));
  });
  });

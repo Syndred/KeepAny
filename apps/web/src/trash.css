@@ -21,6 +21,9 @@
 .encrypted-trash-section .password-vault-entry-main small { overflow-wrap: anywhere; }
 .encrypted-trash-section .password-vault-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .encrypted-trash-section .password-vault-header .button { min-width: 44px; }
+@media (max-width: 430px) {
+  .encrypted-trash-section .password-vault-section-title > small { flex: 0 1 auto; }
+}
 
 
 .trash-confirm-dialog > header .button, .password-vault-purge-dialog > header .button { min-width: 44px; }

@@ -56,7 +56,7 @@ if (run.error || run.status !== 0) {
   collect(join(output, "evidence"));
   const imageNames = new Set(images.map(image => image.path.split("/").at(-1)));
   for (const lang of ["zh-CN", "en"]) {
-    for (const width of [390, 768, 1280, 1810, 1920, 2262]) for (const state of ["toolbar", "menu", "category", "purge"]) if (!imageNames.has(`${state}-${lang}-${width}.png`)) throw Error(`Missing toolbar/trash evidence: ${lang}/${width}/${state}`);
+    for (const width of [390, 768, 1280, 1810, 1920, 2262]) for (const state of ["toolbar", "menu", "category", "trash", "purge"]) if (!imageNames.has(`${state}-${lang}-${width}.png`)) throw Error(`Missing toolbar/trash evidence: ${lang}/${width}/${state}`);
     for (const width of [390, 768, 1280, 1920, 2262, 2560]) {
       for (const state of ["card", "edit", "create", "delete", "gate"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing unified matrix: ${lang}/${width}/${state}`);
       for (const state of ["card", "detail", "impact", "graph", "edit", "task", "reminder"]) if (!imageNames.has(`simple-${state}-${lang}-${width}.png`)) throw Error(`Missing simple account evidence: ${lang}/${width}/${state}`);
