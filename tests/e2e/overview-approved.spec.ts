@@ -167,6 +167,10 @@ for (const locale of ["zh-CN", "en"] as const) {
  for (const width of [390, 768, 1280, 1920, 2262]) test(`${locale} ${width} OV08 responsive overview states`, async ({ page }, info) => {
   const text = t(locale); await page.setViewportSize({ width, height: 1000 }); await start(page, locale);
   await page.screenshot({ path: info.outputPath("empty.png"), fullPage: true }); await populated(page);
+  // Keep the original feedback evidence in prior runs; stable layout checks wait for
+  // the existing notification timeout so it cannot cover the countdown content.
+  await page.clock.fastForward(6000);
+  await expect(page.locator(".toast")).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   // Edge positions settle one paint after node measurement; inspect first-visit selection too.
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
@@ -179,7 +183,10 @@ for (const locale of ["zh-CN", "en"] as const) {
   const link = page.locator(".overview-action-row").first(); await link.hover(); await page.screenshot({ path: info.outputPath("hover.png"), fullPage: true });
   const box = (await link.boundingBox())!; await page.mouse.move(box.x + 15, box.y + 15); await page.mouse.down();
   await page.screenshot({ path: info.outputPath("pressed.png"), fullPage: true }); await page.mouse.move(0, 0); await page.mouse.up();
-  await link.focus(); await page.screenshot({ path: info.outputPath("focus.png"), fullPage: true });
+  await link.focus(); await page.keyboard.press("Shift+Tab"); await page.keyboard.press("Tab");
+  await expect(link).toBeFocused();
+  expect(await link.evaluate(node => node.matches(":focus-visible"))).toBe(true);
+  await page.screenshot({ path: info.outputPath("focus.png"), fullPage: true });
   await page.locator(".overview-countdown-footer button").click(); await page.screenshot({ path: info.outputPath("overdue.png"), fullPage: true });
   await page.keyboard.press("Escape"); await page.getByRole("button", { name: text("accountGraphExpand"), exact: true }).click();
   await expect(page.getByRole("dialog").locator('[data-layout-ready="true"]')).toBeVisible();
