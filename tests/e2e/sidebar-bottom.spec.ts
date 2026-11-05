@@ -9,6 +9,7 @@ async function openSidebar(page: Page) {
     await page.locator('.mobile-menu').click();
     await expect(page.locator('.sidebar')).toHaveClass(/open/);
   }
+  await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.abs(el.getBoundingClientRect().left))).toBeLessThan(10);
 }
 async function aligned(page: Page) {
   const rows = await page.locator('.side-bottom a').evaluateAll(links => links.map(link => {
@@ -22,13 +23,14 @@ async function aligned(page: Page) {
 }
 for (const locale of ['zh-CN', 'en'] as const) {
   const t = (key: string) => (resources[locale].translation as Record<string, string>)[key];
-  test.beforeEach(async ({ page }) => {
+  async function start(page: Page) {
     await page.addInitScript(l => localStorage.setItem('keepany-language', l), locale);
     await page.goto('/');
     await expect(page.locator('.sidebar-trash')).toHaveCount(1);
     expect(createHash('sha256').update(await (await page.request.get('/')).body()).digest('hex')).toBe(identity());
-  });
+  }
   for (const width of [390, 768, 1280, 1920, 1991]) test(`${locale} ${width} SB01-SB03 bottom navigation`, async ({ page }, info) => {
+    await start(page);
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole('heading', { level: 1 }).first().waitFor();
     await openSidebar(page);
@@ -63,6 +65,7 @@ for (const locale of ['zh-CN', 'en'] as const) {
     await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['SB01','SB02','SB03'], locale, width, candidate: identity(), result: 'passed', geometry }), contentType: 'application/json' });
   });
   test(`${locale} SB04 long and multiple collections`, async ({ page }, info) => {
+    await start(page);
     await page.locator('.sidebar a[href="/collections"]').click();
     for (let index = 0; index < 8; index++) {
       await expect(page.locator('#collection-name')).toBeVisible();
