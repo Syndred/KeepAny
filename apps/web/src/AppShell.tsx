@@ -349,7 +349,7 @@ export function AppShell() {
 					)}
 				</div>
 			</div>
-			{data.error && (
+			{data.error && !remindersOpen && (
 				<div className="toast error" role="alert">
 					{t("error")}
 				</div>

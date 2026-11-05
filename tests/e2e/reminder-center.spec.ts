@@ -125,9 +125,11 @@ for(const locale of ["zh-CN","en"] as const){
   screenshots.push(await shot(page,info,"write-recovered"));await receipt(info,["NR05","NR11"],{screenshots,injected:"standard IndexedDB add/put failure in isolated browser; then restored"});
  });
  test(`${locale} NR11 local storage unavailable shows load error`,async({page},info)=>{
+  await page.setViewportSize({width:390,height:1000});
   await page.addInitScript(()=>{Object.defineProperty(indexedDB,"open",{value:()=>{throw new DOMException("Isolated unavailable storage","InvalidStateError");}});});
   await start(page,locale,false);await open(page);await expect(center(page).getByRole("alert")).toContainText(t("reminderCenterLoadFailed"));
   await expect(center(page).getByRole("button",{name:t("reminderCenterMarkAllRead"),exact:true})).toBeDisabled();
+  await expect(page.locator(".toast.error")).toHaveCount(0);await expect(center(page).getByRole("button",{name:t("reminderCenterReload"),exact:true})).toBeVisible();
   await receipt(info,["NR11"],{screenshots:[await shot(page,info,"storage-load-error")],injected:"IndexedDB.open throws in isolated browser; no source records"});
  });
  test(`${locale} NR13 immediate shell feedback stays inside mobile panel`,async({page},info)=>{
