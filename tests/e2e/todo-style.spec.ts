@@ -134,8 +134,24 @@ async function start(page: Page, locale: Locale) {
 	).toBe(identity());
 	await restoreCompletionArchive(page, password, archive);
 }
+async function openAssets(
+	page: Page,
+	kind: (typeof kinds)[number] = "ordinary",
+) {
+	if (
+		(await page.locator(".mobile-menu").isVisible()) &&
+		!(await page.locator(".sidebar.open").count())
+	)
+		await page.locator(".mobile-menu").click();
+	await page.locator('.sidebar nav a[href="/assets"]').click();
+	await expect(page.locator(".workspace-navigation")).toBeVisible();
+	if (kind !== "ordinary")
+		await page
+			.locator(`.workspace-navigation a[href="${paths[kind]}"]`)
+			.click();
+}
 async function enter(page: Page, kind: (typeof kinds)[number]) {
-	await page.goto(paths[kind]);
+	await openAssets(page, kind);
 	await page
 		.locator(".asset-summary-card")
 		.filter({ hasText: `TS ${kind} /` })
@@ -176,6 +192,17 @@ async function receipt(
 	});
 }
 async function geometry(page: Page, rows: Locator) {
+	await expect
+		.poll(() =>
+			rows.evaluateAll((elements) =>
+				elements.every(
+					(el) =>
+						Math.abs(new DOMMatrix(getComputedStyle(el).transform).m42) <
+						0.00001,
+				),
+			),
+		)
+		.toBe(true);
 	const result = await rows.evaluateAll((elements) =>
 		elements.map((el) => {
 			const box = el.getBoundingClientRect(),
@@ -183,8 +210,9 @@ async function geometry(page: Page, rows: Locator) {
 			const buttons = [...el.querySelectorAll("button")].map((b) => {
 				const r = b.getBoundingClientRect();
 				return {
-					width: r.width,
-					height: r.height,
+					// Layout pixels avoid subtraction noise from animated fractional viewport coordinates.
+					width: b.offsetWidth,
+					height: b.offsetHeight,
 					left: r.left,
 					right: r.right,
 				};
@@ -289,7 +317,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await shot(page, info, `${locale}-${width}-menu`);
 			await page.keyboard.press("Escape");
 			for (const variant of ["empty", "single"]) {
-				await page.goto("/assets");
+				await openAssets(page);
 				await page
 					.locator(".asset-summary-card")
 					.filter({ hasText: `TS ${variant}` })
