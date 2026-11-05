@@ -17,8 +17,8 @@ async function shot(page: Page, name: string) { if (page.viewportSize()!.width <
 async function setup(page: Page, t: T) {
  await page.goto("/"); await page.locator(".sidebar nav").getByRole("link", { name: t("accountsWorkspace"), exact: true }).click();
  await page.locator("#password-vault-master").fill(master); await page.locator("#password-vault-master-confirm").fill(master); await page.getByRole("button", { name: t("accountSetUp"), exact: true }).click();
- await expect(page.locator(".password-vault-toolbar")).toBeVisible();
- await page.locator(".password-vault-header").getByRole("button", { name: t("add"), exact: true }).click();
+ await expect(page.locator(".account-toolbar-actions")).toBeVisible();
+ await page.locator(".asset-category-toolbar").getByRole("button", { name: t("add"), exact: true }).click();
  await page.locator("#password-vault-entry-title").fill("Template Mail"); await page.locator("#password-vault-entry-username").fill("source@example.test");
  await page.locator("#password-vault-entry-password").fill("Synthetic source secret"); await page.locator("#password-vault-entry-notes").fill("Private source notes"); await page.locator("#password-vault-entry-url").fill("https://mail.example.test/");
  await selectChoice(page.locator("#account-entry-category"), { label: t("email") }); await save(page, t);

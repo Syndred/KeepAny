@@ -56,6 +56,7 @@ export function AccountsWorkspace() {
     const [deleteBusy, setDeleteBusy] = useState(false), [deleteError, setDeleteError] = useState("");
     const navigate = useNavigate();
     const creationConsumed = useRef(false);
+    useEffect(() => { if (hash === "vault-trash") void navigate({ to: "/trash", hash: "", replace: true }); }, [hash, navigate]);
     useEffect(() => { if (hash !== "new-account") { creationConsumed.current = false; return; } if (snapshot.status === "unlocked" && !creationConsumed.current) { creationConsumed.current = true; setEditAccount({ initialName: pendingAccountName ?? "" }); setPendingAccountName?.(""); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate, pendingAccountName, setPendingAccountName]);
     useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); setDeleteError(""); } }, [snapshot.status]);
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
@@ -82,18 +83,19 @@ export function AccountsWorkspace() {
     }
     if (privateDetail) return <Suspense fallback={<p role="status">{t("loading")}</p>}><PrivateAccountDetail key={privateDetail.id} entry={privateDetail} /></Suspense>;
 	return <main className="page unified-accounts-page">
+		<h1 className="sr-only">{t("accountsWorkspace")}</h1>
 		<Suspense fallback={<p role="status">{t("loading")}</p>}>
-			<PasswordVaultPanel assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify}
+			<PasswordVaultPanel accountToolbar assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify}
 				headerFeedback={<div className="compact-account-feedback-slot" ref={registerFeedbackTarget} />}
 				headerAction={({ busy, clearMessage }) => <Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { clearMessage(); setEditAccount({}); }}><Plus size={17} />{t("add")}</Button>}
-				renderAccounts={(tools) => <AssetKindList kind="account" embedded hideTitle privateSearch={snapshot.status === "unlocked"}
+				renderAccounts={(tools, toolbarActions) => <AssetKindList kind="account" embedded hideTitle toolbarActions={toolbarActions} privateSearch={snapshot.status === "unlocked"}
                     accountExtras={virtualAccounts} filterAccountId={filterAccountId}
                     beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
 					renderAccountCard={(asset, context) => <CompactAccountCard asset={asset} entries={virtualEntries.has(asset.id) ? [virtualEntries.get(asset.id)!] : grouped.linked.get(asset.id) ?? []} virtual={virtualEntries.has(asset.id)} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={asset => { const current = session?.getSnapshot(); if (current?.status !== "unlocked" || !current.revision || current.entries.some(entry => entry.linkedAssetIds.includes(asset.id))) return; setDeleteError(""); setDeleteAccount({ asset, vaultRevision: current.revision }); }} {...context} connectionCount={virtualEntries.has(asset.id) ? virtualEntries.get(asset.id)!.linkedAssetIds.filter(id => data.assets.some(asset => asset.id === id && !asset.deleted)).length : context.connectionCount} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
-		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".password-vault-header button")} onClose={() => setEditAccount(null)} /></Suspense>}
+		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".account-toolbar-actions button")} onClose={() => setEditAccount(null)} /></Suspense>}
         {snapshot.status === "unlocked" && deleteAccount && <Dialog title={t("pwVaultDeleteEntry")} onClose={() => { if (!deleteBusy) setDeleteAccount(null); }} closeDisabled={deleteBusy}><p>{deleteAccount.asset.name}</p>{deleteError && <p role="alert" className="field-error">{deleteError}</p>}<div className="actions"><Button disabled={deleteBusy} onClick={() => setDeleteAccount(null)}>{t("cancel")}</Button><Button variant="danger" disabled={deleteBusy} onClick={() => void removeOrdinaryAccount()}>{t("pwVaultDeleteEntry")}</Button></div></Dialog>}
 	</main>;
 }

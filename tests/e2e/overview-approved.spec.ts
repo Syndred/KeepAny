@@ -41,9 +41,10 @@ test.beforeAll(async () => {
   return { rows: rows.map(asset => asset.id), connections: pairs.length };
  });
 });
-async function start(page: Page, locale: "zh-CN" | "en") {
+async function start(page: Page, locale: "zh-CN" | "en", clockMode: "timers" | "date" = "timers") {
  await page.addInitScript(lang => localStorage.setItem("keepany-language", lang), locale);
- await page.clock.install({ time: new Date("2026-11-05T04:00:00Z") });
+ if (clockMode === "timers") await page.clock.install({ time: new Date("2026-11-05T04:00:00Z") });
+ else await page.clock.setFixedTime(new Date("2026-11-05T04:00:00Z"));
  await page.goto("/");
  await expect(page.locator(".overview-stats")).toBeVisible();
  expect(createHash("sha256").update(await (await page.request.get("/")).body()).digest("hex")).toBe(identity());
@@ -128,7 +129,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   await page.keyboard.press("Escape"); await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.locator('.sidebar nav a[href="/accounts"]').click();
   await page.locator("#password-vault-master").fill(password); await page.locator("#password-vault-master-confirm").fill(password);
-  await page.getByRole("button", { name: text("accountSetUp"), exact: true }).click(); await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+  await page.getByRole("button", { name: text("accountSetUp"), exact: true }).click(); await expect(page.locator(".account-toolbar-actions")).toBeVisible();
   await page.locator('.sidebar nav a[href="/"]').click(); await expect(page.locator('[data-layout-ready="true"]')).toBeVisible();
   await page.locator('.react-flow__node[data-id="ov-shop"] a').focus(); await page.keyboard.press("Enter");
   await expect(page.locator("main.asset-detail-account")).toBeVisible();
@@ -138,7 +139,7 @@ for (const locale of ["zh-CN", "en"] as const) {
   await page.locator(".react-flow__edge").first().focus(); await page.keyboard.press("Enter");
   await expect(page.locator(".account-graph-selection-panel")).toBeVisible();
   await page.screenshot({ path: info.outputPath("ordinary-detail-selected.png"), fullPage: true });
-  await page.locator('.sidebar nav a[href="/accounts"]').click(); await expect(page.locator(".password-vault-toolbar")).toBeVisible();
+  await page.locator('.sidebar nav a[href="/accounts"]').click(); await expect(page.locator(".account-toolbar-actions")).toBeVisible();
   await importVisualKdbxEntries(page, text, [{ title: "Private isolated / 私密独立", username: "private@example.test", password: "SyntheticOverviewSecret!", notes: "PRIVATE-NOTES-NEVER-IN-GRAPH", linkedAssetIds: ["ov-air"] }, { title: "Mixed private login / 混合关联登录", username: "mixed@example.test", password: "SyntheticMixed!", linkedAssetIds: ["ov-mail", "ov-camera"] }]);
   await page.locator('.sidebar nav a[href="/"]').click(); await expect(page.locator('[data-layout-ready="true"]')).toBeVisible();
   await expect(page.locator(".react-flow__node")).toHaveCount(20);
@@ -165,12 +166,11 @@ for (const locale of ["zh-CN", "en"] as const) {
   await info.attach("contract-results.json", { body: JSON.stringify({ ids: ["OV01", "OV02", "OV03", "OV04", "OV05", "OV06", "OV07", "OV09"], candidate: identity(), result: "passed" }), contentType: "application/json" });
  });
  for (const width of [390, 768, 1280, 1920, 2262]) test(`${locale} ${width} OV08 responsive overview states`, async ({ page }, info) => {
-  const text = t(locale); await page.setViewportSize({ width, height: 1000 }); await start(page, locale);
+  const text = t(locale); await page.setViewportSize({ width, height: 1000 }); await start(page, locale, "date");
   await page.screenshot({ path: info.outputPath("empty.png"), fullPage: true }); await populated(page);
   // Keep the original feedback evidence in prior runs; stable layout checks wait for
   // the existing notification timeout so it cannot cover the countdown content.
-  await page.clock.fastForward(6000);
-  await expect(page.locator(".toast")).toHaveCount(0);
+  await expect(page.locator(".toast")).toHaveCount(0, { timeout: 10_000 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   // Edge positions settle one paint after node measurement; inspect first-visit selection too.
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));

@@ -97,11 +97,13 @@ function CategoryStrip({
 	chosen,
 	choose,
 	searchControl,
+	toolbarActions,
 }: {
 	kind: AssetKind;
 	chosen: string;
 	choose: (x: string, id?: string) => void;
 	searchControl?: ReactNode;
+	toolbarActions?: ReactNode;
 }) {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -288,6 +290,7 @@ function CategoryStrip({
 			</div>
 			{searchControl}
 			<Button variant="ghost" size="small" className="asset-category-manage" disabled={categoryBusy} onClick={openManager}>{t("manage")}</Button>
+			{toolbarActions}
 			</div>
 			{data.categoryEditsError && <p className="field-error" role="alert">{t("error")}</p>}
 			{pending && <section className="card asset-category-recovery" aria-label={t("categoryEditRecovery")}>
@@ -420,7 +423,8 @@ export function AssetList() {
 }
 
 export type AccountListFilters = { search: string; category: string; tag: string };
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions }: {
+	toolbarActions?: ReactNode;
 	accountExtras?: Asset[]; filterAccountId?: string;
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
@@ -558,7 +562,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [kind, category, tag, listSearch, data.loading, assets.length]);
-	const tagFilter = (availableTags.length > 0 || tag) ? <div className="list-filters">
+	const tagFilter = (kind === "account" || availableTags.length > 0 || tag) ? <div className="list-filters">
 		<label className="sr-only" htmlFor={`asset-tag-filter-${kind}`}>{t("filterTag")}</label>
 		<Select id={`asset-tag-filter-${kind}`} value={tag} onValueChange={chooseTag}>
 			<SelectOption value="">{t("allTags")}</SelectOption>
@@ -588,7 +592,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 				<Search size={18} aria-hidden="true" />
 				<Input id={renderAccountDetails || renderAccountCard ? "password-vault-search-input" : undefined} ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
 				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
-			</div>{renderAccountCard && tagFilter}</> : undefined} />
+			</div>{renderAccountCard && tagFilter}</> : undefined} toolbarActions={toolbarActions} />
 			{kind !== "account" && kind !== "vault" ? <div className="asset-list-toolbar">
 				{tagFilter}
 				<AssetViewToggle value={assetView} onChange={setAssetView} />
