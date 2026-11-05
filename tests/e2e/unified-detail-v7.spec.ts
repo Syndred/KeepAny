@@ -574,9 +574,21 @@ test.beforeAll(async ({}, info) => {
 });
 
 async function start(page: Page, locale: Locale) {
-	await page.clock.setFixedTime(new Date("2026-11-05T04:00:00Z"));
 	await page.addInitScript(
-		(language) => localStorage.setItem("keepany-language", language),
+		(language) => {
+			localStorage.setItem("keepany-language", language);
+			// Keep natural browser performance/rAF/DocumentTimeline clocks aligned.
+			// Playwright's clock retained performance time across full navigations,
+			// placing native WAAPI startTime many seconds in the future.
+			const Original = Date;
+			let fixed = Original.parse("2026-11-05T04:00:00Z");
+			Object.assign(window, { __keepanyV7SetNow: (next: number) => { fixed = next; } });
+			window.Date = new Proxy(Original, {
+				construct(target, args, newTarget) { return Reflect.construct(target, args.length ? args : [fixed], newTarget); },
+				apply(target) { return new target(fixed).toString(); },
+				get(target, key, receiver) { return key === "now" ? () => fixed : Reflect.get(target, key, receiver); },
+			});
+		},
 		locale,
 	);
 	await page.goto("/assets");
@@ -621,6 +633,32 @@ async function enter(
 	return main;
 }
 async function screenshot(page: Page, info: TestInfo, name: string) {
+	// Observe the rendered state, including the next React commit and natural
+	// animations. A click resolving does not prove a portal or reveal is visible.
+	if (/^(ordinary|item|subscription|wallet)-menu$/.test(name)) {
+		const menu = page.getByRole("menu");
+		await expect(menu).toBeVisible();
+		await expect(menu.getByRole("menuitem").first()).toBeVisible();
+		await expect.poll(() => menu.evaluate((element) => {
+			for (let current: Element | null = element; current; current = current.parentElement) {
+				if (Number(getComputedStyle(current).opacity) < 0.999) return false;
+			}
+			const rect = element.getBoundingClientRect();
+			return rect.width > 0 && rect.height > 0 && rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1;
+		})).toBe(true);
+	}
+	if (/^(ordinary|item|subscription|wallet)-editor$/.test(name)) {
+		await expect(page.getByRole("dialog").locator("#name, #catalog-record-name")).toBeVisible();
+	}
+	await expect.poll(() => page.locator(".unified-detail-header,.ui-menu,.dialog").evaluateAll(elements => elements.flatMap(element => element.getAnimations({ subtree: true })).filter(animation => animation.playState === "running" && animation.effect?.getTiming().iterations !== Infinity).length)).toBe(0);
+	const taskForms = page.locator(".unified-detail-tasks form");
+	if (await taskForms.count()) await taskForms.last().scrollIntoViewIfNeeded();
+	await expect.poll(() => page.locator(".unified-detail-tasks form").evaluateAll((forms) => forms.every(form => {
+		for (let current: Element | null = form; current; current = current.parentElement) {
+			if (Number(getComputedStyle(current).opacity) < 0.999) return false;
+		}
+		return true;
+	}))).toBe(true);
 	const file = info.outputPath(`${name}.png`);
 	await page.screenshot({ path: file, fullPage: false });
 	await info.attach(`${name}.png`, { path: file, contentType: "image/png" });
@@ -790,7 +828,10 @@ for (const locale of ["zh-CN", "en"] as const)
 					.getByRole("button", { name: t("moreActions"), exact: true })
 					.click();
 				await screenshot(page, info, `${kind}-menu`);
+				await page.keyboard.press("ArrowDown");
+				await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute("role"))).toBe("menuitem");
 				await page.keyboard.press("Escape");
+				await expect(page.getByRole("menu")).toBeHidden();
 			}
 			for (const kind of kinds) {
 				await enter(page, kind, "minimal");
@@ -804,7 +845,7 @@ for (const locale of ["zh-CN", "en"] as const)
 					.scrollIntoViewIfNeeded();
 				await screenshot(page, info, `${kind}-long-description`);
 			}
-			await receipt(info, ["V701", "V710"], { locale, width, matrix: true });
+			await receipt(info, ["V701", "V710"], { locale, width, matrix: true, stableMenus: true });
 		});
 
 for (const locale of ["zh-CN", "en"] as const) {
@@ -830,14 +871,26 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await expect(page.getByRole("heading", { level: 1 })).toContainText(
 				names[kind],
 			);
+			for (const width of [390, 768, 1280, 1920, 1991, 2262]) {
+				await page.setViewportSize({ width, height: 720 });
+				await page.getByRole("button", { name: t("edit"), exact: true }).click();
+				dialog = page.getByRole("dialog");
+				await input.fill("");
+				await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+				await expect(input).toHaveAttribute("aria-invalid", "true");
+				await expect(input).toBeFocused();
+				await expect(input).toBeInViewport({ ratio: 1 });
+				const error = dialog.locator(`#${await input.getAttribute("id")}-error`);
+				await expect(error).toBeInViewport({ ratio: 1 });
+				await screenshot(page, info, `${kind}-required-error-${width}`);
+				// Editing another field clears its error without stealing focus.
+				const notes = dialog.locator("textarea").first();
+				await notes.fill("V7 cancelled focus check");
+				await expect(notes).toBeFocused();
+				await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
+			}
 			await page.getByRole("button", { name: t("edit"), exact: true }).click();
 			dialog = page.getByRole("dialog");
-			await input.fill("");
-			await dialog
-				.getByRole("button", { name: t("save"), exact: true })
-				.click();
-			await expect(input).toHaveAttribute("aria-invalid", "true");
-			await screenshot(page, info, `${kind}-required-error`);
 			await input.fill(`${names[kind]} edited`);
 			await dialog
 				.getByRole("button", { name: t("save"), exact: true })
@@ -848,7 +901,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				`${names[kind]} edited`,
 			);
 		}
-		await receipt(info, ["V701", "V703"], { locale });
+		await receipt(info, ["V701", "V703"], { locale, errorWidths: [390, 768, 1280, 1920, 1991, 2262], errorHeight: 720 });
 	});
 }
 
@@ -1989,7 +2042,11 @@ test("V702 V708 renewal history records local day and immutable extended due dat
 	const t = tFor("en");
 	await start(page, "en");
 	await enter(page, "subscription");
-	await page.clock.setFixedTime(new Date("2026-11-04T16:30:00Z"));
+	await page.evaluate(timestamp => {
+		const setNow = Reflect.get(window, "__keepanyV7SetNow");
+		if (typeof setNow !== "function") throw Error("Missing date-only test clock");
+		setNow(timestamp);
+	}, new Date("2026-11-04T16:30:00Z").getTime());
 	await page
 		.locator(".unified-detail-header")
 		.getByRole("button", { name: t("renew"), exact: true })

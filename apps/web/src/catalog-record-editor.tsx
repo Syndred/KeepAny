@@ -15,7 +15,7 @@ import { Button } from "./components/ui/button";
 import { Select, SelectOption } from "./components/ui/select";
 import { DatePicker } from "./components/ui/date-picker";
 import { Textarea } from "./components/ui/textarea";
-import { Field } from "./workflow-field";
+import { Field, useValidationFocus } from "./workflow-field";
 import { useAppContext } from "./view-shared";
 
 export function CatalogRecordEditor({
@@ -41,6 +41,7 @@ export function CatalogRecordEditor({
 	const [uses, setUses] = useState(() => draft.walletCard?.remainingUses == null ? '' : String(draft.walletCard.remainingUses));
 	const [error, setError] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const validation = useValidationFocus(errors);
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const categories = catalogCategories(data.categories);
@@ -58,6 +59,7 @@ export function CatalogRecordEditor({
 		const balanceMinor = balance.trim() ? parseMinorUnits(balance,'CNY') : null;
 		const remainingUses = uses.trim() ? (/^\d+$/.test(uses.trim()) ? Number(uses.trim()) : NaN) : null;
 		if (draft.walletCard && ((balanceMinor !== null && !Number.isSafeInteger(balanceMinor)) || (remainingUses !== null && !Number.isSafeInteger(remainingUses)))) {
+			validation.requestFocus();
 			setErrors({ balance: balanceMinor !== null && !Number.isSafeInteger(balanceMinor) ? t('invalid') : '', uses: remainingUses !== null && !Number.isSafeInteger(remainingUses) ? t('invalid') : '' }); return;
 		}
 		const parsed = assetSchema.safeParse({
@@ -71,6 +73,7 @@ export function CatalogRecordEditor({
 			updatedAt: new Date().toISOString(),
 		});
 		if (!parsed.success) {
+			validation.requestFocus();
 			setErrors(
 				Object.fromEntries(
 					parsed.error.issues.map((issue) => [
@@ -116,7 +119,7 @@ export function CatalogRecordEditor({
 			onClose={onClose}
 			closeDisabled={busy}
 		>
-			<form className="asset-editor" onSubmit={(event) => void submit(event)}>
+			<form ref={validation.formRef} className="asset-editor" onSubmit={(event) => void submit(event)}>
 				<fieldset disabled={busy} className="catalog-fields">
 					<div className="form-grid">
 						<Field

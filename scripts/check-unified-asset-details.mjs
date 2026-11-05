@@ -33,8 +33,16 @@ else{
   const receipt=test.results[0].attachments?.find(attachment=>attachment.name==='contract-results.json');
   if(!receipt)throw Error('Test has no contract receipt.');
   const value=JSON.parse(receipt.path?readFileSync(receipt.path,'utf8'):Buffer.from(receipt.body,'base64').toString());
-  if(value.matrix)for(const kind of ['ordinary','item','subscription','wallet'])for(const state of ['default','description','history','tasks','hover','focus','pressed','editor','menu','minimal','long','long-description'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${kind}-${state}.png`))throw Error(`Missing ${value.locale}/${value.width}/${kind}/${state}`);
+  if(value.matrix){
+   if(value.stableMenus!==true)throw Error('Menu visibility and settled-state assertions were not executed');
+   for(const kind of ['ordinary','item','subscription','wallet']){
+    for(const state of ['default','description','history','tasks','hover','focus','pressed','editor','menu','minimal','long','long-description'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${kind}-${state}.png`))throw Error(`Missing ${value.locale}/${value.width}/${kind}/${state}`);
+    const picture=state=>test.results[0].attachments.find(attachment=>attachment.name===`${kind}-${state}.png`);
+    if(hash(readFileSync(picture('menu').path))===hash(readFileSync(picture('default').path)))throw Error(`Menu evidence equals default: ${value.locale}/${value.width}/${kind}`);
+   }
+  }
   if(value.actionWidths)for(const width of [390,768,1280,1920])for(const state of ['item-activity','item-activity-error','subscription-activity','relation-error'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${state}-${width}.png`))throw Error(`Missing ${value.locale}/${state}/${width}`);
+  if(value.errorWidths)for(const width of [390,768,1280,1920,1991,2262])for(const kind of ['ordinary','item','subscription','wallet'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${kind}-required-error-${width}.png`))throw Error(`Missing visible error ${value.locale}/${width}/${kind}`);
  }
  writeFileSync(join(output,'visual-manifest.json'),JSON.stringify(screenshots.map(attachment=>({name:attachment.name,path:attachment.path,sha256:hash(readFileSync(attachment.path))})),null,2));
  writeFileSync(join(output,'result.json'),JSON.stringify({status:'machine-checks-passed',candidate:identity,tests:tests.length,screenshots:screenshots.length,manualVisual:'separate',controller:'separate',independentReview:'separate'},null,2));
