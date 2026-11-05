@@ -21,6 +21,7 @@ test.beforeAll(async({},info)=>{
   const subscription={...newAsset('subscription'),name:'Annual document',amount:4900,currency:'USD' as const,cycle:'year' as const,dueDate:'2027-02-01',billingAnchor:'2027-02-01'};
   const rows=[{...newAsset('item'),name:'Minimal adapter / 极简插头'},{...newAsset('item'),name:'Photo laptop / 有图电脑',description:'Actual uploaded image / 实际图片',itemPurchasePriceKnown:true,amount:899900,purchaseDate:'2026-01-01',warrantyDate:'2027-01-01',attachments:[image],itemMedia:{coverId:image,detailIds:[],receiptIds:[]}},{...newAsset('subscription'),name:'Monthly cloud / 月付服务',amount:3900,dueDate:'2026-12-01'},subscription,{...newAsset('project'),name:'Photography / 摄影',catalogCategoryId:category.id,description:'Weekend learning / 周末学习',url:'https://learn.example.test/course'},{...newAsset('project'),name:'Long title 很长的标题 '.repeat(7),catalogCategoryId:category.id,description:'Long description 很长的描述 '.repeat(12),url:'https://learn.example.test/'+ 'long/'.repeat(60),tags:['Long tag 很长的标签 '.repeat(3)]},{...newAsset('project'),name:'Archived / 已归档',status:'archived' as const},{...newAsset('project'),name:'Minimal record / 极简记录',catalogCategoryId:category.id}];
   await db.saveBatch([...rows.map(value=>({type:'asset' as const,value})),{type:'history',value:{id:'mw-old-expense',assetId:subscription.id,action:'expense',title:'Historical fee',note:'Fictional historical receipt',eventDate:'2026-10-01',amount:4900,currency:'USD',createdAt:'2026-10-01T00:00:00.000Z'}},{type:'preference',value:{id:'subscriptionCnyRatesV1',value:{USD:'6.7'}}}]);
+  await db.save('task',{id:'mw-pending-reminder',name:'Fictional pending reminder',dueDate:new Date().toISOString().slice(0,10),createdAt:new Date().toISOString()});
   return {categoryId:category.id};
  });
 });
@@ -65,7 +66,7 @@ test('MW01 baseline and final natural-height, masonry, wallet entry',async({page
 for(const locale of ['zh-CN','en'] as const){
  test(`${locale} MW02-06 wallet CRUD, samples, filtering and archive`,async({page,context},info)=>{
   const t=copy(locale);const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await start(page,locale);
-  await page.locator('.workspace-navigation a[href="/cards"]').click();await expect(page.locator('.empty')).toBeVisible();
+  await page.locator('.workspace-navigation a[href="/cards"]').click();await expect(page.locator('.empty')).toBeVisible();await expect(page.locator('.reminder-runtime-banner')).toHaveCount(0);
   await page.getByRole('button',{name:t('walletSamples'),exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page.locator('.asset-summary-card')).toHaveCount(0);
   await page.getByRole('button',{name:t('workspaceAddAsset'),exact:true}).click();let dialog=page.getByRole('dialog');
   await dialog.getByRole('button',{name:t('save'),exact:true}).click();await expect(dialog.locator('#catalog-record-name')).toHaveAttribute('aria-invalid','true');
