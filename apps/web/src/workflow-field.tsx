@@ -1,5 +1,23 @@
 import { Input } from "./components/ui/input";
 import { DatePicker } from "./components/ui/date-picker";
+import { useLayoutEffect, useRef } from "react";
+
+export function useValidationFocus(errors: Record<string, string>) {
+	const formRef = useRef<HTMLFormElement>(null);
+	const requested = useRef(false);
+	useLayoutEffect(() => {
+		if (!requested.current) return;
+		requested.current = false;
+		const form = formRef.current;
+		const error = form?.querySelector<HTMLElement>(".field-error");
+		const target = form?.querySelector<HTMLElement>('[aria-invalid="true"]:not(:disabled)')
+			?? error?.closest(".field")?.querySelector<HTMLElement>('input:not([type="hidden"]):not(:disabled),textarea:not(:disabled),select:not(:disabled),button:not(:disabled)');
+		if (!target) return;
+		(target.closest(".field") ?? target).scrollIntoView({ block: "center", behavior: "instant" });
+		target.focus({ preventScroll: true });
+	}, [errors]);
+	return { formRef, requestFocus: () => { requested.current = true; } };
+}
 
 export function Field({
 	label,

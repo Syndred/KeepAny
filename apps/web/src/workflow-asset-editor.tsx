@@ -11,7 +11,7 @@ import { Select, SelectOption } from "./components/ui/select";
 import { assetNotes, editAssetNotes } from "./asset-notes";
 import { saveAccountWithIdentityLinks, AccountIdentitySavePending } from "./account-identity-save";
 import { AccountLinkConflict } from "./vault-account-links";
-import { Field } from "./workflow-field";
+import { Field, useValidationFocus } from "./workflow-field";
 type FieldName = keyof Asset;
 
 export function AssetEditor({
@@ -61,6 +61,7 @@ export function AssetEditor({
 			: "0",
 	);
 	const [errors, setErrors] = useState<Record<string, string>>({});
+	const validation = useValidationFocus(errors);
 	const [tagsInput, setTagsInput] = useState(() => original?.tags.join(", ") ?? "");
 	const [busy, setBusy] = useState(false);
 	const [failure, setFailure] = useState("");
@@ -110,7 +111,7 @@ export function AssetEditor({
 		if (inFlight.current || pendingConnections || checkingConnections) return;
 		const parsedCnyAmount = foreignSubscription && amount.trim() ? parseMinorUnits(amount, "CNY") : null;
   const parsedCnyDiscount = foreignSubscription ? parseMinorUnits(discount, "CNY") : null;
-  if (foreignSubscription && ((amount.trim() && (!Number.isSafeInteger(parsedCnyAmount) || parsedCnyAmount! < 0)) || (!Number.isSafeInteger(parsedCnyDiscount) || parsedCnyDiscount! < 0) || (parsedCnyAmount !== null && parsedCnyDiscount! > parsedCnyAmount))) { setErrors({amount:t("invalid"),discountAmount:t("invalid")}); return; }
+  if (foreignSubscription && ((amount.trim() && (!Number.isSafeInteger(parsedCnyAmount) || parsedCnyAmount! < 0)) || (!Number.isSafeInteger(parsedCnyDiscount) || parsedCnyDiscount! < 0) || (parsedCnyAmount !== null && parsedCnyDiscount! > parsedCnyAmount))) { validation.requestFocus(); setErrors({amount:t("invalid"),discountAmount:t("invalid")}); return; }
   const parsedAmount = foreignSubscription ? draft.amount : kind === "item" && !amount.trim() ? 0 : parseMinorUnits(amount, draft.currency);
 		const parsedDiscount = foreignSubscription ? draft.discountAmount : kind === "subscription" ? parseMinorUnits(discount, draft.currency) : draft.discountAmount;
 		const scheduleChanged =
@@ -144,6 +145,7 @@ export function AssetEditor({
 			updatedAt: new Date().toISOString(),
 		});
 		if (!parsed.success) {
+			validation.requestFocus();
 			setErrors(
 				Object.fromEntries(
 					parsed.error.issues.map((issue) => [
@@ -206,7 +208,7 @@ export function AssetEditor({
 	}
 	return (
 		<Dialog title={asset ? t("edit") : t("newRecord")} className={kind === "account" ? "account-detail-dialog" : undefined} onClose={closeIfIdle}>
-			<form className="asset-editor" onSubmit={(e) => void submit(e)}>
+			<form ref={validation.formRef} className="asset-editor" onSubmit={(e) => void submit(e)}>
 				<div className="form-grid">
 					<Field
 						name="name"

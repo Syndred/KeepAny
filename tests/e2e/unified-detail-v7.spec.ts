@@ -857,14 +857,26 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await expect(page.getByRole("heading", { level: 1 })).toContainText(
 				names[kind],
 			);
+			for (const width of [390, 768, 1280, 1920, 1991, 2262]) {
+				await page.setViewportSize({ width, height: 720 });
+				await page.getByRole("button", { name: t("edit"), exact: true }).click();
+				dialog = page.getByRole("dialog");
+				await input.fill("");
+				await dialog.getByRole("button", { name: t("save"), exact: true }).click();
+				await expect(input).toHaveAttribute("aria-invalid", "true");
+				await expect(input).toBeFocused();
+				await expect(input).toBeInViewport({ ratio: 1 });
+				const error = dialog.locator(`#${await input.getAttribute("id")}-error`);
+				await expect(error).toBeInViewport({ ratio: 1 });
+				await screenshot(page, info, `${kind}-required-error-${width}`);
+				// Editing another field clears its error without stealing focus.
+				const notes = dialog.locator("textarea").first();
+				await notes.fill("V7 cancelled focus check");
+				await expect(notes).toBeFocused();
+				await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
+			}
 			await page.getByRole("button", { name: t("edit"), exact: true }).click();
 			dialog = page.getByRole("dialog");
-			await input.fill("");
-			await dialog
-				.getByRole("button", { name: t("save"), exact: true })
-				.click();
-			await expect(input).toHaveAttribute("aria-invalid", "true");
-			await screenshot(page, info, `${kind}-required-error`);
 			await input.fill(`${names[kind]} edited`);
 			await dialog
 				.getByRole("button", { name: t("save"), exact: true })
@@ -875,7 +887,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				`${names[kind]} edited`,
 			);
 		}
-		await receipt(info, ["V701", "V703"], { locale });
+		await receipt(info, ["V701", "V703"], { locale, errorWidths: [390, 768, 1280, 1920, 1991, 2262], errorHeight: 720 });
 	});
 }
 

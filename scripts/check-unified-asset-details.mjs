@@ -42,6 +42,7 @@ else{
    }
   }
   if(value.actionWidths)for(const width of [390,768,1280,1920])for(const state of ['item-activity','item-activity-error','subscription-activity','relation-error'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${state}-${width}.png`))throw Error(`Missing ${value.locale}/${state}/${width}`);
+  if(value.errorWidths)for(const width of [390,768,1280,1920,1991,2262])for(const kind of ['ordinary','item','subscription','wallet'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${kind}-required-error-${width}.png`))throw Error(`Missing visible error ${value.locale}/${width}/${kind}`);
  }
  writeFileSync(join(output,'visual-manifest.json'),JSON.stringify(screenshots.map(attachment=>({name:attachment.name,path:attachment.path,sha256:hash(readFileSync(attachment.path))})),null,2));
  writeFileSync(join(output,'result.json'),JSON.stringify({status:'machine-checks-passed',candidate:identity,tests:tests.length,screenshots:screenshots.length,manualVisual:'separate',controller:'separate',independentReview:'separate'},null,2));
