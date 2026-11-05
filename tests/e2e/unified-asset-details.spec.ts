@@ -8,6 +8,7 @@ import { acceptanceCandidate } from './helpers/acceptance-candidate';
 import { prepareCompletionArchive, restoreCompletionArchive } from './helpers/completion-archive';
 import { decryptBackup } from '../../packages/local-db/src/backup-crypto';
 import { unzipSync, strFromU8 } from 'fflate';
+import { importVisualKdbxEntries } from './fixtures/password-smart-import-visual';
 
 const password = 'Unified-Details-Fictional-only-2026';
 const stamp = '2026-11-05T00:00:00.000Z';
@@ -147,7 +148,7 @@ for(const locale of ['zh-CN','en'] as const){
   await enter(page,'ordinary','long');await geometry(page);await page.locator('.unified-detail-description').scrollIntoViewIfNeeded();await screenshot(page,info,'long-description');
   const text=await page.locator('.unified-detail-description').innerText();expect(text).toContain('UD long notes');
   await enter(page,'wallet','minimal');await geometry(page);await screenshot(page,info,'minimal-empty-wallet');
-  await receipt(info,['UD01','UD04','UD05','UD07','UD10','UD11'],{locale,width});
+  await receipt(info,['UD01','UD04','UD05','UD07','UD10','UD11'],{locale,width,matrix:true});
  });
 }
 
@@ -175,12 +176,44 @@ for(const locale of ['zh-CN','en'] as const){
    await relations.getByRole('button',{name:t('addRelation'),exact:true}).click();let dialog=page.getByRole('dialog');await expect(dialog.getByRole('button',{name:t('save'),exact:true})).toBeDisabled();await dialog.locator('#detail-relation-target').click();await expect(page.getByRole('option',{name:'UD Retired vault reference',exact:true})).toHaveCount(0);await expect(page.getByRole('option',{name:'UD Deleted record',exact:true})).toHaveCount(0);await page.keyboard.press('Escape');await dialog.getByRole('button',{name:t('cancel'),exact:true}).click();
    await relations.getByRole('button',{name:t('addRelation'),exact:true}).click();dialog=page.getByRole('dialog');await selectOption(page,'#detail-relation-target','UD Neighbor 2 / 关联资料 2');await dialog.locator('#detail-relation-label').fill('UD link 2');await dialog.getByRole('button',{name:t('save'),exact:true}).click();await expect(dialog.getByRole('alert')).toBeVisible();await screenshot(page,info,`${kind}-relation-duplicate`);await dialog.getByRole('button',{name:t('cancel'),exact:true}).click();
    await relations.getByRole('button',{name:t('addRelation'),exact:true}).click();dialog=page.getByRole('dialog');await selectOption(page,'#detail-relation-target','UD Minimal ordinary');await dialog.locator('#detail-relation-label').fill(`UD manual ${kind}`);await dialog.getByRole('button',{name:t('save'),exact:true}).click();await expect(dialog).toBeHidden();await expect(relations.locator('.react-flow__edge')).toHaveCount(originalEdges+1);await page.reload();await expect(relations.locator('.graph')).toHaveAttribute('data-layout-ready','true');await expect(relations.locator('.react-flow__edge')).toHaveCount(originalEdges+1);
-   const edge=relations.locator(`.react-flow__edge[aria-label*="UD manual ${kind}"]`);await expect(edge).toHaveCount(1);const point=await edge.locator('.react-flow__edge-interaction').evaluate((path:SVGPathElement)=>{const p=path.getPointAtLength(path.getTotalLength()*.52),matrix=path.getScreenCTM()!;return {x:matrix.a*p.x+matrix.c*p.y+matrix.e,y:matrix.b*p.x+matrix.d*p.y+matrix.f};});await page.mouse.click(point.x,point.y);await expect(relations.locator('.account-graph-selection-panel')).toContainText(`UD manual ${kind}`);
+   const edge=relations.locator(`.react-flow__edge[aria-label*="UD manual ${kind}"]`);await expect(edge).toHaveCount(1);await edge.focus();await page.keyboard.press('Enter');await expect(relations.locator('.account-graph-selection-panel')).toContainText(`UD manual ${kind}`);
    await relations.getByRole('button',{name:t('deleteRelation'),exact:true}).click();dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:t('cancel'),exact:true}).click();await expect(relations.locator('.react-flow__edge')).toHaveCount(originalEdges+1);await relations.getByRole('button',{name:t('deleteRelation'),exact:true}).click();dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:t('deleteRelation'),exact:true}).click();await expect(dialog).toBeHidden();await expect(relations.locator('.react-flow__edge')).toHaveCount(originalEdges);await page.reload();await expect(relations.locator('.react-flow__edge')).toHaveCount(originalEdges);
   }
   await receipt(info,['UD06'],{locale});
  });
 }
+
+for(const locale of ['zh-CN','en'] as const)for(const width of [390,1920])test(`${locale} ${width} UD11 lazy loading resource error and reload`,async({browser},info)=>{
+ const baseURL=String(info.project.use.baseURL),t=tFor(locale),pattern=/\/assets\/account-family-graph-view-[^/]+\.js(?:\?|$)/;
+ const loadingContext=await browser.newContext({baseURL,viewport:{width,height:1080}});let release!:()=>void;const held=new Promise<void>(resolve=>{release=resolve;});
+ try{
+  const page=await loadingContext.newPage();await page.route(pattern,async route=>{await held;await route.continue();});await start(page,locale);await page.locator('.asset-summary-card').filter({hasText:names.ordinary}).click();await expect(page.locator('.unified-detail-relations').getByRole('status')).toContainText(t('loading'));await screenshot(page,info,'graph-loading');release();await expect(page.locator('.unified-detail-relations .graph')).toHaveAttribute('data-layout-ready','true');await screenshot(page,info,'graph-loaded');
+ }finally{release();await loadingContext.close();}
+ const errorContext=await browser.newContext({baseURL,viewport:{width,height:1080}});
+ try{
+  const page=await errorContext.newPage();await page.route(pattern,route=>route.abort('failed'));await start(page,locale);await page.locator('.asset-summary-card').filter({hasText:names.ordinary}).click();await expect(page.locator('[data-testid="route-load-error"]')).toHaveAttribute('data-error-kind','module-load');await screenshot(page,info,'graph-resource-error');await page.unroute(pattern);await page.getByRole('button',{name:t('pageLoadErrorReload'),exact:true}).click();await expect(page.getByRole('heading',{level:1})).toContainText(names.ordinary);await expect(page.locator('.unified-detail-relations .graph')).toHaveAttribute('data-layout-ready','true');await expect(page.locator('.unified-detail-description img')).toHaveCount(3);await screenshot(page,info,'graph-resource-reloaded');
+ }finally{await errorContext.close();}
+ await receipt(info,['UD11'],{locale,width,states:['loading','resource-error','reloaded']});
+});
+
+for(const locale of ['zh-CN','en'] as const)test(`${locale} UD11 specialized action dialogs at four widths`,async({page},info)=>{
+ const t=tFor(locale);await start(page,locale);
+ for(const width of [390,768,1280,1920]){
+  await page.setViewportSize({width,height:1080});await enter(page,'item');await page.getByRole('button',{name:t('detailRecordActivity'),exact:true}).click();let dialog=page.getByRole('dialog');await screenshot(page,info,`item-activity-${width}`);
+  const fields=await dialog.locator('.field').evaluateAll(elements=>elements.map(el=>{const r=el.getBoundingClientRect();return {w:r.width,left:r.left,right:r.right};}));for(const field of fields)expect(field.w).toBeGreaterThanOrEqual(width===390?200:150);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
+  await dialog.getByRole('button',{name:t('loan'),exact:true}).click();await expect(dialog.getByRole('alert')).toContainText(t('borrowerRequired'));await screenshot(page,info,`item-activity-error-${width}`);await dialog.getByRole('button',{name:t('close'),exact:true}).click();
+  await enter(page,'subscription');await page.getByRole('button',{name:t('renew'),exact:true}).click();dialog=page.getByRole('dialog');await screenshot(page,info,`subscription-activity-${width}`);const amount=await dialog.locator('.renewal-amount-field input').boundingBox();expect(amount!.width).toBeGreaterThanOrEqual(150);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);await dialog.getByRole('button',{name:t('close'),exact:true}).click();
+  await enter(page,'ordinary');await page.getByRole('button',{name:t('addRelation'),exact:true}).click();dialog=page.getByRole('dialog');await selectOption(page,'#detail-relation-target','UD Neighbor 2 / 关联资料 2');await dialog.locator('#detail-relation-label').fill('UD link 2');await dialog.getByRole('button',{name:t('save'),exact:true}).click();await expect(dialog.getByRole('alert')).toBeVisible();await screenshot(page,info,`relation-error-${width}`);await dialog.getByRole('button',{name:t('cancel'),exact:true}).click();
+ }
+ await receipt(info,['UD06','UD08','UD09','UD11'],{locale,actionWidths:[390,768,1280,1920]});
+});
+
+for(const locale of ['zh-CN','en'] as const)test(`${locale} UD12 ordinary private and overview graphs retain default labels`,async({page},info)=>{
+ const t=tFor(locale),master='UD-Fictional-Account-Master-2026';await start(page,locale);await page.goto('/accounts');await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();await page.locator('.account-toolbar-actions').getByRole('button',{name:t('add'),exact:true}).click();await page.locator('#password-vault-entry-title').fill('UD normal account');await page.locator('#password-vault-entry-username').fill('ud-normal@example.test');await page.locator('#password-vault-entry-password').fill('UD fictional secret only');await page.getByRole('dialog').getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('dialog')).toBeHidden();
+ const card=page.locator('.compact-account-card').filter({hasText:'UD normal account'});await card.locator('.compact-account-title-block').click();await expect(page.locator('.graph')).toHaveAttribute('data-layout-ready','true');await expect(page.locator('.graph.account-graph-wrap-labels')).toHaveCount(0);await screenshot(page,info,'ordinary-account-graph');await page.locator('.topbar-back-link').click();
+ await importVisualKdbxEntries(page,t,[{title:'UD private account',username:'ud-private@example.test',password:'UD fictional private secret',linkedAssetIds:[ids.ordinary]}]);await page.locator('.compact-account-card').filter({hasText:'UD private account'}).locator('.compact-account-title-block').click();await expect(page.locator('.graph')).toHaveAttribute('data-layout-ready','true');await expect(page.locator('.graph.account-graph-wrap-labels')).toHaveCount(0);await expect(page.locator('.graph .react-flow__node')).toHaveCount(2);await screenshot(page,info,'private-account-graph');
+ await page.goto('/');await expect(page.locator('.overview-page .graph')).toHaveAttribute('data-layout-ready','true');await expect(page.locator('.overview-page .graph.account-graph-wrap-labels')).toHaveCount(0);await screenshot(page,info,'overview-default-labels');await page.goto('/accounts');await page.locator('.account-toolbar-actions').getByRole('button',{name:t('pwVaultLock'),exact:true}).click();await expect(page.locator('#password-vault-unlock-master')).toBeVisible();await screenshot(page,info,'account-locked-after-detail');await receipt(info,['UD12'],{locale});
+});
 
 test('UD05 real graph fit zoom fullscreen node navigation and UD07 complete history',async({page},info)=>{
  const t=tFor('en');await page.setViewportSize({width:1920,height:1080});await start(page,'en');

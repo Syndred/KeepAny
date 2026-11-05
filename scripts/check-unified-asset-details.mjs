@@ -19,18 +19,20 @@ if(run.error||run.status!==0){writeFileSync(join(output,'result.json'),JSON.stri
 else{
  const data=JSON.parse(readFileSync(report,'utf8')),tests=[];
  const walk=suites=>suites.forEach(suite=>{for(const spec of suite.specs??[])tests.push(...spec.tests);walk(suite.suites??[]);});walk(data.suites);
- if(data.errors?.length||tests.length!==26||tests.some(test=>test.status!=='expected'||test.results.length!==1||test.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
+ if(data.errors?.length||tests.length!==34||tests.some(test=>test.status!=='expected'||test.results.length!==1||test.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
  const receipts=tests.flatMap(test=>test.results[0].attachments??[]).filter(attachment=>attachment.name==='contract-results.json').map(attachment=>JSON.parse(attachment.path?readFileSync(attachment.path,'utf8'):Buffer.from(attachment.body,'base64').toString()));
  for(const id of ['UD01','UD02','UD03','UD04','UD05','UD06','UD07','UD08','UD09','UD10','UD11','UD12'])if(!receipts.some(receipt=>receipt.ids.includes(id)))throw Error(`Missing ${id}`);
  if(receipts.some(receipt=>receipt.candidate!==identity||receipt.result!=='passed'))throw Error('Candidate mismatch.');
- for(const locale of ['zh-CN','en'])for(const width of [390,768,1280,1920,1991,2262])if(!receipts.some(receipt=>receipt.locale===locale&&receipt.width===width))throw Error(`Missing ${locale}/${width}`);
+ for(const locale of ['zh-CN','en'])for(const width of [390,768,1280,1920,1991,2262])if(!receipts.some(receipt=>receipt.matrix&&receipt.locale===locale&&receipt.width===width))throw Error(`Missing ${locale}/${width}`);
+ for(const locale of ['zh-CN','en'])for(const width of [390,1920])if(!receipts.some(receipt=>receipt.locale===locale&&receipt.width===width&&['loading','resource-error','reloaded'].every(state=>receipt.states?.includes(state))))throw Error(`Missing loading/error/reload ${locale}/${width}`);
  const screenshots=tests.flatMap(test=>test.results[0].attachments??[]).filter(attachment=>attachment.contentType==='image/png');
  if(screenshots.length<200||screenshots.some(attachment=>!attachment.path||!existsSync(attachment.path)))throw Error('Incomplete screenshot evidence.');
  for(const test of tests){
   const receipt=test.results[0].attachments?.find(attachment=>attachment.name==='contract-results.json');
   if(!receipt)throw Error('Test has no contract receipt.');
   const value=JSON.parse(receipt.path?readFileSync(receipt.path,'utf8'):Buffer.from(receipt.body,'base64').toString());
-  if(value.width)for(const kind of ['ordinary','item','subscription','wallet'])for(const state of ['default','description','history','hover','focus','pressed','editor'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${kind}-${state}.png`))throw Error(`Missing ${value.locale}/${value.width}/${kind}/${state}`);
+  if(value.matrix)for(const kind of ['ordinary','item','subscription','wallet'])for(const state of ['default','description','history','hover','focus','pressed','editor'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${kind}-${state}.png`))throw Error(`Missing ${value.locale}/${value.width}/${kind}/${state}`);
+  if(value.actionWidths)for(const width of [390,768,1280,1920])for(const state of ['item-activity','item-activity-error','subscription-activity','relation-error'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${state}-${width}.png`))throw Error(`Missing ${value.locale}/${state}/${width}`);
  }
  writeFileSync(join(output,'visual-manifest.json'),JSON.stringify(screenshots.map(attachment=>({name:attachment.name,path:attachment.path,sha256:hash(readFileSync(attachment.path))})),null,2));
  writeFileSync(join(output,'result.json'),JSON.stringify({status:'machine-checks-passed',candidate:identity,tests:tests.length,screenshots:screenshots.length,manualVisual:'separate',controller:'separate',independentReview:'separate'},null,2));

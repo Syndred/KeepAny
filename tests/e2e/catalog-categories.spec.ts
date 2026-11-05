@@ -197,17 +197,14 @@ for (const locale of ["zh-CN", "en"] as const)
 		await editor.getByRole("button", { name: t("save"), exact: true }).click();
 		await expect(editor).toBeHidden();
 		await page.reload();
-		await expect(page.locator(".catalog-record-notes")).toHaveText(
+		await expect(page.locator(".unified-detail-description .unified-detail-text")).toHaveText(
 			"Synthetic note stays local.",
 		);
-		await expect(page.locator(".catalog-record-info a")).toHaveAttribute(
+		await expect(page.locator(".unified-detail-info .unified-detail-highlight a")).toHaveAttribute(
 			"href",
 			"https://example.test/collection",
 		);
-		await page
-			.getByRole("link", { name: t("back"), exact: true })
-			.last()
-			.click();
+		await page.locator('.topbar-back-link').click();
 		await newCategory(page, locale, "Second");
 		await newRecord(page, locale, "Second record");
 		let manager = await manage(page, locale);
@@ -375,10 +372,11 @@ for (const locale of ["zh-CN", "en"] as const)
 				.click();
 			await expect(page.getByRole("dialog")).toBeHidden();
 			await page.reload();
-			await expect(page.locator(".catalog-record-info dl")).toHaveCSS(
+			await expect(page.locator(".unified-detail-info dl")).toHaveCSS(
 				"display",
-				"grid",
+				"block",
 			);
+			await expect(page.locator('.unified-detail-info dl > div').first()).toHaveCSS('display','grid');
 			const actions = page.locator(
 				".catalog-record-detail .page-header > .actions",
 			);
@@ -396,7 +394,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				path: info.outputPath("detail-refreshed-long.png"),
 				fullPage: true,
 			});
-			await page.locator(".catalog-record-extra > summary").click();
+			await expect(page.locator(".unified-asset-detail details, .unified-asset-detail summary")).toHaveCount(0); await page.locator(".unified-detail-description").scrollIntoViewIfNeeded();
 			await noOverflow(page);
 			await page.screenshot({
 				path: info.outputPath("detail-expanded.png"),
@@ -434,56 +432,60 @@ test("CAT13 pictures, connections, cancel and recycle-bin restore stay usable", 
 		.locator(".catalog-record-card")
 		.filter({ hasText: "Photograph" })
 		.click();
-	await page.locator(".catalog-record-extra > summary").click();
+	await expect(page.locator(".unified-asset-detail details, .unified-asset-detail summary")).toHaveCount(0); await page.locator(".unified-detail-description").scrollIntoViewIfNeeded();
 	await page
 		.locator('input[type="file"]')
 		.setInputFiles(resolve("apps/web/public/samples/logo.png"));
-	await expect(page.locator(".catalog-images img")).toHaveCount(1);
-	const form = page.locator(".catalog-relation-form");
+	await expect(page.getByRole('dialog').locator('.image-preview')).toBeVisible();
+	await page.getByRole('dialog').getByRole('button',{name:'Confirm',exact:true}).click();
+	await expect(page.getByRole('dialog')).toBeHidden();
+	await expect(page.locator(".unified-detail-description img")).toHaveCount(1);
+	await page.getByRole('button',{name:'Add connection',exact:true}).click();
+	let form = page.getByRole('dialog');
 	await form.getByRole("combobox").click();
 	await page.getByRole("option", { name: "Related note", exact: true }).click();
 	await form.getByRole("textbox").fill("Reference");
 	await form
-		.getByRole("button", { name: "Add connection", exact: true })
+		.getByRole("button", { name: "Save", exact: true })
 		.click();
-	await expect(page.locator(".catalog-related-row")).toHaveCount(1);
+	await expect(form).toBeHidden();
+	await expect(page.locator('.unified-detail-relations .graph')).toHaveAttribute('data-layout-ready','true');
+	await expect(page.locator(".unified-detail-relations .react-flow__edge")).toHaveCount(1);
+	await page.getByRole('button',{name:'Add connection',exact:true}).click();form=page.getByRole('dialog');
 	await form.getByRole("combobox").click();
 	await page.getByRole("option", { name: "Related note", exact: true }).click();
 	await form.getByRole("textbox").fill("Reference");
 	await form
-		.getByRole("button", { name: "Add connection", exact: true })
+		.getByRole("button", { name: "Save", exact: true })
 		.click();
 	await expect(page.getByRole("alert")).toBeVisible();
-	await expect(page.locator(".catalog-related-row")).toHaveCount(1);
+	await expect(page.locator(".unified-detail-relations .react-flow__edge")).toHaveCount(1);
 	await page.screenshot({
 		path: info.outputPath("populated-details.png"),
 		fullPage: true,
 	});
-	await page
-		.locator(".catalog-related-row")
-		.getByRole("button", { name: "Remove", exact: true })
-		.click();
+	await form.getByRole('button',{name:'Cancel',exact:true}).click();
+	await page.locator('.unified-detail-relations .react-flow__edge').focus();await page.keyboard.press('Enter');
+	await page.getByRole('button',{name:text('en','deleteRelation'),exact:true}).click();
 	await page
 		.getByRole("dialog")
 		.getByRole("button", { name: "Cancel", exact: true })
 		.click();
-	await expect(page.locator(".catalog-related-row")).toHaveCount(1);
-	await page
-		.locator(".catalog-related-row")
-		.getByRole("button", { name: "Remove", exact: true })
-		.click();
+	await expect(page.locator(".unified-detail-relations .react-flow__edge")).toHaveCount(1);
+	await page.getByRole('button',{name:text('en','deleteRelation'),exact:true}).click();
 	await page
 		.getByRole("dialog")
-		.getByRole("button", { name: "Remove", exact: true })
+		.getByRole("button", { name: text('en','deleteRelation'), exact: true })
 		.click();
-	await expect(page.locator(".catalog-related-row")).toHaveCount(0);
+	await expect(page.locator(".unified-detail-relations .react-flow__edge")).toHaveCount(0);
 	await page
-		.locator(".catalog-images")
+		.locator(".unified-detail-description")
 		.getByRole("button", { name: "Remove image", exact: true })
 		.click();
-	await expect(page.locator(".catalog-images img")).toHaveCount(0);
+	await expect(page.locator(".unified-detail-description img")).toHaveCount(0);
+	await page.getByRole('button',{name:text('en','moreActions'),exact:true}).click();
 	await page
-		.getByRole("button", { name: text("en", "delete"), exact: true })
+		.getByRole("menuitem", { name: text("en", "delete"), exact: true })
 		.click();
 	await page
 		.getByRole("dialog")
@@ -492,8 +494,9 @@ test("CAT13 pictures, connections, cancel and recycle-bin restore stay usable", 
 	await expect(
 		page.getByRole("heading", { level: 1, name: "Photograph" }),
 	).toBeVisible();
+	await page.getByRole('button',{name:text('en','moreActions'),exact:true}).click();
 	await page
-		.getByRole("button", { name: text("en", "delete"), exact: true })
+		.getByRole("menuitem", { name: text("en", "delete"), exact: true })
 		.click();
 	await page
 		.getByRole("dialog")
@@ -596,11 +599,11 @@ test("CAT08 legacy project/domain and category backup remain lossless", async ({
 		.locator(".catalog-record-card")
 		.filter({ hasText: "example.test" })
 		.click();
-	await expect(
-		page.getByRole("button", { name: "Move to trash", exact: true }),
-	).toHaveCount(0);
-	await page.locator(".catalog-record-extra > summary").click();
-	await expect(page.locator(".catalog-relation-form")).toHaveCount(0);
+	await page.getByRole('button',{name:text('en','moreActions'),exact:true}).click();
+	await expect(page.getByRole('menuitem',{name:'Move to trash',exact:true})).toBeDisabled();
+	await page.keyboard.press('Escape');
+	await expect(page.locator(".unified-asset-detail details, .unified-asset-detail summary")).toHaveCount(0); await page.locator(".unified-detail-description").scrollIntoViewIfNeeded();
+	await expect(page.locator('.unified-detail-relations').getByRole('button',{name:'Add connection',exact:true})).toHaveCount(0);
 	await page.getByRole("button", { name: "Edit", exact: true }).click();
 	const editor = page.getByRole("dialog");
 	await editor.locator("#catalog-record-name").fill("Independent display name");
@@ -626,7 +629,7 @@ test("CAT08 legacy project/domain and category backup remain lossless", async ({
 		.fill("Long legacy name preserved");
 	await editor.getByRole("button", { name: "Save", exact: true }).click();
 	await expect(editor).toBeHidden();
-	await expect(page.locator(".catalog-record-notes")).toHaveText(
+	await expect(page.locator(".unified-detail-description .unified-detail-text")).toHaveText(
 		"Long legacy name preserved",
 	);
 	await openBackupPage(page);
@@ -669,3 +672,4 @@ test("CAT08 legacy project/domain and category backup remain lossless", async ({
 		contentType: "application/json",
 	});
 });
+
