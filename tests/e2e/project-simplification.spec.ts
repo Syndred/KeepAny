@@ -99,6 +99,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		await form.locator("#name").fill("Updated basic project"); await form.locator("#notes").fill("Updated ordinary note");
 		await form.locator("#tags").fill("legacy, retained");
 		await form.getByRole("button", { name: t("save"), exact: true }).click(); await expect(form).toHaveCount(0); await page.reload();
+		await openProjectDetails(page);
 		await expect(page.locator(".asset-project-profile-card")).toContainText("Updated ordinary note");
 		const result = await archive();
 		const { name, notes, tags, updatedAt, ...retained } = result.asset;
