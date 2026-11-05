@@ -20,6 +20,7 @@ type AccountNode = Node<{
 }, "accountCard">;
 type Bookmark = { id: string; zoom: number };
 type Props = {
+	fitAllOnOpen?: boolean;
 	assets: Asset[];
 	relations: Relation[];
 	matches: Set<string>;
@@ -220,7 +221,7 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 				minZoom={0.01} maxZoom={2} defaultViewport={{ x: 0, y: 0, zoom: 1 }}
 				nodesFocusable={false} edgesFocusable onEdgesChange={changeEdges} onPaneClick={() => props.onSelectEdge(null)}
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
-				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={rootId} fitWholeGraph={props.scope === "all" || props.root?.kind !== "account"} restore={restore} onSize={setSize} onReady={setReadyKey} />
+				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={rootId} fitWholeGraph={props.fitAllOnOpen || props.scope === "all" || props.root?.kind !== "account"} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				{navigationHost && createPortal(<><GraphControls layout={layout} rootId={rootId} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={rootId} />}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>

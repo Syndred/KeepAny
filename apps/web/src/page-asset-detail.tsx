@@ -1283,7 +1283,7 @@ function LegacyAssetDetail() {
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
 							</div> : relations.length >= 5 ? relationSearch : null}
-							<Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? visibleRelations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense>
+							<Suspense fallback={<p role="status">{t("loading")}</p>}><AssetRelationGraph fitAllOnOpen={kind === "account"} root={asset} assets={[asset, ...graphRelated]} relations={displayedFamily?.relations ?? visibleRelations} matches={graphMatches} selectedEdgeId={selectedGraphEdgeId} onSelectEdge={setSelectedGraphEdgeId} onVisit={visitRelation} onDeleteRelations={(items) => { setRelationDeleteError(""); setRelationToDelete(items); }} /></Suspense>
 							{kind === "account" ? visibleRelations.length > 0 && <details className="account-relation-details" open={relationDetailsOpen} onToggle={(event) => setRelationDetailsOpen(event.currentTarget.open)}>
 								<summary>{t("accountGraphDetails", { count: visibleRelations.length })}</summary>
 								{relationList}

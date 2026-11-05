@@ -5,6 +5,7 @@ import {resources} from "../../apps/web/src/i18n";
 import {selectChoice} from "./helpers/select-choice";
 import {portableCandidate} from "./helpers/portable-candidate";
 import {importVisualKdbxEntries} from "./fixtures/password-smart-import-visual";
+import {waitForAccountGraphLayout} from "./helpers/account-graph";
 
 const output=resolve(process.env.KEEPANY_ACCOUNT_DETAIL_EVIDENCE??"test-results/account-detail-approved/evidence");mkdirSync(output,{recursive:true});
 const master="SyntheticAccountDetail2026!", rootName="Synthetic Douyin";
@@ -27,7 +28,7 @@ async function setup(page:Page,t:T){
  await page.locator(`.compact-account-card[data-account-id="${root}"] .compact-account-title-block`).click();await expect(page.locator(".account-history-card")).toBeVisible();await page.locator(".account-graph-stage.is-ready").waitFor();
  return {root,template,phone,sameName};
 }
-async function screenshot(page:Page,name:string){const path=join(output,name+".png");await page.screenshot({path});return path}
+async function screenshot(page:Page,name:string){await waitForAccountGraphLayout(page);const path=join(output,name+".png");await page.screenshot({path});return path}
 async function addRelations(page:Page,t:T,ids:string[]){for(const id of ids){await page.locator("#account-relations").getByRole("button",{name:t("addRelation"),exact:true}).click();await selectChoice(page.locator("#relation-target"),{value:id});await page.locator("#relation-label").fill("Synthetic connection");await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0)}}
 
 for(const language of ["zh-CN","en"] as const){
@@ -65,6 +66,7 @@ for(const language of ["zh-CN","en"] as const){
    expect(dimensions.scrollWidth).toBeLessThanOrEqual(width+1);if(width>1000)expect(dimensions.scrollHeight).toBeLessThanOrEqual(dimensions.height+1);
    const left=await page.locator('.asset-detail-secondary').boundingBox(),relationCard=await page.locator('#account-relations').boundingBox(),relatedCard=await page.locator('.account-related-card').boundingBox();
    expect(Math.abs(left!.width-relationCard!.width)).toBeLessThanOrEqual(1);expect(relatedCard!.y).toBeGreaterThanOrEqual(relationCard!.y+relationCard!.height);
+   await expect.poll(()=>page.locator('.account-graph-stage').evaluate(stage=>{const frame=stage.getBoundingClientRect();return [...stage.querySelectorAll('.react-flow__node')].every(node=>{const r=node.getBoundingClientRect();return r.left>=frame.left-1&&r.right<=frame.right+1&&r.top>=frame.top-1&&r.bottom<=frame.bottom+1})})).toBe(true);
    shots.push(await screenshot(page,`default-${language}-${width}`));
    const copy=page.locator(".account-login-summary").getByRole("button",{name:t("pwVaultCopyUsername"),exact:true});await copy.scrollIntoViewIfNeeded();await copy.hover();shots.push(await screenshot(page,`hover-${language}-${width}`));await copy.focus();shots.push(await screenshot(page,`focus-${language}-${width}`));const r=await copy.boundingBox();await page.mouse.move(r!.x+r!.width/2,r!.y+r!.height/2);await page.mouse.down();shots.push(await screenshot(page,`pressed-${language}-${width}`));await page.mouse.up();if(await page.getByRole("dialog").count())await page.keyboard.press("Escape");
    const guide=page.locator(".account-graph-guide>summary");await guide.click();shots.push(await screenshot(page,`guide-${language}-${width}`));await guide.click();

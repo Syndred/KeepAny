@@ -76,13 +76,17 @@
 .account-login-value > div { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; min-height:44px; }
 .account-login-value > div > span:first-child,.account-login-url-value { min-width:0; overflow-wrap:anywhere; font-size:16px; }
 .account-login-url-value { color:var(--ink); text-decoration:none; }
+.account-login-url-value,.account-login-summary [data-login-username],.account-login-secret { max-height:4.5em; overflow:auto; }
 .account-login-url-value:hover { text-decoration:underline; text-underline-offset:3px; }
 .account-login-value .actions { flex:none; flex-wrap:nowrap; gap:4px; }
 .account-login-value .button.icon { flex:none; width:44px; height:44px; padding:0; box-shadow:none; }
 .account-login-value .button.icon svg { width:18px; height:18px; }
 .account-login-secret { white-space:pre-wrap; font-family:var(--font-mono,monospace); }
 .account-note-summary { padding:16px 18px; }
+.account-login-column > .account-note-summary { display:flex; flex-direction:column; flex:0 1 auto; min-height:85px; }
+.account-login-column > .account-note-summary h2 { flex:none; }
 .account-note-summary p { max-height:160px; overflow:auto; margin:10px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.account-login-column > .account-note-summary p { min-height:0; flex:1; }
 .account-history-card { display:flex; flex-direction:column; flex:1; min-height:100px; min-width:0; padding:16px 18px 10px; }
 .account-history-card > header { display:flex; flex:none; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
 .account-history-card > header > svg { color:var(--muted); }
