@@ -143,6 +143,8 @@ for (const locale of ['zh-CN', 'en'] as const) {
   await start(page,locale);await page.setViewportSize({width:1280,height:900});
   for(const route of ['/','/assets','/cards','/collections','/settings','/backup','/intake','/accounts']){
    await page.goto(route);await expect(page.getByRole('heading',{level:1}).first()).toBeVisible();
+   if(route==='/')await expect(page.locator('.overview-page .graph')).toHaveAttribute('data-layout-ready','true');
+   await page.evaluate(()=>document.fonts.ready);
    const palette=await page.evaluate(()=>{const values:Record<string,string>={};for(const name of ['--yellow','--yellow-soft','--accent','--accent-soft','--accent-hover']){const el=document.createElement('span');el.style.background=`var(${name})`;document.body.append(el);values[name]=getComputedStyle(el).backgroundColor;el.remove();}return values;});
    expect(Object.values(palette)).toEqual(Array(5).fill('rgb(255, 210, 76)'));
    await shot(page,info,`${locale}-theme-${route==='/'?'overview':route.slice(1)}`);
