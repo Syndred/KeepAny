@@ -97,14 +97,38 @@ for(const language of ["zh-CN","en"] as const){
    await expect.poll(()=>page.locator('.account-graph-stage').evaluate(stage=>{const frame=stage.getBoundingClientRect();return [...stage.querySelectorAll('.react-flow__node')].every(node=>{const r=node.getBoundingClientRect();return r.left>=frame.left-1&&r.right<=frame.right+1&&r.top>=frame.top-1&&r.bottom<=frame.bottom+1})})).toBe(true);
    shots.push(await screenshot(page,`default-${language}-${width}`));
    const copy=page.locator(".account-login-summary").getByRole("button",{name:t("pwVaultCopyUsername"),exact:true});await copy.scrollIntoViewIfNeeded();await copy.hover();shots.push(await screenshot(page,`hover-${language}-${width}`));await copy.focus();shots.push(await screenshot(page,`focus-${language}-${width}`));const r=await copy.boundingBox();await page.mouse.move(r!.x+r!.width/2,r!.y+r!.height/2);await page.mouse.down();shots.push(await screenshot(page,`pressed-${language}-${width}`));await page.mouse.up();if(await page.getByRole("dialog").count())await page.keyboard.press("Escape");
-   const guide=page.locator(".account-graph-guide>summary");await guide.click();shots.push(await screenshot(page,`guide-${language}-${width}`));await guide.click();
-   const details=page.locator(".account-relation-details>summary");await details.click();shots.push(await screenshot(page,`connections-${language}-${width}`));
-   expect(await page.locator('.account-relation-details').evaluate(e=>e.getBoundingClientRect().bottom<=e.closest('.asset-relations-card')!.getBoundingClientRect().bottom+1)).toBe(true);await details.click();
+   await expect(page.locator(".account-graph-guide,.account-relation-details")).toHaveCount(0);
    const expanded=page.locator(".account-graph-fullscreen");await expanded.click();await expect(expanded).toHaveAttribute("aria-pressed","true");shots.push(await screenshot(page,`fullscreen-${language}-${width}`));await page.keyboard.press("Escape");await expect(expanded).toHaveAttribute("aria-pressed","false");
   }
   await page.setViewportSize({width:1280,height:800});await page.locator(".page-header").getByRole("button",{name:t("edit"),exact:true}).click();await page.locator("#password-vault-entry-title").fill("Long account title · 很长的账号名称 ".repeat(5));await page.locator("#password-vault-entry-notes").fill("Long account notes / 很长的备注\n".repeat(100));await page.locator("#password-vault-entry-url").fill("https://account.example.test/"+"long-path-segment/".repeat(18));await save(page,t);
   for(const width of [390,768,1280,1920,1991]){await page.setViewportSize({width,height:width===1280?800:990});await page.evaluate(()=>scrollTo(0,0));shots.push(await screenshot(page,`long-${language}-${width}`));expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width+1);expect(await page.locator('.account-note-summary p').evaluate(e=>e.clientHeight)).toBeGreaterThanOrEqual(32);expect(await page.locator('.account-history-card').evaluate(e=>e.getBoundingClientRect().bottom<=e.closest('main')!.getBoundingClientRect().bottom+1)).toBe(true)}
   writeFileSync(join(output,`visual-${language}.json`),JSON.stringify({ids:["AS02","AS03","AS04"],candidate:portableCandidate(),screenshots:shots,status:"machine geometry only; manual review separate"},null,2));
+ });
+
+ test(`${language} RE01 RE02 RE03 removed controls and scrollable hidden history scrollbar`,async({page})=>{
+  await page.setViewportSize({width:1280,height:720});const ids=await setup(page,t);await addRelations(page,t,[ids.template]);
+  for(let version=1;version<=5;version++){
+   await page.locator('.page-header').getByRole('button',{name:t('edit'),exact:true}).click();
+   await page.locator('#password-vault-entry-notes').fill(`History version ${version}`);await save(page,t);
+  }
+  await expect(page.locator('.account-history-row')).toHaveCount(5);
+  await screenshot(page,`removed-controls-${language}`);
+  await expect.soft(page.locator('.account-graph-guide,.account-relation-details')).toHaveCount(0);
+  const list=page.locator('.account-history-list');
+  expect.soft(await list.evaluate(e=>getComputedStyle(e).scrollbarWidth)).toBe('none');
+  expect.soft(await list.evaluate(e=>getComputedStyle(e,'::-webkit-scrollbar').display)).toBe('none');
+  expect(await list.evaluate(e=>e.scrollHeight>e.clientHeight)).toBe(true);
+  await list.focus();await page.keyboard.press('End');await expect.poll(()=>list.evaluate(e=>e.scrollTop)).toBeGreaterThan(0);
+  const oldest=page.locator('.account-history-row').last().getByRole('button');await expect(oldest).toBeInViewport();
+  await screenshot(page,`history-end-${language}`);
+  await oldest.click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page.locator('.account-note-summary')).toContainText('History version 5');
+  await list.focus();await page.keyboard.press('Home');await expect.poll(()=>list.evaluate(e=>e.scrollTop)).toBe(0);
+  await list.hover();await page.mouse.wheel(0,1000);await expect.poll(()=>list.evaluate(e=>e.scrollTop)).toBeGreaterThan(0);
+  await oldest.click();await page.getByRole('dialog').getByRole('button',{name:t('pwVaultHistoryRestore'),exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.account-note-summary')).toContainText('Original account notes');await expect(page.locator('.account-history-row')).toHaveCount(6);
+  await page.reload();await page.locator('#password-vault-unlock-master').fill(master);await page.getByRole('button',{name:t('accountUnlockAction'),exact:true}).click();await expect(page.locator('.account-note-summary')).toContainText('Original account notes');
+  await expect(page.locator('.account-history-row')).toHaveCount(6);await expect(page.locator('.account-graph-guide,.account-relation-details')).toHaveCount(0);
+  writeFileSync(join(output,`removals-${language}.json`),JSON.stringify({ids:['RE01','RE02','RE03'],candidate:portableCandidate(),status:'passed'},null,2));
  });
 
  test(`${language} AS05 AS09 AS10 AS11 private account history and template navigation`,async({page})=>{
