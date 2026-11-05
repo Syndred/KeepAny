@@ -2,14 +2,14 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { readCandidate, selectCandidate } from './lib/portable-candidate.mjs';
 const output=resolve(process.argv[2]??'test-results/unified-asset-details-ci');
 if(existsSync(output)&&readdirSync(output).length)throw Error('Choose a new evidence directory; existing failures must be preserved.');
 mkdirSync(output,{recursive:true});
 const candidate=process.env.KEEPANY_WEB_CANDIDATE;
-if(!candidate)throw Error('KEEPANY_WEB_CANDIDATE is required.');
-const manifest=JSON.parse(readFileSync(join(candidate,'CANDIDATE.json'),'utf8'));
+const manifest=candidate?JSON.parse(readFileSync(join(candidate,'CANDIDATE.json'),'utf8')):readCandidate(selectCandidate()).release;
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
-for(const file of manifest.webFiles)if(hash(readFileSync(join(candidate,file.path)))!==file.sha256)throw Error(`Candidate changed: ${file.path}`);
+if(candidate)for(const file of manifest.webFiles)if(hash(readFileSync(join(candidate,file.path)))!==file.sha256)throw Error(`Candidate changed: ${file.path}`);
 const identity=manifest.webFiles.find(file=>file.path==='index.html')?.sha256;
 if(!identity)throw Error('Missing compiled identity.');
 writeFileSync(join(output,'candidate.json'),JSON.stringify({sourceCommit:manifest.sourceCommit,sourceDirty:manifest.sourceDirty,indexSha256:identity,specSha256:hash(readFileSync('tests/e2e/unified-asset-details.spec.ts'))},null,2));
@@ -19,12 +19,19 @@ if(run.error||run.status!==0){writeFileSync(join(output,'result.json'),JSON.stri
 else{
  const data=JSON.parse(readFileSync(report,'utf8')),tests=[];
  const walk=suites=>suites.forEach(suite=>{for(const spec of suite.specs??[])tests.push(...spec.tests);walk(suite.suites??[]);});walk(data.suites);
- if(data.errors?.length||tests.length<17||tests.some(test=>test.status!=='expected'||test.results.length!==1||test.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
+ if(data.errors?.length||tests.length!==26||tests.some(test=>test.status!=='expected'||test.results.length!==1||test.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
  const receipts=tests.flatMap(test=>test.results[0].attachments??[]).filter(attachment=>attachment.name==='contract-results.json').map(attachment=>JSON.parse(attachment.path?readFileSync(attachment.path,'utf8'):Buffer.from(attachment.body,'base64').toString()));
- for(const id of ['UD01','UD02','UD03','UD04','UD05','UD07','UD10','UD11'])if(!receipts.some(receipt=>receipt.ids.includes(id)))throw Error(`Missing ${id}`);
+ for(const id of ['UD01','UD02','UD03','UD04','UD05','UD06','UD07','UD08','UD09','UD10','UD11','UD12'])if(!receipts.some(receipt=>receipt.ids.includes(id)))throw Error(`Missing ${id}`);
  if(receipts.some(receipt=>receipt.candidate!==identity||receipt.result!=='passed'))throw Error('Candidate mismatch.');
  for(const locale of ['zh-CN','en'])for(const width of [390,768,1280,1920,1991,2262])if(!receipts.some(receipt=>receipt.locale===locale&&receipt.width===width))throw Error(`Missing ${locale}/${width}`);
  const screenshots=tests.flatMap(test=>test.results[0].attachments??[]).filter(attachment=>attachment.contentType==='image/png');
  if(screenshots.length<200||screenshots.some(attachment=>!attachment.path||!existsSync(attachment.path)))throw Error('Incomplete screenshot evidence.');
+ for(const test of tests){
+  const receipt=test.results[0].attachments?.find(attachment=>attachment.name==='contract-results.json');
+  if(!receipt)throw Error('Test has no contract receipt.');
+  const value=JSON.parse(receipt.path?readFileSync(receipt.path,'utf8'):Buffer.from(receipt.body,'base64').toString());
+  if(value.width)for(const kind of ['ordinary','item','subscription','wallet'])for(const state of ['default','description','history','hover','focus','pressed','editor'])if(!test.results[0].attachments.some(attachment=>attachment.name===`${kind}-${state}.png`))throw Error(`Missing ${value.locale}/${value.width}/${kind}/${state}`);
+ }
+ writeFileSync(join(output,'visual-manifest.json'),JSON.stringify(screenshots.map(attachment=>({name:attachment.name,path:attachment.path,sha256:hash(readFileSync(attachment.path))})),null,2));
  writeFileSync(join(output,'result.json'),JSON.stringify({status:'machine-checks-passed',candidate:identity,tests:tests.length,screenshots:screenshots.length,manualVisual:'separate',controller:'separate',independentReview:'separate'},null,2));
 }
