@@ -83,6 +83,27 @@ describe("single account and optional credential save", () => {
 		expect(copied.profile).not.toHaveProperty("sourceEntryId");
 		expect(copied.draft).toMatchObject({ username: "", password: "", notes: "", linkedAssetIds: [] });
 	});
+	it("records explicit card provenance ahead of legacy entry provenance only in KDBX", async () => {
+        const sourceCardId = crypto.randomUUID();
+        const copied = accountFromTemplate({name:"Example service",url:"https://example.test/",category:"other",sourceCardId,sourceEntryId:"shared-entry"});
+        expect(copied.draft.templateSourceId).toBe(`card:${sourceCardId}`);
+        expect(copied.profile).not.toHaveProperty("sourceCardId");
+        expect(copied.profile).not.toHaveProperty("templateSourceId");
+        const {session,repository,storage}=await fixture();
+        const target=new VaultSession(new Storage());
+        try {
+            await saveAccountEntry({...copied,draft:{...copied.draft,username:"copy@example.test"},session,progress:progress(),label,repository});
+            const id=session.getSnapshot().entries[0].id;
+            const bytes=await session.exportKdbx();
+            await target.initialize();await target.importKdbx(bytes,master);
+            expect(target.readEntry(id).templateSourceId).toBe(`card:${sourceCardId}`);
+            session.lock();await session.unlock(master);
+            expect(session.getSnapshot().entries[0].templateSourceId).toBe(`card:${sourceCardId}`);
+            const ordinary=await repository.list<Asset>("asset");
+            expect(JSON.stringify(ordinary)).not.toContain(sourceCardId);
+            expect(storage.record).not.toBeNull();
+        } finally {session.lock();target.lock();await repository.close();}
+    },60000);
 	it("creates an independent account from only the three template fields", async () => {
 		const source = { ...profile(), ...draft, name: draft.title, username: "source@example.test", notes: "Do not copy" };
 		const first = accountFromTemplate(source), second = accountFromTemplate(source);

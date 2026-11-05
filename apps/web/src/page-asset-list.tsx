@@ -501,9 +501,9 @@ export function AssetList() {
 }
 
 export type AccountListFilters = { search: string; category: string; tag: string };
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions, accountCardGroupIds }: {
 	toolbarActions?: ReactNode;
-	accountExtras?: Asset[]; filterAccountId?: string;
+	accountExtras?: Asset[]; filterAccountId?: string; accountCardGroupIds?: ReadonlyMap<string, string>;
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
 	onAccountFiltersChange?: (filters: AccountListFilters) => void;
@@ -605,13 +605,20 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		(a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }),
 	);
 	const normalizedSearch = `${search} ${accountQuery}`.trim().toLocaleLowerCase();
-	const assets = allKindAssets.filter(
+	const matchingAssets = allKindAssets.filter(
 		(a) =>
             (!filterAccountId || a.id === filterAccountId) &&
 			(!category || a.category === category || kind === "account" && category === "other" && !a.category || !!pendingCategory && [pendingCategory.beforeName, pendingCategory.afterName].includes(a.category)) &&
 			(!tag || a.tags.includes(tag)) &&
 			[search, accountQuery].every((query) => matchesAssetSearch(a, query) || !!accountSearchExtras?.get(a.id)?.includes(query.trim().toLocaleLowerCase())),
 	);
+ const seenAccountGroups = new Set<string>();
+ const assets = matchingAssets.filter(asset => {
+  const group = kind === "account" ? accountCardGroupIds?.get(asset.id) : undefined;
+  if (!group) return true;
+  if (seenAccountGroups.has(group)) return false;
+  seenAccountGroups.add(group); return true;
+ });
 	const restored = useRef("");
 	useEffect(() => {
 		if (data.loading || restored.current === kind) return;
