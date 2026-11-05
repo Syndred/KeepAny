@@ -1,3 +1,4 @@
+import { openReminderCenter } from "./reminder-navigation";
 import { Textarea } from "./components/ui/textarea";
 import { Input } from "./components/ui/input";
 import { DatePicker } from "./components/ui/date-picker";
@@ -689,18 +690,7 @@ export function AiWorkspaceDialog({
 									<span>{result.title}</span>
 								</Link></TextLink>
 							) : result.task ? (
-								<TextLink asChild><Link
-									to="/tasks"
-									hash={`${result.task ? "task-" : "finance-entry-"}${result.id}`}
-									onClick={() => {
-										requestSearchLocation(
-											`${result.task ? "task-" : "finance-entry-"}${result.id}`,
-										);
-										onClose();
-									}}
-								>
-									<span>{result.title}</span>
-								</Link></TextLink>
+								<button type="button" className="text-link reminder-entry-button" onClick={() => { onClose(); requestAnimationFrame(() => openReminderCenter({ taskId: result.task?.id ?? result.id })); }}><span>{result.title}</span></button>
 							) : <span>{result.title}</span>}
 							{result.asset?.dueDate && <small>{result.asset.dueDate}</small>}
 						</div>
@@ -929,9 +919,7 @@ export function AiWorkspaceDialog({
 							</>
 						) : (
 							<>
-								<TextLink asChild><Link to="/tasks" onClick={onClose}>
-									{t("aiActionSaved")}
-								</Link></TextLink>
+								<button type="button" className="text-link reminder-entry-button" onClick={() => { onClose(); requestAnimationFrame(() => openReminderCenter({ taskId: savedTask?.id })); }}>{t("aiActionSaved")}</button>
 								{savedTask && (
 									<Button disabled={saving} onClick={() => void undo()}>
 										{t("aiUndoAction")}

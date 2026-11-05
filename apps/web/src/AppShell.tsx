@@ -1,3 +1,6 @@
+import { ReminderCenter } from "./ReminderCenter";
+import { openReminderCenter } from "./reminder-navigation";
+import "./reminder-entry.css";
 import { Input } from "./components/ui/input";
 import { catalogCategories, catalogCategoryLabel } from './catalog-records';
 import { readCatalogRecordReturn } from './workspace-return';
@@ -56,6 +59,7 @@ export function AppShell() {
 	const topSearchPanelRef = useRef<HTMLDivElement>(null);
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
 	const [toast, setToast] = useState("");
+	const [remindersOpen, setRemindersOpen] = useState(false);
 	const [feedbackTarget, setFeedbackTarget] = useState<HTMLElement | null>(null);
 	const [ai, setAi] = useState(false);
 	const [mobile, setMobile] = useState(false);
@@ -125,16 +129,8 @@ export function AppShell() {
 		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget, pendingAccountName, setPendingAccountName }),
 		[data, search, pendingAccountName],
 	);
-	const openTasks = data.tasks.filter((x) => !x.done && !x.deleted).length;
 	const navigation: SortableNavItem[] = [
 		{ id: "overview", to: "/", label: t("overview"), icon: LayoutDashboard },
-		{
-			id: "tasks",
-			to: "/tasks",
-			label: t("tasks"),
-			icon: Bell,
-			badge: openTasks,
-		},
 		{ id: "assets", to: "/assets", label: t("assetsWorkspace"), icon: Layers, active: workspacePathGroup(pathname) === "assets" },
 		{ id: "accounts", to: "/accounts", label: t("accountsWorkspace"), icon: UserRound, active: workspacePathGroup(pathname) === "accounts" },
 	];
@@ -142,7 +138,7 @@ export function AppShell() {
 	const collections = readCollections(data.preferences.find((preference) => preference.id === COLLECTIONS_PREFERENCE_ID)?.value);
 	const currentKind = kinds.find((kind) => pathname.startsWith(`/assets/${kind}`));
 	const currentHeading = pathname === "/" ? t("overview") : currentKind ? t(currentKind) :
-		pathname === "/tasks" ? t("tasks") : pathname === "/intake" ? t("intake") :
+		pathname === "/intake" ? t("intake") :
 		pathname === "/trash" ? t("trash") : t("settings");
 	const detailMatch = /^\/assets\/([^/]+)\/([^/]+)\/?$/.exec(pathname);
 	const detailKind = detailMatch && kinds.includes(detailMatch[1] as (typeof kinds)[number]) ? detailMatch[1] : null;
@@ -314,7 +310,7 @@ export function AppShell() {
 							<kbd>⌘ K</kbd>
 						</button>
 						<div className="top-actions">
-							<Link to="/tasks" className="top-icon-button" aria-label={t("taskReminders")}><Bell size={17}/>{openTasks > 0 && <i aria-hidden="true"/>}</Link>
+							<ReminderCenter feedback={toast} onOpenChange={setRemindersOpen} />
 							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
                            <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
                             <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
@@ -335,8 +331,9 @@ export function AppShell() {
                             if(data.assets.some(a=>a.id===target.assetId && !!a.walletCard))return <Link key={result.key} to="/records/$id" params={{id:`asset:${target.assetId}`}} onClick={()=>{let categoryId:string|null=null;try{categoryId=/^\/assets\/category\/([^/]+)/.exec(pathname)?.[1] ?? null;categoryId=categoryId?decodeURIComponent(categoryId):null;}catch{/* Unknown category falls back to wallet. */}sessionStorage.setItem('keepany-catalog-record-return',JSON.stringify({recordId:`asset:${target.assetId}`,categoryId,wallet:pathname!=='/assets'&&!categoryId}));closeSearch();}}>{content}</Link>;
                             return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
                         }
-							const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : `task-${target.taskId}`;
-							return <Link key={result.key} to={target.type === "finance" ? "/assets" : target.type === "intake" ? "/intake" : "/tasks"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
+							if (target.type === "task") return <button type="button" className="reminder-search-result" key={result.key} onClick={() => { closeSearch(); openReminderCenter({ taskId: target.taskId }); }}>{content}</button>;
+							const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : "";
+							return <Link key={result.key} to={target.type === "finance" ? "/assets" : "/intake"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
 						}) : <p>{t("none")}</p>}</div>
 						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
 					</div>}
@@ -352,12 +349,12 @@ export function AppShell() {
 					)}
 				</div>
 			</div>
-			{data.error && (
+			{data.error && !remindersOpen && (
 				<div className="toast error" role="alert">
 					{t("error")}
 				</div>
 			)}
-			{toast && (feedbackTarget ? createPortal(<div className="compact-account-feedback-message" role="status">{toast}</div>, feedbackTarget) : (
+			{toast && !remindersOpen && (feedbackTarget ? createPortal(<div className="compact-account-feedback-message" role="status">{toast}</div>, feedbackTarget) : (
 				<div className="toast" role="status">
 					{toast}
 				</div>
@@ -378,3 +375,4 @@ export function AppShell() {
 		</AppContext.Provider>
 	);
 }
+

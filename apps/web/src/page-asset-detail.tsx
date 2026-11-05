@@ -1,3 +1,4 @@
+import { ReminderTaskContext } from "./ReminderTaskContext";
 import { UnifiedDetailColumns, UnifiedDetailDescription, UnifiedDetailHeader, UnifiedDetailHistory, UnifiedDetailImage, UnifiedDetailRelations } from "./components/UnifiedAssetDetail";
 import { historyCny, readSubscriptionRates, subscriptionCny, subscriptionRatesId } from "./subscription-cny";
 import { Textarea } from "./components/ui/textarea";
@@ -1180,7 +1181,7 @@ function LegacyAssetDetail() {
 					</>;
 	return (
 		<main className={unified ? "page unified-asset-detail" : `page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
-            {kind === "project" && <div className="asset-project-action-bar">
+            <ReminderTaskContext assetId={asset.id} modal={unified}/>{kind === "project" && <div className="asset-project-action-bar">
               <Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button>
               <DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")} />}><MoreHorizontal size={18}/>{t("moreActions")}</DropdownMenuTrigger><DropdownMenuContent align="end">
                 <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }} />}>{t("workflowBrandEntry")}</DropdownMenuItem>
@@ -1337,31 +1338,7 @@ function LegacyAssetDetail() {
 						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
 				</DetailDisclosure>
-				<section className="card asset-tasks-card">
-					<div className="card-header">
-						<h2>{t("tasks")}</h2>
-						<div className="actions">
-						{asset.kind === "item" && <Button asChild size="small"><Link to="/tasks" hash={maintenanceTask ? `task-${maintenanceTask.id}` : undefined}>{t("itemOpenMaintenancePlan")}</Link></Button>}
-						<Button
-							variant="ghost"
-							size="small"
-							onClick={() => setTaskEdit(true)}
-						>
-							<Plus size={14} />
-							{t("add")}
-						</Button>
-						</div>
-					</div>
-					{ownTasks.length ? (
-						<div className="list">
-							{ownTasks.map((task) => (
-								<TaskRow key={task.id} task={task} hideRelated={kind === "account" || kind === "project"} compact={kind === "account" || kind === "project"} />
-							))}
-						</div>
-					) : (
-						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
-					)}
-				</section>
+
 			</div>)}
 			{asset.kind === "project" && <DetailDisclosure className="asset-project-media-disclosure" collapsible label={t("attachments")}>{attachmentSection}</DetailDisclosure>}
 			{asset.kind === "account" && <aside className="account-login-column">

@@ -54,9 +54,9 @@ export function CollectionsPage() {
 	const visibleAssetKinds = workspaceGroupIds.filter((kind) => !sidebarHidden.includes(kind)).length;
 	const sidebarItems: SortableNavItem[] = sidebarOrder.filter(id => id !== "tasks").map((id) => ({
 		id,
-		to: id === "overview" ? "/" : id === "tasks" ? "/tasks" : id === "accounts" ? "/accounts" : "/assets",
+		to: id === "overview" ? "/" : id === "accounts" ? "/accounts" : "/assets",
 		label: t(id === "assets" ? "assetsWorkspace" : id === "accounts" ? "accountsWorkspace" : id),
-		icon: id === "overview" ? LayoutDashboard : id === "tasks" ? Bell : id === "assets" ? Layers : UserRound,
+		icon: id === "overview" ? LayoutDashboard : id === "assets" ? Layers : UserRound,
 		visible: !sidebarHidden.includes(id),
 		visibilityLocked: id === "overview" || (workspaceGroupIds.includes(id) && !sidebarHidden.includes(id) && visibleAssetKinds === 1),
 		visibilityLockReason: id === "overview" ? t("navAlwaysVisible") : visibleAssetKinds === 1 ? t("navAtLeastOneAsset") : undefined,

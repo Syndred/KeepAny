@@ -1,3 +1,4 @@
+import { ReminderTaskContext } from "./ReminderTaskContext";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -327,7 +328,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 		</UnifiedDetailDescription>
 	);
 	return (
-		<main className="page unified-asset-detail catalog-record-detail">
+		<main className="page unified-asset-detail catalog-record-detail"><ReminderTaskContext assetId={current.owner.id} modal/>
 			<UnifiedDetailHeader
 				asset={current.asset}
 				category={categoryName}

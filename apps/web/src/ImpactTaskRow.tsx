@@ -1,3 +1,4 @@
+import { openReminderCenter } from "./reminder-navigation";
 import { DatePicker } from "./components/ui/date-picker";
 import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
@@ -102,7 +103,7 @@ export function ImpactTaskRow({
 					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
 				)}
 				{showTaskLink && (
-					<small><TextLink asChild><Link to="/tasks" hash={`task-${task.id}`}>{t("viewTask")}</Link></TextLink></small>
+					<small><button type="button" className="text-link reminder-entry-button" onClick={() => openReminderCenter({ taskId: task.id })}>{t("reminderEntryDetails")}</button></small>
 				)}
 			</div>
 			<div className="impact-task-actions">

@@ -63,6 +63,9 @@ jobs:
       - name: Verify approved overview graph, countdown, privacy and responsive evidence
         run: node scripts/check-overview-approved.mjs
         timeout-minutes: 7
+      - name: Verify reminder panel, historical task links and candidate evidence
+        run: node scripts/check-reminder-center.mjs
+        timeout-minutes: 8
       - name: Verify natural-height masonry and card wallet on the same candidate
         run: node scripts/check-masonry-wallet.mjs
         timeout-minutes: 6
