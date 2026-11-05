@@ -11,11 +11,11 @@ import {
 	useSensor,
 	useSensors,
 	type DragEndEvent,
+	type KeyboardCoordinateGetter,
 } from "@dnd-kit/core";
 import {
 	SortableContext,
 	horizontalListSortingStrategy,
-	sortableKeyboardCoordinates,
 	useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -126,10 +126,25 @@ function CategoryStrip({
 			bi = savedOrder.indexOf(b);
 		return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
 	});
+	const keyboardCoordinates: KeyboardCoordinateGetter = (event, { context }) => {
+		if (event.code !== "ArrowLeft" && event.code !== "ArrowRight") return;
+		event.preventDefault();
+		const current = ordered.indexOf(String(context.over?.id ?? context.active?.id));
+		if (current < 0 || !context.collisionRect) return;
+		const target = ordered[current + (event.code === "ArrowLeft" ? -1 : 1)];
+		const rect = target ? context.droppableRects.get(target) : undefined;
+		if (!rect) return;
+		// Match closestCenter even when adjacent category pills have different widths.
+		return {
+			x: rect.left + (rect.width - context.collisionRect.width) / 2,
+			y: rect.top + (rect.height - context.collisionRect.height) / 2,
+		};
+	};
 	const sensors = useSensors(
 		useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
 		useSensor(KeyboardSensor, {
-			coordinateGetter: sortableKeyboardCoordinates,
+			coordinateGetter: keyboardCoordinates,
+			scrollBehavior: "auto",
 		}),
 	);
 	const [manage, setManage] = useState<false | "manage" | "new">(false);
@@ -231,6 +246,7 @@ function CategoryStrip({
 		if (blocked || !e.over || e.active.id === e.over.id) return;
 		const from = ordered.indexOf(String(e.active.id)),
 			to = ordered.indexOf(String(e.over.id));
+		if (from < 0 || to < 0) return;
 		const next = [...ordered];
 		next.splice(to, 0, next.splice(from, 1)[0]);
 		try { await save("preference", { id: `categoryOrder-${kind}`, value: next }); }
