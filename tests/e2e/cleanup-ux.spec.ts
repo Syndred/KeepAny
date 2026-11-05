@@ -120,13 +120,15 @@ test("UX04 sample backup rejects wrong passwords, supports cancellation and rest
   } finally { await context.close(); }
 });
 
-test("UX06 UX07 UX08 sample cancel is safe, inactive filters remain discoverable and task defaults focus pending", async ({ page }) => {
+test("UX06 UX07 UX08 sample cancel is safe, inactive filters remain discoverable and legacy task entry opens reminders", async ({ page }) => {
   await prepare(page); await page.getByRole("button", { name: "Start with sample records", exact: true }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Cancel", exact: true }).click(); await expect(page.locator(".overview-project-card")).toHaveCount(0);
   await sample(page); await page.goto("/assets"); await expect(page.getByText("Sample | Paused media library", { exact: true })).toBeHidden();
   await selectChoice(page.getByLabel("Records to show"), "all"); await expect(page.locator(".asset-list-content")).toContainText("Paused");
-  await page.goto("/tasks"); await expect(page.getByRole("button", { name: /^Pending ·/ })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: /^All ·/ }).click(); await page.reload(); await expect(page.getByRole("button", { name: /^All ·/ })).toHaveAttribute("aria-pressed", "true");
+  await page.goto("/tasks"); const reminders=page.getByTestId("reminder-center"); await expect(reminders).toBeVisible();
+  await expect(reminders.getByRole("tab", { name: "All", exact:true })).toHaveAttribute("aria-selected", "true");
+  await reminders.getByRole("button",{name:"Mark all as read",exact:true}).click();await expect(reminders.locator('[data-read="false"]')).toHaveCount(0);
+  await page.reload();await expect(reminders.locator('[data-read="false"]')).toHaveCount(0);await expect(page.locator(".tasks-page")).toHaveCount(0);
 });
 
 for (const [kind, label] of [["item", "Item"], ["subscription", "Subscription"]] as const) {
@@ -161,20 +163,16 @@ test("UX03c switching creation from an item list to subscriptions uses the newly
  await page.reload(); await expect(page.getByRole("dialog")).toBeHidden();
 });
 
-test("UX07b global search reveals a completed task from the pending view and survives reload", async ({ page }) => {
+test("UX07b global search reveals a completed historical task without its removed page and survives reload", async ({ page }) => {
  await prepare(page); await sample(page); await page.goto("/tasks");
- const pending = page.getByRole("button", { name: /^Pending ·/ }), all = page.getByRole("button", { name: /^All ·/ });
- await expect(pending).toHaveAttribute("aria-pressed", "true"); await all.click();
- const completed = page.locator(".tasks-list-card .task-card").filter({ has: page.getByRole("button", { name: "Reopen", exact: true }) }).first();
- await expect(completed).toBeVisible();
- const id = await completed.getAttribute("id"), name = await completed.locator(".impact-task-info > strong").innerText();
- expect(id).toMatch(/^task-/); await pending.click(); await expect(page.locator(`[id="${id}"]`)).toBeHidden();
+ const reminders=page.getByTestId("reminder-center"), name="Prepare the first component inventory";
+ await expect(reminders).not.toContainText(name);await page.keyboard.press("Escape");
  await page.getByRole("button", { name: "Search all records", exact: true }).click();
  await page.locator("#top-search-query").fill(name);
- await page.locator(`.search-results a[href="/tasks#${id}"]`).click();
- await expect(page.locator(`[id="${id}"]`)).toBeVisible(); await expect(all).toHaveAttribute("aria-pressed", "true");
- await expect(page.locator(`[id="${id}"]`).getByRole("button", { name: "Reopen", exact: true })).toBeVisible();
- await page.reload(); await expect(page.locator(`[id="${id}"]`)).toBeVisible();
+ await page.locator(".reminder-search-result").filter({hasText:name}).click();
+ const completed=page.locator(".reminder-task-context .task-card");await expect(completed).toContainText(name);
+ await expect(completed.getByRole("button", { name: "Reopen", exact: true })).toBeVisible();
+ await page.reload(); await expect(completed).toContainText(name);await expect(page.locator(".tasks-page")).toHaveCount(0);
 });
 
 for (const language of ["zh-CN", "en"] as const) for (const width of [390, 768, 1280, 1920, 2560]) {

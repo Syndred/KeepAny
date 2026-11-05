@@ -16,6 +16,7 @@ export default defineConfig({
 
 	outputDir: "test-results/local-release",
 	testMatch: [
+        "reminder-center.spec.ts",
         "unified-local-entry.spec.ts",
         "masonry-wallet.spec.ts",
         "catalog-categories.spec.ts",

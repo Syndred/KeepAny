@@ -19,6 +19,10 @@ async function shot(page: Page, info: TestInfo, name: string) { const path=info.
 async function receipt(info: TestInfo, ids: string[], extra = {}) { await info.attach("contract-results.json",{body:JSON.stringify({ids,candidate:identity(),result:"passed",...extra}),contentType:"application/json"}); }
 
 test.beforeAll(async () => {
+ await prepareCompletionArchive(resolve(fixture,"single"),password,async repo=>{
+  await repo.save("task",taskSchema.parse({id:"nr-single",name:"One reminder / 单条提醒",dueDate:"2026-11-05",createdAt:"2026-11-01T00:00:00Z"}));
+  return {tasks:1};
+ });
  await prepareCompletionArchive(fixture,password,async repo => {
   const rows = [
    {...newAsset("subscription"),id:"nr-renew",name:"CloudNest hosting / 云主机续费",dueDate:"2026-11-03",billingAnchor:"2026-11-03"},
@@ -48,15 +52,16 @@ async function start(page:Page,locale:Locale,populated=true) {
  await page.clock.setFixedTime(new Date("2026-11-05T04:00:00Z"));
  await page.goto("/");await expect(bell(page)).toBeVisible();
  expect(createHash("sha256").update(await(await page.request.get("/")).body()).digest("hex")).toBe(identity());
- if(populated){await restoreCompletionArchive(page,password,resolve(fixture,"fixture.ka1"));await page.locator('.sidebar nav a[href="/"]').click();}
+ if(populated){await restoreCompletionArchive(page,password,resolve(fixture,"fixture.ka1"));await overview(page);}
 }
+async function overview(page:Page){ if (await page.locator(".mobile-menu").isVisible()) await page.locator(".mobile-menu").click(); await page.locator('.sidebar nav a[href="/"]').click(); }
 async function open(page:Page){await bell(page).click();await expect(center(page)).toBeVisible();}
 for(const locale of ["zh-CN","en"] as const){
  const t=text(locale);
  test(`${locale} NR01-05 grouping read-state persistence and keyboard`,async({page},info)=>{
   await start(page,locale,false);await open(page);await expect(center(page)).toContainText(t("reminderCenterEmpty"));
   const screenshots=[await shot(page,info,"empty")];await page.keyboard.press("Escape");await expect(center(page)).toHaveCount(0);await expect(bell(page)).toBeFocused();
-  await restoreCompletionArchive(page,password,resolve(fixture,"fixture.ka1"));await page.locator('.sidebar nav a[href="/"]').click();
+  await restoreCompletionArchive(page,password,resolve(fixture,"fixture.ka1"));await overview(page);
   await bell(page).focus();await page.keyboard.press("Enter");await expect(center(page)).toBeVisible();
   await expect(row(page,"renew-nr-renew")).toBeVisible();await expect(row(page,"task-nr-linked")).toBeVisible();
   await expect(center(page)).not.toContainText(/Paused must|Completed historical|Deleted must|Paused owner/);
@@ -80,6 +85,7 @@ for(const locale of ["zh-CN","en"] as const){
   await dialog.locator('[name="taskName"]').fill("Cancelled changes");await dialog.getByRole("button",{name:t("cancel"),exact:true}).click();
   await expect(source).toContainText("Check laptop warranty");await source.getByRole("button",{name:t("complete"),exact:true}).click();await expect(source.getByRole("button",{name:t("reopen"),exact:true})).toBeVisible();
   const screenshots=[await shot(page,info,"source-completed")];await page.reload();await expect(source.getByRole("button",{name:t("reopen"),exact:true})).toBeVisible();
+  await source.getByRole("button",{name:t("close"),exact:true}).click();await expect(source).toHaveCount(0);await expect(bell(page)).toBeFocused();
   await page.goto("/tasks#task-nr-alone");await expect(page).toHaveURL(/\/#reminder-task-nr-alone$/);await expect(center(page)).toContainText("Standalone item");
   await center(page).getByRole("button",{name:t("moreActions"),exact:true}).click();await page.getByRole("menuitem",{name:t("edit"),exact:true}).click();
   await dialog.locator('[name="taskName"]').fill("");await dialog.getByRole("button",{name:t("save"),exact:true}).click();await expect(dialog).toContainText(t("required"));
@@ -118,6 +124,12 @@ for(const locale of ["zh-CN","en"] as const){
   await center(page).getByRole("button",{name:t("reminderCenterMarkAllRead"),exact:true}).click();await expect(center(page).locator('[data-read="false"]')).toHaveCount(0);
   screenshots.push(await shot(page,info,"write-recovered"));await receipt(info,["NR05","NR11"],{screenshots,injected:"standard IndexedDB add/put failure in isolated browser; then restored"});
  });
+ test(`${locale} NR11 local storage unavailable shows load error`,async({page},info)=>{
+  await page.addInitScript(()=>{Object.defineProperty(indexedDB,"open",{value:()=>{throw new DOMException("Isolated unavailable storage","InvalidStateError");}});});
+  await start(page,locale,false);await open(page);await expect(center(page).getByRole("alert")).toContainText(t("reminderCenterLoadFailed"));
+  await expect(center(page).getByRole("button",{name:t("reminderCenterMarkAllRead"),exact:true})).toBeDisabled();
+  await receipt(info,["NR11"],{screenshots:[await shot(page,info,"storage-load-error")],injected:"IndexedDB.open throws in isolated browser; no source records"});
+ });
  test(`${locale} NR12 recurrence and midnight update`,async({page},info)=>{
   await start(page,locale);await page.goto("/tasks#task-nr-plan");const source=page.locator(".reminder-task-context");await expect(source).toContainText("Recurring maintenance");
   await source.getByRole("button",{name:t("maintenanceComplete"),exact:true}).click();
@@ -134,7 +146,8 @@ for(const locale of ["zh-CN","en"] as const){
  for(const width of [390,768,1280,1810,1920,2262])test(`${locale} ${width} NR13 responsive states`,async({page},info)=>{
   await page.setViewportSize({width,height:1000});await start(page,locale,false);await open(page);
   const screenshots=[await shot(page,info,"empty")];await page.keyboard.press("Escape");
-  await restoreCompletionArchive(page,password,resolve(fixture,"fixture.ka1"));await page.locator('.sidebar nav a[href="/"]').click();await open(page);
+  await restoreCompletionArchive(page,password,resolve(fixture,"single","fixture.ka1"));await overview(page);await open(page);await expect(center(page).locator("[data-reminder-id]")).toHaveCount(1);screenshots.push(await shot(page,info,"single"));await page.keyboard.press("Escape");
+  await restoreCompletionArchive(page,password,resolve(fixture,"fixture.ka1"));await overview(page);await open(page);
   await row(page,"task-nr-linked").hover();screenshots.push(await shot(page,info,"hover"));
   await row(page,"task-nr-linked").focus();screenshots.push(await shot(page,info,"focus"));
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -148,4 +161,5 @@ for(const locale of ["zh-CN","en"] as const){
   await receipt(info,["NR01","NR02","NR04","NR07","NR13","NR14"],{locale,width,screenshots});
  });
 }
+
 
