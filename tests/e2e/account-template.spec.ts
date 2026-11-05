@@ -46,6 +46,19 @@ for (const language of ["zh-CN", "en"] as const) {
   expect(await created.getAttribute("data-account-id")).not.toBe(sourceId); const original = page.locator(`.compact-account-card[data-account-id="${sourceId}"]`); await expect(original.locator("[data-login-username]")).toHaveText("source@example.test"); await expect(original.locator(".compact-account-switch")).toHaveCount(0);
   await created.getByRole("button", { name: t("edit"), exact: true }).click(); await expect(dialog.locator("#password-vault-entry-notes")).toHaveValue(""); await expect(dialog.locator("#account-entry-category")).toContainText(t("email")); await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
   await page.reload(); await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(cards(page)).toHaveCount(2); await expect(created).toBeVisible(); await shot(page, `saved-reloaded-${language}`);
+  // The same-name templates must remain distinguishable when used from Assets.
+  const createdId = await created.getAttribute("data-account-id");
+  await page.locator(".sidebar nav").getByRole("link", { name: t("assetsWorkspace"), exact: true }).click();
+  await page.locator(".workspace-navigation").getByRole("link", { name: t("subscription"), exact: true }).click();
+  await page.getByRole("button", { name: t("workspaceAddAsset"), exact: true }).click();
+  await dialog.locator("#subscriptionLoginAccount").click();
+  await expect(page.getByRole("option", { name: "Template Mail · source@example.test", exact: true })).toBeVisible();
+  await page.getByRole("option", { name: "Template Mail · new@example.test", exact: true }).click();
+  await dialog.locator("#name").fill("Template-linked subscription"); await dialog.locator("#amount").fill("20"); await save(page, t);
+  await page.locator(".asset-summary-card").filter({ hasText: "Template-linked subscription" }).click();
+  await page.getByRole("button", { name: t("edit"), exact: true }).click();
+  await expect(dialog.locator("#subscriptionLoginAccount")).toHaveAttribute("data-value", createdId!);
+  await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
  });
  test(`${language} AT08-11 detail actions work for linked and private cards`, async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]); await setup(page, t);

@@ -319,7 +319,7 @@ export function AssetEditor({
 							<Field name="subscriptionLoginAccount" label={t("subscriptionLoginAccount")}>
 								<Select id="subscriptionLoginAccount" value={accountId} onValueChange={(selectValue) => setAccountId(selectValue)}>
 									<SelectOption value="">{t("none")}</SelectOption>
-									{data.assets.filter((candidate) => candidate.kind === "account" && !candidate.deleted).map((candidate) => <SelectOption key={candidate.id} value={candidate.id}>{candidate.name}</SelectOption>)}
+									{data.assets.filter((candidate) => candidate.kind === "account" && !candidate.deleted).map((candidate) => <SelectOption key={candidate.id} value={candidate.id}>{[candidate.name, candidate.username.trim() !== candidate.name.trim() ? candidate.username.trim() : ""].filter(Boolean).join(" · ")}</SelectOption>)}
 								</Select>
 							</Field>
 							{original && (linkedProjects.length > 0 || linkedAccounts.length > 0) && <p className="notice">{t("subscriptionExistingLinks")}: {[...linkedProjects, ...linkedAccounts].map((candidate) => candidate.name).join(" · ")}. {t("subscriptionLinksAdditive")}</p>}
