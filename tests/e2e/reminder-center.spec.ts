@@ -90,9 +90,17 @@ for(const locale of ["zh-CN","en"] as const){
   await page.keyboard.press("Escape");await page.goto("/tasks#task-missing");await expect(center(page)).toContainText(t("reminderCenterMissingTask"));
   screenshots.push(await shot(page,info,"missing-item"));await page.keyboard.press("Escape");
   await page.goto("/tasks");await expect(center(page)).toBeVisible();await expect(page.locator(".tasks-page")).toHaveCount(0);await expect(page.locator('a[href^="/tasks"]')).toHaveCount(0);
-  await page.keyboard.press("Escape");await page.getByRole("button",{name:t("globalSearch"),exact:true}).click();await page.locator("#top-search-query").fill("Undated historical");
+  await page.keyboard.press("Escape");await page.locator(".overview-countdown-footer").getByRole("button",{name:t("reminderEntryOpen"),exact:true}).click();await expect(center(page)).toBeVisible();await page.keyboard.press("Escape");
+  await page.locator(".overview-panels > section").first().getByRole("button",{name:t("viewAll"),exact:true}).click();await page.locator(".overview-countdown-dialog").getByRole("button",{name:t("reminderEntryOpen"),exact:true}).click();await expect(center(page)).toBeVisible();await page.keyboard.press("Escape");
+  await page.getByRole("button",{name:t("globalSearch"),exact:true}).click();await page.locator("#top-search-query").fill("Undated historical");
   await page.locator(".reminder-search-result").click();await expect(center(page)).toContainText("Undated historical");
   screenshots.push(await shot(page,info,"search-undated"));await receipt(info,["NR06","NR07","NR08","NR09","NR10","NR14"],{screenshots});
+ });
+ test(`${locale} NR05 explicit standalone link marks the opened occurrence read`,async({page},info)=>{
+  await start(page,locale);await page.goto("/tasks#task-nr-alone");await expect(center(page)).toContainText("Standalone item");
+  await center(page).getByRole("button",{name:t("reminderCenterBackToList"),exact:true}).click();
+  await expect(row(page,"task-nr-alone")).toHaveAttribute("data-read","true");
+  await receipt(info,["NR04","NR05","NR10"],{screenshots:[await shot(page,info,"standalone-marked-read")]});
  });
  test(`${locale} NR05 NR11 storage failure is visible and can recover`,async({page},info)=>{
   await start(page,locale);await open(page);

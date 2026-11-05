@@ -132,11 +132,10 @@ export function ReminderCenter() {
 		const task = current.data.tasks.find(row => row.id === requested && !row.deleted && !row.purged);
 		const target = task ? taskTarget(task, current.data.assets) : null;
 		setRequest(null);
-		if (!target) return;
 		const item = current.items.find(row => row.task?.id === requested);
 		const activation = interaction.current;
 		void markRead(item ? [item] : []).then(async saved => {
-			if (!saved || activation !== interaction.current) return;
+			if (!saved || activation !== interaction.current || !target) return;
 			try {
 				await navigate(target);
 				setSelectedTaskId(null);
