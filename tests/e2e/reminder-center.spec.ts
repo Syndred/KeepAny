@@ -85,7 +85,7 @@ for(const locale of ["zh-CN","en"] as const){
   await dialog.locator('[name="taskName"]').fill("Cancelled changes");await dialog.getByRole("button",{name:t("cancel"),exact:true}).click();
   await expect(source).toContainText("Check laptop warranty");await source.getByRole("button",{name:t("complete"),exact:true}).click();await expect(source.getByRole("button",{name:t("reopen"),exact:true})).toBeVisible();
   const screenshots=[await shot(page,info,"source-completed")];await page.reload();await expect(source.getByRole("button",{name:t("reopen"),exact:true})).toBeVisible();
-  await source.getByRole("button",{name:t("close"),exact:true}).click();await expect(source).toHaveCount(0);await expect(bell(page)).toBeFocused();
+  await page.getByRole("dialog").getByRole("button",{name:t("close"),exact:true}).click();await expect(source).toHaveCount(0);await expect(bell(page)).toBeFocused();
   await page.goto("/tasks#task-nr-alone");await expect(page).toHaveURL(/\/#reminder-task-nr-alone$/);await expect(center(page)).toContainText("Standalone item");
   await center(page).getByRole("button",{name:t("moreActions"),exact:true}).click();await page.getByRole("menuitem",{name:t("edit"),exact:true}).click();
   await dialog.locator('[name="taskName"]').fill("");await dialog.getByRole("button",{name:t("save"),exact:true}).click();await expect(dialog).toContainText(t("required"));

@@ -320,6 +320,10 @@
 .unified-detail-activity-dialog .item-history-actions { grid-column: 1 / -1; }
 .unified-detail-activity-dialog .toolbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .unified-detail-activity-dialog .toolbar > .button { order: 3; justify-self: end; }
+.unified-detail-activity-dialog .toolbar > input { min-height: 44px; padding: 9px 12px; border: 1.5px solid var(--line); border-radius: 9px; background: var(--field-background); font: inherit; }
+.unified-detail-activity-dialog .renewal-amount-field { display: grid; gap: 8px; }
+.unified-detail-activity-dialog .renewal-amount-field input { width: 100%; min-height: 44px; }
+.unified-detail-highlight strong > small { display: inline; margin-left: 6px; }
 .unified-detail-dialog form > [role="alert"], .unified-detail-dialog form > .actions { grid-column: 1 / -1; }
 .unified-detail-location {
 	display: flex;
