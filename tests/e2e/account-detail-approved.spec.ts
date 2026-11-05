@@ -84,6 +84,9 @@ for(const language of ["zh-CN","en"] as const){
 
  test(`${language} AS02 AS03 AS04 compiled visual states`,async({page,context})=>{
   await context.grantPermissions(["clipboard-read","clipboard-write"]);await page.setViewportSize({width:1920,height:1080});const ids=await setup(page,t);await addRelations(page,t,[ids.template,ids.phone,ids.sameName]);
+  await page.setViewportSize({width:1280,height:720});await screenshot(page,`default-short-related-${language}`);
+  expect(await page.evaluate(()=>document.documentElement.scrollHeight)).toBeLessThanOrEqual(721);
+  expect((await page.locator('.account-related-card').boundingBox())!.y+(await page.locator('.account-related-card').boundingBox())!.height).toBeLessThanOrEqual(720);
   const shots:string[]=[];
   for(const width of [390,768,1280,1920,1991]){
    await page.setViewportSize({width,height:width<1000?900:width===1280?800:990});await page.evaluate(()=>scrollTo(0,0));await page.locator(".account-graph-stage.is-ready").waitFor();
@@ -108,7 +111,7 @@ for(const language of ["zh-CN","en"] as const){
   await page.setViewportSize({width:1280,height:900});await page.goto("/accounts");await page.locator("#password-vault-master").fill(master);await page.locator("#password-vault-master-confirm").fill(master);await page.getByRole("button",{name:t("accountSetUp"),exact:true}).click();
   await importVisualKdbxEntries(page,t,[{title:"Private related",username:"first@example.test",password:"Synthetic private password",notes:"Private original notes"},{title:"Private related",username:"second@example.test",password:"Other synthetic password"}],async dialog=>{
    await injectMemoryFailure(page);await dialog.getByRole('button',{name:t('pwVaultImportNow'),exact:true}).click();
-   await expect(dialog.getByRole('alert')).toHaveText(t('pwVaultMemoryUnavailable'));await expect(dialog.locator('#password-vault-import-password')).not.toHaveValue('');expect(await dialog.locator('#password-vault-import-file').evaluate((e:HTMLInputElement)=>e.files?.length)).toBe(1);await screenshot(page,`import-memory-${language}`);
+   await expect(dialog.getByRole('alert')).toHaveText(t('pwVaultMemoryUnavailable'));await expect(dialog.locator('#password-vault-import-password')).not.toHaveValue('');expect(await dialog.locator('#password-vault-import-file').evaluate((e:HTMLInputElement)=>e.files?.length)).toBe(1);await page.screenshot({path:join(output,`import-memory-${language}.png`)});
   });
   await openAccountOption(page,t,'pwVaultImport');await page.locator('#password-vault-import-password').fill('Synthetic cancelled import password');await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await openAccountOption(page,t,'pwVaultImport');await expect(page.locator('#password-vault-import-password')).toHaveValue('');await expect(page.getByRole('dialog').getByRole('alert')).toHaveCount(0);expect(await page.locator('#password-vault-import-file').evaluate((e:HTMLInputElement)=>e.files?.length)).toBe(0);await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
   await card(page,"first@example.test").locator(".compact-account-title-block").click();await expect(page.locator(".account-related-link")).toHaveCount(1);await page.locator(".page-header").getByRole("button",{name:t("edit"),exact:true}).click();await page.locator("#password-vault-entry-notes").fill("Private updated notes");await save(page,t);await page.locator(".account-history-row").first().getByRole("button").click();await page.getByRole("dialog").getByRole("button",{name:t("pwVaultHistoryRestore"),exact:true}).click();await expect(page.locator(".account-note-summary")).toContainText("Private original notes");
