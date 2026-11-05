@@ -102,6 +102,7 @@ export function AppShell() {
 		return () => window.clearTimeout(timer);
 	}, [toast]);
 	const searchLabels = useMemo((): GlobalSearchLabels => ({
+		walletKind: t('wallet'),
 		assetKinds: { project: t("project"), account: t("account"), item: t("item"), subscription: t("subscription"), vault: t("vault") },
 		financeActions: { expense: t("financeActionExpense"), topup: t("financeActionTopup"), refund: t("financeActionRefund"), balance: t("financeActionBalance"), renew: t("financeRenewalRecorded") },
 		sources: { asset: t("globalSearchAsset"), finance: t("globalSearchFinance"), intake: t("globalSearchIntake"), task: t("globalSearchTask") },
