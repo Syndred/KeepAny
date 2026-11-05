@@ -523,7 +523,10 @@ for (const locale of ["zh-CN", "en"] as const) {
 		for (const width of widths) {
 			await page.setViewportSize({ width, height: 1000 });
 			for (const target of ["ts-orphan", "ts-item-0"]) {
-				await page.goto(`/tasks#task-${target}`);
+				if (await page.getByTestId("reminder-center").isVisible())
+					await page.keyboard.press("Escape");
+				await page.getByTestId("reminder-bell").click();
+				await page.locator(`[data-reminder-id="task-${target}"]`).click();
 				const task = page.locator(`#task-${target}`);
 				await expect(task).toBeVisible();
 				await geometry(page, task);
@@ -545,9 +548,22 @@ for (const locale of ["zh-CN", "en"] as const) {
 				await shot(page, info, `${locale}-${width}-${target}-shared`, task);
 			}
 		}
+		// Historical URLs are a separate supported entry, checked once per language.
+		await page.keyboard.press("Escape");
+		for (const target of ["ts-orphan", "ts-item-0"]) {
+			await page.goto(`/tasks#task-${target}`);
+			await expect(page.locator(`#task-${target}`)).toBeVisible();
+			await geometry(page, page.locator(`#task-${target}`));
+			await shot(
+				page,
+				info,
+				`${locale}-${target}-historical-entry`,
+				page.locator(`#task-${target}`),
+			);
+		}
 		await receipt(info, locale, ["TS05"], {
 			widths,
-			parents: ["standalone-center", "linked-context"],
+			parents: ["standalone-center", "unified-detail-from-bell"],
 		});
 	});
 	test(`${locale} TS05 direct editor lazy loading failure recovery`, async ({
