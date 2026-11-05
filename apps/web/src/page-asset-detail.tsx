@@ -1,5 +1,6 @@
+import { detailHistoryRows } from "./unified-detail-data";
 import { ReminderTaskContext } from "./ReminderTaskContext";
-import { UnifiedDetailColumns, UnifiedDetailDescription, UnifiedDetailHeader, UnifiedDetailHistory, UnifiedDetailImage, UnifiedDetailRelations } from "./components/UnifiedAssetDetail";
+import { UnifiedDetailColumns, UnifiedDetailDescription, UnifiedDetailHeader, UnifiedDetailHistory, UnifiedDetailImage, UnifiedDetailTasks } from "./components/UnifiedAssetDetail";
 import { historyCny, readSubscriptionRates, subscriptionCny, subscriptionRatesId } from "./subscription-cny";
 import { Textarea } from "./components/ui/textarea";
 import { CatalogRecordPage } from './page-catalog-record';
@@ -11,7 +12,7 @@ import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, Check, ExternalLink, Plus, Mail, Pencil, MoreHorizontal, ChevronRight, Network } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Plus, Mail, Pencil, MoreHorizontal, MapPin, ChevronRight, Network } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,
@@ -130,6 +131,7 @@ function LegacyAssetDetail() {
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const imageInput = useRef<HTMLInputElement>(null);
+ const imageExpectedAsset = useRef<Asset | null>(null);
 	const asset = data.assets.find(
 		(a) => a.id === params.id && a.kind === kind && !a.deleted,
 	);
@@ -561,23 +563,24 @@ function LegacyAssetDetail() {
 	}
 	async function addImage(file: File) {
 		if (!asset || imageInFlight.current) return;
+		const expected = imageExpectedAsset.current ?? asset;
 		imageInFlight.current = true;
 		setUploading(true);
 		let fileId = "";
 		try {
 			fileId = await putFile(file);
-			const media: ProjectMedia = { ...emptyProjectMedia, ...asset.projectMedia,
-				productScreenshotIds: [...(asset.projectMedia?.productScreenshotIds ?? [])] };
-			const itemImages: ItemMedia = { ...emptyItemMedia, ...asset.itemMedia,
-				detailIds: [...(asset.itemMedia?.detailIds ?? [])], receiptIds: [...(asset.itemMedia?.receiptIds ?? [])] };
+			const media: ProjectMedia = { ...emptyProjectMedia, ...expected.projectMedia,
+				productScreenshotIds: [...(expected.projectMedia?.productScreenshotIds ?? [])] };
+			const itemImages: ItemMedia = { ...emptyItemMedia, ...expected.itemMedia,
+				detailIds: [...(expected.itemMedia?.detailIds ?? [])], receiptIds: [...(expected.itemMedia?.receiptIds ?? [])] };
 			// Preserve legacy role references when an ordinary attachment is explicitly replaced.
-			if (asset.kind === "project" && replaceImageId) {
+			if (expected.kind === "project" && replaceImageId) {
 				media.productScreenshotIds = media.productScreenshotIds.map((id) => id === replaceImageId ? fileId : id);
 				for (const key of ["logoId", "homeScreenshotId", "promoCoverId"] as const) {
 					if (media[key] === replaceImageId) media[key] = fileId;
 				}
 			}
-			if (asset.kind === "item") {
+			if (expected.kind === "item") {
 				if (itemImageRole === "detailIds" || itemImageRole === "receiptIds") {
 					itemImages[itemImageRole] = replaceImageId
 						? itemImages[itemImageRole].map((id) => id === replaceImageId ? fileId : id)
@@ -585,11 +588,11 @@ function LegacyAssetDetail() {
 				} else if (itemImageRole === "coverId") itemImages.coverId = fileId;
 			}
 			const updatedAttachments = replaceImageId
-				? asset.attachments.map((id) => id === replaceImageId ? fileId : id)
-				: [...asset.attachments, fileId];
-			await saveAssetIfCurrent(asset, {
-				...asset,
-				attachments: asset.kind === "item" && itemImageRole === "coverId"
+				? expected.attachments.map((id) => id === replaceImageId ? fileId : id)
+				: [...expected.attachments, fileId];
+			await saveAssetIfCurrent(expected, {
+				...expected,
+				attachments: expected.kind === "item" && itemImageRole === "coverId"
 					? [fileId, ...updatedAttachments.filter((id) => id !== fileId)] : updatedAttachments,
 				projectMedia: media,
 				itemMedia: itemImages,
@@ -666,6 +669,7 @@ function LegacyAssetDetail() {
 				assetId: asset.id,
 				action: "renew",
 				billDate: asset.dueDate,
+                renewalDueDate: update.dueDate,
 				amount: recordedAmount,
 				currency: "CNY",
 				note,
@@ -1058,43 +1062,33 @@ function LegacyAssetDetail() {
 		asset.kind === "project" ? <p className="asset-quiet-empty">{t("noMatches")}</p> : <Empty hint={false} />
 	);
 
- const unifiedInfo = <section className="card unified-detail-info">
- <header className="card-header"><h2>{t("detailBasicInfo")}</h2>{asset.kind === "item" && <Button size="small" variant="ghost" disabled={itemBusy} onClick={openItemStatus}>{t("itemStatusChange")}</Button>}</header>
- {asset.kind === "subscription" && <div className="unified-detail-highlight"><div><small>{t("amount")}</small><strong>{cnySubscription ? money(cnySubscription.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")}<small> / {asset.interval > 1 ? asset.interval : ""} {t(asset.cycle)}</small></strong></div><Button size="small" disabled={asset.status !== "active" || !asset.dueDate || !cnySubscription} onClick={()=>setActivityOpen(true)}>{t("renew")}</Button></div>}
- {asset.kind === "item" && asset.warrantyDate && <div className="unified-detail-highlight"><div><small>{t("warrantyDate")}</small><strong>{date(asset.warrantyDate,i18n.language)}</strong></div></div>}
- <dl className="facts">
- {asset.category && <div><dt>{t("category")}</dt><dd>{niceCategory(asset.category,t)}</dd></div>}
- {asset.url && <div><dt>{t("url")}</dt><dd>{/^https?:\/\//i.test(asset.url) ? <TextLink href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}</TextLink> : asset.url}</dd></div>}
- {asset.username && <div><dt>{t("username")}</dt><dd>{asset.username}</dd></div>}
- {asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
+ const renewalRows = detailHistoryRows(data.history, asset.id).filter(row => row.action === "renew" && row.assetId === asset.id);
+ const renewalAmounts = renewalRows.map(row => historyCny(row, subscriptionRates));
+ const unifiedInfo = <section className="unified-detail-info" aria-label={t("detailBasicInfo")}><dl>
  {asset.kind === "subscription" && <>
- <div><dt>{t("cycle")}</dt><dd>{asset.interval} {t(asset.cycle)}</dd></div>
- <div><dt>{t("dueDate")}</dt><dd>{date(asset.dueDate,i18n.language)}</dd></div>
- {asset.cycle !== "month" || asset.interval !== 1 ? <div><dt>{t("monthly")}</dt><dd>{cnySubscription ? money(monthlyMinorUnits(cnySubscription),"CNY",i18n.language) : t("subscriptionCnyMissing")}</dd></div> : null}
- {asset.trialEndsAt || asset.discountUntil ? <div><dt>{t("actualCharge")}</dt><dd>{dueCharge === null ? "—" : money(dueCharge,"CNY",i18n.language)}</dd></div> : null}
- {asset.trialEndsAt && <div><dt>{t("trialEndsAt")}</dt><dd>{date(asset.trialEndsAt,i18n.language)}</dd></div>}
- {asset.discountUntil && <div><dt>{t("discountUntil")}</dt><dd>{date(asset.discountUntil,i18n.language)} · {cnySubscription ? money(cnySubscription.discountAmount,"CNY",i18n.language) : t("subscriptionCnyMissing")}</dd></div>}
+  <div><dt>{t("amount")}</dt><dd>{cnySubscription ? money(cnySubscription.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {asset.interval > 1 ? asset.interval : ""} {t(asset.cycle)}</dd></div>
+  <div><dt>{t("detailRenewalTotal")}</dt><dd>{renewalAmounts.some(value => value === null) ? t("subscriptionCnyMissing") : money(renewalAmounts.reduce<bigint>((sum, value) => sum + BigInt(value ?? 0), 0n), "CNY", i18n.language)} · {t("detailTimes", { count: renewalRows.length })}</dd></div>
+  {asset.cycle !== "month" || asset.interval !== 1 ? <div><dt>{t("monthly")}</dt><dd>{cnySubscription ? money(monthlyMinorUnits(cnySubscription),"CNY",i18n.language) : t("subscriptionCnyMissing")}</dd></div> : null}
+  {asset.trialEndsAt && <div><dt>{t("trialEndsAt")}</dt><dd>{date(asset.trialEndsAt,i18n.language)}</dd></div>}
+  {asset.discountUntil && <div><dt>{t("discountUntil")}</dt><dd>{date(asset.discountUntil,i18n.language)} · {cnySubscription ? money(cnySubscription.discountAmount,"CNY",i18n.language) : t("subscriptionCnyMissing")}</dd></div>}
  </>}
  {asset.kind === "item" && <>
- <div><dt>{t("itemPurchasePrice")}</dt><dd>{asset.itemPurchasePriceKnown ? money(asset.amount,asset.currency,i18n.language) : t("itemStatusUnrecorded")}</dd></div>
- <div><dt>{t("purchaseDate")}</dt><dd>{asset.purchaseDate ? date(asset.purchaseDate,i18n.language) : t("itemStatusUnrecorded")}</dd></div>
- {asset.itemStartDate && <div><dt>{t("itemStartDate")}</dt><dd>{date(asset.itemStartDate,i18n.language)}</dd></div>}
- {asset.itemStatusDate && <div><dt>{t("itemStatusDate")}</dt><dd>{date(asset.itemStatusDate,i18n.language)}</dd></div>}
- {asset.itemWarrantyStatus && <div><dt>{t("itemWarrantyStatus")}</dt><dd>{t(`itemWarranty_${asset.itemWarrantyStatus}`)}</dd></div>}
- <div><dt>{t("location")}</dt><dd className="unified-detail-location">{asset.location ? asset.location.replaceAll("\u2063","") : "—"}<Button size="small" variant="ghost" onClick={openLocation}>{t("itemEditLocation")}</Button></dd></div>
- {asset.status === "loaned" && <><div><dt>{t("borrower")}</dt><dd>{asset.borrower || t("none")}</dd></div><div><dt>{t("itemExpectedReturnDate")}</dt><dd>{date(asset.itemExpectedReturnDate ?? "",i18n.language)}</dd></div></>}
+  <div><dt>{t("itemPurchasePrice")}</dt><dd>{asset.itemPurchasePriceKnown ? money(asset.amount,asset.currency,i18n.language) : t("itemStatusUnrecorded")}{asset.purchaseDate && <small>{date(asset.purchaseDate,i18n.language)}</small>}</dd></div>
+  <div><dt>{t("location")}</dt><dd className="unified-detail-location">{asset.location ? asset.location.replaceAll("\u2063","") : t("none")}<Button size="icon" variant="ghost" aria-label={t("itemEditLocation")} onClick={openLocation}><MapPin size={16}/></Button></dd></div>
+  {asset.itemWarrantyStatus && <div><dt>{t("itemWarrantyStatus")}</dt><dd>{t(`itemWarranty_${asset.itemWarrantyStatus}`)}</dd></div>}
+  {asset.status === "loaned" && <div><dt>{t("borrower")}</dt><dd>{asset.borrower || t("none")} · {date(asset.itemExpectedReturnDate ?? "",i18n.language)}</dd></div>}
  </>}
- </dl>{asset.tags.length > 0 && <div className="unified-detail-tags">{asset.tags.map(tag=><span key={tag}>{tag}</span>)}</div>}
- </section>;
+ {asset.username && <div><dt>{t("username")}</dt><dd>{asset.username}</dd></div>}{asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
+ </dl></section>;
  const unifiedDescription = <UnifiedDetailDescription asset={asset} actions={<div className="actions">
   {asset.kind === "item" && <Select aria-label={t("itemPhotosAndEvidence")} value={itemImageRole} onValueChange={value => setItemImageRole(value as ItemImageRole)}><SelectOption value="other">{t("itemOtherImages")}</SelectOption><SelectOption value="coverId">{t("itemCoverPhoto")}</SelectOption><SelectOption value="detailIds">{t("itemDetailPhotos")}</SelectOption><SelectOption value="receiptIds">{t("itemReceiptImages")}</SelectOption></Select>}
   <Button size="small" variant="ghost" disabled={uploading || asset.attachments.length >= 20 && !(itemImageRole === "coverId" && itemMedia.coverId)} onClick={() => chooseImage(itemImageRole, itemImageRole === "coverId" ? itemMedia.coverId : "")}>{t("addPhoto")}</Button>
  </div>}>
-  <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden tabIndex={-1} aria-label={t("addPhoto")} onChange={event => { const file=event.target.files?.[0]; event.target.value=""; if(!file)return; if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type)||!file.size||file.size>20*1024*1024||file.name.length>255)notify(t("uploadError")); else {setPendingImageUrl("");setPendingImageStatus("loading");setPendingImage(file);} }}/>
+  <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden tabIndex={-1} aria-label={t("addPhoto")} onChange={event => { const file=event.target.files?.[0]; event.target.value=""; if(!file)return; if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type)||!file.size||file.size>20*1024*1024||file.name.length>255)notify(t("uploadError")); else {setPendingImageUrl("");setPendingImageStatus("loading");imageExpectedAsset.current=structuredClone(asset);setPendingImage(file);} }}/>
   {asset.attachments.length ? <div className="unified-detail-gallery">{asset.attachments.map((id,index)=>{
    const role:ItemImageRole = itemMedia.coverId===id ? "coverId" : itemMedia.detailIds.includes(id) ? "detailIds" : itemMedia.receiptIds.includes(id) ? "receiptIds" : "other";
    const label = asset.kind === "item" ? t(role === "coverId" ? "itemCoverPhoto" : role === "detailIds" ? "itemDetailPhotos" : role === "receiptIds" ? "itemReceiptImages" : "itemOtherImages") : t("detailPhotoNumber",{number:index+1});
-   return <UnifiedDetailImage key={id} id={id} label={label} actions={<><Button size="small" disabled={uploading} onClick={()=>chooseImage(role,id)}>{t("replaceImage")}</Button><Button size="small" variant="danger" disabled={uploading} onClick={()=>void removeImage(id)}>{t("removeImage")}</Button></>}/>;
+   return <UnifiedDetailImage key={id} id={id} label={label} actions={<><DropdownMenuItem disabled={uploading} onClick={()=>chooseImage(role,id)}>{t("replaceImage")}</DropdownMenuItem><DropdownMenuItem disabled={uploading} onClick={()=>void removeImage(id)}>{t("removeImage")}</DropdownMenuItem></>}/>;
   })}</div> : <p className="unified-detail-empty">{t("detailNoImages")}</p>}
  </UnifiedDetailDescription>;
  const unifiedActivity = <>{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
@@ -1181,7 +1175,7 @@ function LegacyAssetDetail() {
 					</>;
 	return (
 		<main className={unified ? "page unified-asset-detail" : `page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
-            <ReminderTaskContext assetId={asset.id} modal={unified}/>{kind === "project" && <div className="asset-project-action-bar">
+            {!unified && <ReminderTaskContext assetId={asset.id}/>}{kind === "project" && <div className="asset-project-action-bar">
               <Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button>
               <DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")} />}><MoreHorizontal size={18}/>{t("moreActions")}</DropdownMenuTrigger><DropdownMenuContent align="end">
                 <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: asset.id, flow: "brand" }} />}>{t("workflowBrandEntry")}</DropdownMenuItem>
@@ -1189,7 +1183,7 @@ function LegacyAssetDetail() {
                 <DropdownMenuItem disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</DropdownMenuItem>
               </DropdownMenuContent></DropdownMenu>
             </div>}
-{unified ? <UnifiedDetailHeader asset={asset} category={niceCategory(asset.category,t)||t(asset.kind)} state={asset.kind === "item" && asset.status === "active" && asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t(asset.status)} actions={<><Button variant="primary" onClick={()=>setEdit(true)}>{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")}/>}>{t("moreActions")}<MoreHorizontal size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={()=>setActivityOpen(true)}>{t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")}</DropdownMenuItem><DropdownMenuItem onClick={()=>{setDeleteError("");setDeleteOpen(true);}}>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></>}/> : (			<div className="page-header">
+{!unified && (			<div className="page-header">
 				<div>
 					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
 						<ArrowLeft size={16} />
@@ -1241,7 +1235,7 @@ function LegacyAssetDetail() {
 					</div>
 				</Dialog>
 			)}
-{unified ? <UnifiedDetailColumns info={unifiedInfo} description={unifiedDescription} relations={<UnifiedDetailRelations key={asset.id} asset={asset}/>} history={<UnifiedDetailHistory asset={asset}>{asset.kind === "item" && <Button size="small" variant="ghost" onClick={()=>setActivityOpen(true)}>{t("detailRecordActivity")}</Button>}</UnifiedDetailHistory>}/> : (			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
+{unified ? <UnifiedDetailColumns asset={asset} header={<UnifiedDetailHeader asset={asset} category={niceCategory(asset.category,t)||t(asset.kind)} state={asset.kind === "item" && asset.status === "active" && asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t(asset.status)} actions={<><Button disabled={asset.kind === "subscription" && (asset.status !== "active" || !asset.dueDate || !cnySubscription)} onClick={()=>setActivityOpen(true)}>{t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")}</Button><Button variant="default" onClick={()=>setEdit(true)}>{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")}/>}><MoreHorizontal size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">{asset.kind === "item" && <DropdownMenuItem onClick={openItemStatus}>{t("itemStatusChange")}</DropdownMenuItem>}<DropdownMenuItem onClick={()=>{setDeleteError("");setDeleteOpen(true);}}>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></>}/>} info={unifiedInfo} description={unifiedDescription} history={<UnifiedDetailHistory asset={asset}/>} tasks={<UnifiedDetailTasks assetId={asset.id}/>}/> : (			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
 				{asset.kind === "item" && <section className="card asset-item-photo-main" aria-label={t("itemCoverPhoto")}>
 					<div className="asset-item-photo-stage">{itemMedia.coverId ? <ImageTile id={itemMedia.coverId} /> : <p>{t("itemStatusUnrecorded")}</p>}
 						<span className="chip">{asset.status === "loaned" ? t("loaned") : asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded")}</span>

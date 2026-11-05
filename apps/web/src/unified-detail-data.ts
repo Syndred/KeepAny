@@ -45,3 +45,12 @@ export function withDetailImages(
 		},
 	};
 }
+
+/** Display the local recording day; UTC midnight is not the user's midnight. */
+export function detailEventDate(row: History): string {
+	if (row.eventDate) return row.eventDate;
+	const recorded = new Date(row.createdAt);
+	return Number.isNaN(recorded.getTime())
+		? (row.billDate ?? "")
+		: `${recorded.getFullYear()}-${String(recorded.getMonth() + 1).padStart(2, "0")}-${String(recorded.getDate()).padStart(2, "0")}`;
+}

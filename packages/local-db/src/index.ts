@@ -956,7 +956,7 @@ export class LocalRepository {
     const next = entitySchemas.asset.parse(nextAsset);
     const event = entitySchemas.history.parse(history);
     const anchor = expected.billingAnchor || expected.dueDate;
-    const unchanged = Object.keys(expected).every(field =>
+    const unchanged = [...new Set([...Object.keys(expected), ...Object.keys(next)])].every(field =>
       ['dueDate', 'billingAnchor', 'renewalCount', 'lastRenewalId', 'updatedAt'].includes(field) ||
       JSON.stringify(expected[field as keyof Asset]) === JSON.stringify(next[field as keyof Asset]));
     if (expected.kind !== 'subscription' || expected.status !== 'active' || expected.deleted || !expected.dueDate ||
@@ -966,6 +966,7 @@ export class LocalRepository {
       next.dueDate !== dueOnCycle(anchor, expected.cycle, expected.interval, next.renewalCount) ||
       !unchanged ||
       event.action !== 'renew' || event.assetId !== expected.id || event.deleted ||
+      (event.renewalDueDate !== undefined && event.renewalDueDate !== next.dueDate) ||
       event.billDate !== expected.dueDate || event.amount === undefined || (event.currency !== expected.currency && event.currency !== 'CNY')) {
       throw Error('renewal-invalid');
     }

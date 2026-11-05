@@ -16,7 +16,7 @@ import {
 	UnifiedDetailHeader,
 	UnifiedDetailHistory,
 	UnifiedDetailImage,
-	UnifiedDetailRelations,
+	UnifiedDetailTasks,
 } from "./components/UnifiedAssetDetail";
 import { CatalogRecordEditor } from "./catalog-record-editor";
 import {
@@ -34,7 +34,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "./components/ui/dropdown-menu";
-import { date, useAppContext } from "./view-shared";
+import { money, date, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { withDetailImages } from "./unified-detail-data";
 
@@ -78,6 +78,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 	const [pending, setPending] = useState<{
 			file: File;
 			replace: string;
+			expected: CatalogRecord;
 		} | null>(null),
 		[preview, setPreview] = useState(""),
 		[ready, setReady] = useState(false);
@@ -133,17 +134,22 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 			setBusy(false);
 		}
 	}
-	async function storeImages(ids: string[], replace = "", replacement = "") {
-		if (!current) return;
-		const draft = current.domain
-			? { ...current.asset, attachments: ids }
-			: withDetailImages(current.asset, ids, replace, replacement);
+	async function storeImages(
+		ids: string[],
+		replace = "",
+		replacement = "",
+		expected = current,
+	) {
+		if (!expected) return;
+		const draft = expected.domain
+			? { ...expected.asset, attachments: ids }
+			: withDetailImages(expected.asset, ids, replace, replacement);
 		await saveAssetIfCurrent(
-			current.owner,
+			expected.owner,
 			applyCatalogEdit(
-				current,
+				expected,
 				{ ...draft, updatedAt: new Date().toISOString() },
-				current.categoryId,
+				expected.categoryId,
 			),
 		);
 	}
@@ -169,83 +175,69 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 			current.owner.projectEmail,
 		].some(Boolean);
 	const info = (
-		<section className="card unified-detail-info">
-			<header className="card-header">
-				<h2>{t("detailBasicInfo")}</h2>
-			</header>
-			{current.asset.walletCard ? (
-				<WalletCardFace asset={current.asset} />
-			) : current.asset.url && /^https?:\/\//i.test(current.asset.url) ? (
-				<div className="unified-detail-highlight">
-					<a href={current.asset.url} target="_blank" rel="noopener noreferrer">
-						{current.asset.url}
-						<ExternalLink size={15} />
-					</a>
-				</div>
-			) : null}
+		<section className="unified-detail-info" aria-label={t("detailBasicInfo")}>
 			<dl>
-				<div>
-					<dt>{t("category")}</dt>
-					<dd>{categoryName}</dd>
-				</div>
-				{current.asset.walletCard?.issuer ? (
-					<div>
-						<dt>{t("walletIssuer")}</dt>
-						<dd>{current.asset.walletCard.issuer}</dd>
-					</div>
-				) : null}
-				{current.asset.walletCard?.lastFour ? (
-					<div>
-						<dt>{t("walletLastFour")}</dt>
-						<dd>{current.asset.walletCard.lastFour}</dd>
-					</div>
-				) : null}
-				<div>
-					<dt>{t("status")}</dt>
-					<dd>{t(current.asset.status)}</dd>
-				</div>
-				<div>
-					<dt>
-						{t(current.asset.walletCard ? "walletExpiry" : "catalogDate")}
-					</dt>
-					<dd>{date(current.asset.dueDate, i18n.language)}</dd>
-				</div>
-				{current.domain ? (
+				{current.asset.walletCard && (
+					<>
+						<div>
+							<dt>{t("walletIssuer")}</dt>
+							<dd>{current.asset.walletCard.issuer || t("none")}</dd>
+						</div>
+						{current.asset.walletCard.lastFour && (
+							<div>
+								<dt>{t("walletLastFour")}</dt>
+								<dd>{current.asset.walletCard.lastFour}</dd>
+							</div>
+						)}
+						{current.asset.walletCard.balanceMinor !== null && (
+							<div>
+								<dt>{t("walletBalance")}</dt>
+								<dd>
+									{money(
+										current.asset.walletCard.balanceMinor,
+										"CNY",
+										i18n.language,
+									)}
+								</dd>
+							</div>
+						)}
+						{current.asset.walletCard.remainingUses !== null && (
+							<div>
+								<dt>{t("walletRemaining")}</dt>
+								<dd>{current.asset.walletCard.remainingUses}</dd>
+							</div>
+						)}
+					</>
+				)}
+				{current.domain && (
 					<div>
 						<dt>{t("project")}</dt>
 						<dd>{current.owner.name}</dd>
 					</div>
-				) : null}
+				)}
 			</dl>
-			{current.asset.tags.length ? (
-				<div className="unified-detail-tags">
-					{current.asset.tags.map((tag) => (
-						<span key={tag}>{tag}</span>
-					))}
-				</div>
-			) : null}
-			{hasLegacy ? (
-				<div className="actions">
-					<Button size="small" asChild>
-						<Link
-							to="/assets/$kind/$id"
-							params={{ kind: "project", id: current.owner.id }}
-							hash={
-								current.domain
-									? `project-domain-${current.domain.id}`
-									: "project-details"
-							}
-						>
-							{t("catalogLegacy")}
-						</Link>
-					</Button>
-				</div>
-			) : null}
+			{hasLegacy && (
+				<Button size="small" variant="ghost" asChild>
+					<Link
+						to="/assets/$kind/$id"
+						params={{ kind: "project", id: current.owner.id }}
+						hash={
+							current.domain
+								? `project-domain-${current.domain.id}`
+								: "project-details"
+						}
+					>
+						{t("catalogLegacy")}
+					</Link>
+				</Button>
+			)}
 		</section>
 	);
 	const description = (
 		<UnifiedDetailDescription
 			asset={current.asset}
+			accountId={current.domain?.accountId}
+			readOnly={!!current.domain}
 			actions={
 				<Button
 					size="small"
@@ -281,7 +273,11 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 						setError(t("uploadError"));
 						return;
 					}
-					setPending({ file, replace: replaceId.current });
+					setPending({
+						file,
+						replace: replaceId.current,
+						expected: structuredClone(current),
+					});
 				}}
 			/>
 			{current.asset.attachments.length ? (
@@ -293,16 +289,13 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 							label={t("detailPhotoNumber", { number: index + 1 })}
 							actions={
 								<>
-									<Button
-										size="small"
+									<DropdownMenuItem
 										disabled={busy}
 										onClick={() => chooseImage(image)}
 									>
 										{t("replaceImage")}
-									</Button>
-									<Button
-										size="small"
-										variant="danger"
+									</DropdownMenuItem>
+									<DropdownMenuItem
 										disabled={busy}
 										onClick={() =>
 											void run(async () => {
@@ -316,7 +309,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 										}
 									>
 										{t("removeImage")}
-									</Button>
+									</DropdownMenuItem>
 								</>
 							}
 						/>
@@ -328,55 +321,52 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 		</UnifiedDetailDescription>
 	);
 	return (
-		<main className="page unified-asset-detail catalog-record-detail"><ReminderTaskContext assetId={current.owner.id} modal/>
-			<UnifiedDetailHeader
-				asset={current.asset}
-				category={categoryName}
-				state={t(current.asset.status)}
-				actions={
-					<>
-						<Button variant="primary" onClick={() => setEdit(true)}>
-							{t("edit")}
-						</Button>
-						<DropdownMenu>
-							<DropdownMenuTrigger
-								render={<Button aria-label={t("moreActions")} />}
-							>
-								{t("moreActions")}
-								<MoreHorizontal size={18} />
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem
-									disabled={!!current.domain || busy}
-									onClick={() => {
-										setError("");
-										setRemove(structuredClone(current));
-									}}
-								>
-									{t("delete")}
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</>
-				}
-			/>
+		<main className="page unified-asset-detail catalog-record-detail">
 			{error && !pending && !remove ? (
 				<p className="field-error" role="alert">
 					{error}
 				</p>
 			) : null}
 			<UnifiedDetailColumns
-				info={info}
-				description={description}
-				relations={
-					<UnifiedDetailRelations
-						key={current.id}
+				asset={current.asset}
+				header={
+					<UnifiedDetailHeader
 						asset={current.asset}
-						owner={current.domain ? current.owner : undefined}
+						category={categoryName}
+						state={t(current.asset.status)}
+						actions={
+							<>
+								<Button variant="primary" onClick={() => setEdit(true)}>
+									{t("edit")}
+								</Button>
+								<DropdownMenu>
+									<DropdownMenuTrigger
+										render={<Button aria-label={t("moreActions")} />}
+									>
+										<MoreHorizontal size={18} />
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem
+											disabled={!!current.domain || busy}
+											onClick={() => {
+												setError("");
+												setRemove(structuredClone(current));
+											}}
+										>
+											{t("delete")}
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</>
+						}
 					/>
 				}
+				info={info}
+				description={description}
 				history={<UnifiedDetailHistory asset={current.asset} />}
+				tasks={<UnifiedDetailTasks assetId={current.owner.id} />}
 			/>
+
 			{edit ? (
 				<CatalogRecordEditor record={current} onClose={() => setEdit(false)} />
 			) : null}
@@ -414,11 +404,16 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 									try {
 										id = await putFile(pending.file);
 										const ids = pending.replace
-											? current.asset.attachments.map((value) =>
+											? pending.expected.asset.attachments.map((value) =>
 													value === pending.replace ? id : value,
 												)
-											: [...current.asset.attachments, id];
-										await storeImages(ids, pending.replace, id);
+											: [...pending.expected.asset.attachments, id];
+										await storeImages(
+											ids,
+											pending.replace,
+											id,
+											pending.expected,
+										);
 										if (pending.replace)
 											await cleanupUnreferencedFile(pending.replace).catch(
 												() => false,

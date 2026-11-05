@@ -365,6 +365,7 @@ export function AssetEditor({
 								onChange={(v) => set("dueDate", v)}
 								error={errors.dueDate}
 							/>
+							<Field name="subscriptionStartDate" label={t("detailSubscriptionStart")} value={draft.subscriptionStartDate ?? ""} type="date" onChange={(v) => set("subscriptionStartDate", v)} error={errors.subscriptionStartDate} />
 							<Field
 								name="trialEndsAt"
 								label={t("trialEndsAt")}
