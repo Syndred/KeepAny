@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, relative, isAbsolute } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readCandidate, selectCandidate } from './lib/portable-candidate.mjs';
 const output = resolve(process.argv[2] ?? 'test-results/sidebar-bottom-ci');
@@ -24,6 +24,18 @@ if (run.error || run.status !== 0) {
   if (data.errors?.length || tests.length !== 12 || tests.some(t => t.status !== 'expected' || t.results.length !== 1 || t.results[0].status !== 'passed')) throw Error('Missing, failed, skipped or retried checks.');
   const receipts = tests.flatMap(t => t.results[0].attachments ?? []).filter(a => a.name === 'contract-results.json').map(a => JSON.parse(a.path ? readFileSync(a.path, 'utf8') : Buffer.from(a.body, 'base64').toString()));
   if (receipts.length !== 12 || receipts.some(r => r.candidate !== identity || r.result !== 'passed')) throw Error('Candidate or evidence mismatch.');
+  const screenshots = receipts.flatMap(receipt => {
+    if (receipt.screenshots?.length !== (receipt.ids.includes('SB04') ? 6 : 5)) throw Error('Incomplete screenshot evidence.');
+    return receipt.screenshots.map(file => {
+      const path = relative(join(output, 'browser'), file);
+      if (path.startsWith('..') || isAbsolute(path)) throw Error('Screenshot outside evidence directory.');
+      const bytes = readFileSync(file);
+      if (bytes.length <= 8 || !bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) throw Error(`Missing or invalid screenshot: ${file}`);
+      return { path, sha256: sha(bytes) };
+    });
+  });
+  if (new Set(screenshots.map(file => file.path)).size !== 62) throw Error('Duplicate screenshot evidence.');
+  writeFileSync(join(output, 'screenshots.json'), JSON.stringify(screenshots, null, 2));
   for (const locale of ['zh-CN', 'en']) {
     for (const width of [390, 768, 1280, 1920, 1991]) if (!receipts.some(r => r.locale === locale && r.width === width && ['SB01','SB02','SB03'].every(id => r.ids.includes(id)))) throw Error(`Missing ${locale}/${width}`);
     if (!receipts.some(r => r.locale === locale && r.ids.includes('SB04'))) throw Error(`Missing long collection check: ${locale}`);

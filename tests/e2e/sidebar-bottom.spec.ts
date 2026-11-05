@@ -62,7 +62,7 @@ for (const locale of ['zh-CN', 'en'] as const) {
       await openSidebar(page); await page.locator('.mobile-close').click(); await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['SB01','SB02','SB03'], locale, width, candidate: identity(), result: 'passed', geometry }), contentType: 'application/json' });
+    await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['SB01','SB02','SB03'], locale, width, candidate: identity(), result: 'passed', geometry, screenshots: ['default','hover','focus','pressed','selected'].map(state => info.outputPath(`${state}.png`)) }), contentType: 'application/json' });
   });
   test(`${locale} SB04 long and multiple collections`, async ({ page }, info) => {
     await start(page);
@@ -84,6 +84,6 @@ for (const locale of ['zh-CN', 'en'] as const) {
       await expect(page.locator('.sidebar-trash')).toBeInViewport(); await aligned(page);
       await page.locator('.sidebar').screenshot({ path: info.outputPath(`multiple-${width}.png`) });
     }
-    await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['SB04'], locale, candidate: identity(), result: 'passed' }), contentType: 'application/json' });
+    await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['SB04'], locale, candidate: identity(), result: 'passed', screenshots: ['single-collection', ...[390,768,1280,1920,1991].map(width => `multiple-${width}`)].map(name => info.outputPath(`${name}.png`)) }), contentType: 'application/json' });
   });
 }
