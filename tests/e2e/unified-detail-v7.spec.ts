@@ -2042,7 +2042,11 @@ test("V702 V708 renewal history records local day and immutable extended due dat
 	const t = tFor("en");
 	await start(page, "en");
 	await enter(page, "subscription");
-	await page.evaluate(timestamp => (window as Window & { __keepanyV7SetNow(value: number): void }).__keepanyV7SetNow(timestamp), new Date("2026-11-04T16:30:00Z").getTime());
+	await page.evaluate(timestamp => {
+		const setNow = Reflect.get(window, "__keepanyV7SetNow");
+		if (typeof setNow !== "function") throw Error("Missing date-only test clock");
+		setNow(timestamp);
+	}, new Date("2026-11-04T16:30:00Z").getTime());
 	await page
 		.locator(".unified-detail-header")
 		.getByRole("button", { name: t("renew"), exact: true })
