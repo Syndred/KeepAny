@@ -337,7 +337,7 @@ export function AppShell() {
 						}) : <p>{t("none")}</p>}</div>
 						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
 					</div>}
-					<ReminderRuntime hideBanner={pathname === "/" || /^\/(accounts|assets\/(account|vault))\/?$/.test(pathname) || pathname === "/assets" || pathname === "/cards" || /^\/assets\/(item|subscription|category|project|domains)(?:\/|$)/.test(pathname)} />
+					<ReminderRuntime hideBanner={pathname === "/" || /^\/(accounts|assets\/(account|vault))\/?$/.test(pathname) || pathname === "/assets" || pathname === "/cards" || /^\/records\//.test(pathname) || /^\/assets\/(item|subscription|category|project|domains)(?:\/|$)/.test(pathname)} />
 					{data.loading ? (
 						<main className="page">
 							<div className="notice" role="status">
