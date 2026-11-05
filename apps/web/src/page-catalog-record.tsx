@@ -234,7 +234,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 				)}
 			</dl>
 			{hasLegacy && (
-                <Button ref={extrasToggle} size="small" variant="ghost" aria-expanded={extrasOpen} aria-controls="project-detail-extras" onClick={() => setExtrasOpen(value => !value)}>{t("detailMoreInfo")}</Button>
+                <Button size="small" variant="ghost" aria-expanded={extrasOpen} aria-controls="project-detail-extras" onClick={event => { extrasToggle.current = event.currentTarget; setExtrasOpen(value => !value); }}>{t("detailMoreInfo")}</Button>
 			)}
 		</section>
 	);
