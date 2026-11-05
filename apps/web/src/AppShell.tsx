@@ -273,7 +273,6 @@ export function AppShell() {
 							onNavigate={() => setMobile(false)}
 						/>
 					</nav>
-					<Link to="/trash" className="sidebar-trash sidebar-customize" aria-current={pathname === "/trash" ? "page" : undefined} onClick={() => setMobile(false)}><Trash2 size={18}/>{t("trash")}</Link>
 					<div className="sidebar-custom">
 						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
 						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)} title={collection.name}><span>{collection.name}</span></Link>)}
@@ -281,6 +280,7 @@ export function AppShell() {
 						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
 					</div>
 					<div className="side-bottom">
+						<Link to="/trash" className="sidebar-trash sidebar-customize" aria-current={pathname === "/trash" ? "page" : undefined} onClick={() => setMobile(false)}><Trash2 size={15}/>{t("trash")}</Link>
                       <Link to="/backup" className="sidebar-customize" onClick={() => setMobile(false)}><Plus size={15}/>{t("backupAndRestore")}</Link>
                       <Link to="/settings" className="sidebar-customize" onClick={() => setMobile(false)}><Settings size={15}/>{t("settings")}</Link>
 					</div>
