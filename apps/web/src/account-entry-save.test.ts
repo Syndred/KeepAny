@@ -76,6 +76,13 @@ async function fixture() {
 	return { repository, storage, session };
 }
 describe("single account and optional credential save", () => {
+	it("records explicit template provenance only in the encrypted draft", () => {
+		const copied = accountFromTemplate({ name: "Example service", url: "https://example.test/", category: "other", sourceEntryId: "source-id" });
+		expect(copied.draft.templateSourceId).toBe("source-id");
+		expect(copied.profile).not.toHaveProperty("templateSourceId");
+		expect(copied.profile).not.toHaveProperty("sourceEntryId");
+		expect(copied.draft).toMatchObject({ username: "", password: "", notes: "", linkedAssetIds: [] });
+	});
 	it("creates an independent account from only the three template fields", async () => {
 		const source = { ...profile(), ...draft, name: draft.title, username: "source@example.test", notes: "Do not copy" };
 		const first = accountFromTemplate(source), second = accountFromTemplate(source);

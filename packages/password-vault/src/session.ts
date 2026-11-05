@@ -110,7 +110,8 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
       target.notes !== item.draft.notes ||
       JSON.stringify(target.usernameAliases ?? []) !== JSON.stringify(item.draft.usernameAliases ?? []) ||
       JSON.stringify(target.linkedAssetIds) !== JSON.stringify(item.draft.linkedAssetIds) ||
-      target.password !== item.draft.password
+      target.password !== item.draft.password ||
+      (item.draft.templateSourceId !== undefined && target.templateSourceId !== item.draft.templateSourceId)
     );
     rows.push({
       index,
@@ -133,13 +134,13 @@ function planImports(db: Kdbx, items: VaultImportItem[]) {
       mutations.push({
         index,
         action: 'update',
-        draft: item.draft,
+        draft: { ...item.draft, ...(item.draft.templateSourceId === undefined && target.templateSourceId ? { templateSourceId: target.templateSourceId } : {}) },
         targetId: item.targetId,
       });
       byIdentity.set(
         key,
         matches.map((value) =>
-          value === target ? { ...item.draft, id: target.id } : value,
+          value === target ? { ...item.draft, id: target.id, ...(item.draft.templateSourceId === undefined && target.templateSourceId ? { templateSourceId: target.templateSourceId } : {}) } : value,
         ),
       );
       updated += 1;
@@ -560,10 +561,13 @@ export class VaultSession {
     }));
   }
 
-  async restoreHistory(id: string, index: number): Promise<void> {
+  async restoreHistory(id: string, index: number, expected?: { contentRevision: string; at: string }): Promise<void> {
+    const baseline = expected ? { ...expected } : undefined;
     return this.run((generation) => this.mutate(generation, (candidate) => {
       const entry = findEntry(candidate, id);
+      if (baseline && this.contentRevision(candidate) !== baseline.contentRevision) fail('vault-stale');
       if (isTrash(candidate, entry) || !Number.isSafeInteger(index) || !entry.history[index]) fail('vault-invalid');
+      if (baseline && (entry.history[index].times.lastModTime ?? new Date(0)).toISOString() !== baseline.at) fail('vault-stale');
       const draft = normalizeDraft(draftOf(entry.history[index]));
       pushLoginHistory(entry);
       applyDraft(entry, draft);

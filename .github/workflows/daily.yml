@@ -48,6 +48,9 @@ jobs:
       - name: Verify unlock, compact cards and merged account editing on the compiled candidate
         run: node scripts/check-account-entry.mjs
         timeout-minutes: 12
+      - name: Verify approved account details, history restore and related accounts
+        run: node scripts/check-account-detail-approved.mjs
+        timeout-minutes: 5
       - name: Verify selected removals and retained local project data
         run: pnpm exec playwright test --config playwright.portable-release.config.ts tests/e2e/pdf-removal-release.spec.ts tests/e2e/project-simplification.spec.ts --workers=2 --reporter=line --max-failures=1
         timeout-minutes: 6

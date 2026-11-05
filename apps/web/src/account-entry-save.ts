@@ -22,12 +22,12 @@ export type AccountEntryProgress = {
 	needsVault: boolean;
 };
 
-export type AccountTemplate = Pick<Asset, "name" | "url" | "category">;
+export type AccountTemplate = Pick<Asset, "name" | "url" | "category"> & { sourceEntryId?: string };
 
 /** Copy only the service template, never its identity, secrets or connections. */
 export function accountFromTemplate(template: AccountTemplate) {
 	const profile = { ...newAsset("account"), name: template.name, url: template.url, category: template.category };
-	const draft: VaultEntryDraft = { title: template.name, url: template.url, username: "", usernameAliases: [], password: "", notes: "", linkedAssetIds: [] };
+	const draft: VaultEntryDraft = { title: template.name, url: template.url, username: "", usernameAliases: [], password: "", notes: "", linkedAssetIds: [], ...(template.sourceEntryId ? { templateSourceId: template.sourceEntryId } : {}) };
 	return { profile, draft };
 }
 

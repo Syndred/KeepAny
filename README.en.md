@@ -10,7 +10,7 @@ Which email does a project use? Where is its domain registered? Which subscripti
 
 No registration required. English and Simplified Chinese interfaces. The local core is open source under [AGPL-3.0-only](LICENSE). Optional paid hosting is planned; official cloud sync and paid services are not available yet.
 
-Navigation groups records into **Accounts** and **Assets**. Open Accounts to set up or unlock the master password. Compact cards copy usernames and passwords directly, cycle existing logins with one icon, and open the URL at the top right. Add, edit and delete sit at the bottom right. Add creates a separate card using only the current name, URL and category. History, disconnect and copy URL are available on the detail page. One short form contains the account details and a single note; passwords are optional. The connection count sits below the title, which opens the relationship graph, login information and notes. Secrets remain in the separate encrypted KDBX store. Assets keeps **All, Items, Subscriptions, and Card wallet** as fixed pages. Add, rename, reorder, hide, or remove your own categories. Ordinary records share name, category, URL, tags, status, date, and notes; only the name is required. Expand details for images and connections. Removing a category keeps its records, and original project and domain details remain accessible. Cards use their natural content height in a responsive masonry layout; click the whole card to open its details. Items and subscriptions retain their specialized features. The card wallet records stored-value, membership, visit and gift cards, with optional CNY balances, remaining visits and expiry dates. Add four clearly fictional samples from the wallet page. Existing expense and renewal history remains in local storage and backups.
+Navigation groups records into **Accounts** and **Assets**. Open Accounts to set up or unlock the master password. Compact cards copy usernames and passwords directly, cycle existing logins with one icon, and open the URL at the top right. Add, edit and delete sit at the bottom right. Add creates a separate card using only the current name, URL and category. The detail page shows restorable login history, disconnect in the graph area, and URL copying beside the URL. Related accounts are ranked by template origin, shared phone/email, and matching names. One short form contains the account details and a single note; passwords are optional. The connection count sits below the title, which opens the relationship graph, login information and notes. Secrets remain in the separate encrypted KDBX store. Assets keeps **All, Items, Subscriptions, and Card wallet** as fixed pages. Add, rename, reorder, hide, or remove your own categories. Ordinary records share name, category, URL, tags, status, date, and notes; only the name is required. Expand details for images and connections. Removing a category keeps its records, and original project and domain details remain accessible. Cards use their natural content height in a responsive masonry layout; click the whole card to open its details. Items and subscriptions retain their specialized features. The card wallet records stored-value, membership, visit and gift cards, with optional CNY balances, remaining visits and expiry dates. Add four clearly fictional samples from the wallet page. Existing expense and renewal history remains in local storage and backups.
 
 ![KeepAny overview with fictional project, account, and subscription records](apps/public-site/assets/onboarding-en.png)
 
@@ -39,7 +39,7 @@ In an empty **Overview**, choose **Start with sample records**, then **Add sampl
 1. Add your own category in Assets, then add a record; a project or domain is optional.
 2. Add a login account and connect it to a related record.
 3. Record a subscription, its renewal date, and related records.
-4. Open reminders from the top-right bell, follow them to the relevant records, and review account connections and change impact.
+4. Open reminders from the top-right bell, follow them to the relevant records, and use the account graph to review connected services.
 5. Create an encrypted `.ka1` backup in **Backup & restore**, **save the downloaded file**, then preview and restore it in a separate browser profile.
 
 See the [trial guide](docs/试用指南.md#english) for setup, storage, and recovery. Start with sample records and complete a restore before adding important information.
@@ -49,13 +49,13 @@ See the [trial guide](docs/试用指南.md#english) for setup, storage, and reco
 | Your task | Local features |
 |---|---|
 | Find a project's records | Projects, accounts, subscriptions, and physical items; collections, tags, search, and a connection graph |
-| Keep track of maintenance and costs | Tasks, subscription schedules and renewal records, warranties, and lending history |
+| Keep track of maintenance and costs | Subscription schedules and renewal records, warranties, and lending history |
 | Organize scattered records | Review text, CSV, URL, or image records before saving; optional AI using your own provider |
-| Check before changing a login | Account connections, sources, verification dates, and a checklist for changes you handle yourself |
+| Check before changing a login | Account relationship graphs, connection sources, and verification dates |
 | Keep login details | A separate encrypted KDBX vault with import, export, and reviewed batch import |
 | Take your data with you | Encrypted `.ka1` backup and restore for records, images, history, and the encrypted local vault |
 
-You can record domains in project details and maintenance tasks. KeepAny does not manage registrars or renew domains automatically. Bills and renewal records are your ledger; they do not confirm a third-party charge. Change checklists do not log in, rebind accounts, or cancel services for you.
+You can record domains in project details and maintenance tasks. KeepAny does not manage registrars or renew domains automatically. Bills and renewal records are your ledger; they do not confirm a third-party charge. The graph shows recorded connections; it does not log in, rebind accounts, or cancel services for you.
 
 ### Example: keeping website records
 

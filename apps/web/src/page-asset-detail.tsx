@@ -10,7 +10,7 @@ import { assetNotes } from "./asset-notes";
 import { accountFamilyGraph } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, Check, ExternalLink, Plus, Mail, Pencil, MoreHorizontal, ChevronRight, Network } from "lucide-react";
+import { ArrowLeft, Check, ExternalLink, Plus, Mail, Smartphone, UserRound, Pencil, MoreHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {
 	type Asset,
@@ -28,7 +28,7 @@ import {
 	parseMinorUnits,
 	projectDomainSchema,
 } from "../../../packages/domain/src";
-import { buildImpactTasks, upgradeLegacyImpactTasks } from "../../../packages/domain/src/impact";
+
 import {
 	cleanupUnreferencedFile,
 	deleteEntity,
@@ -39,7 +39,6 @@ import {
 	recordRenewal,
 	save,
 	saveAssetIfCurrent,
-	saveBatch,
 	setItemArchived,
 } from "../../../packages/local-db/src";
 import { TextLink } from "./components/ui/text-link";
@@ -49,8 +48,9 @@ import "./asset-restoration.css";
 import "./account-detail.css";
 import "./workspaces.css";
 import { readWorkspaceReturn } from "./workspace-return";
-import { TaskRow } from "./TaskRow";
-import { ImpactTaskRow } from "./ImpactTaskRow";
+import { AccountHistory } from "./components/AccountHistory";
+import { RelatedAccounts } from "./components/RelatedAccounts";
+import { useAccountDetailViewport } from "./use-account-detail-viewport";
 import {
 	Empty,
 	PageTitle,
@@ -71,9 +71,7 @@ const AccountEntryDialog = lazy(() => import("./components/AccountEntryDialog").
 const AssetEditor = lazy(() =>
 	import("./workflow-asset-editor").then((module) => ({ default: module.AssetEditor })),
 );
-const TaskEditor = lazy(() =>
-	import("./workflow-task-editor").then((module) => ({ default: module.TaskEditor })),
-);
+
 const AssetRelationGraph = lazy(() => import("./account-family-graph-view").then((module) => ({ default: module.AssetRelationGraph })));
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
 function validCalendarDay(value: string) {
@@ -181,16 +179,6 @@ function LegacyAssetDetail() {
 	const [domainFee, setDomainFee] = useState("");
 	const [domainError, setDomainError] = useState("");
 	const [domainBusy, setDomainBusy] = useState(false);
-	const [taskEdit, setTaskEdit] = useState(false);
-	const [impactFilter, setImpactFilter] = useState<"all" | "pending" | "done">("all");
-	const [impactBusy, setImpactBusy] = useState(false);
-	const impactInFlight = useRef(false);
-	const generatedImpactKeys = useRef(new Set<string>());
-	useEffect(() => {
-		for (const task of data.tasks) {
-			if (!task.deleted) generatedImpactKeys.current.delete(task.dedupeKey);
-		}
-	}, [data.tasks]);
 	const [uploading, setUploading] = useState(false);
 	const imageInFlight = useRef(false);
 	const [pendingImage, setPendingImage] = useState<File | null>(null);
@@ -291,11 +279,12 @@ function LegacyAssetDetail() {
 		return () => { active = false; };
 	}, [kind]);
     useEffect(() => {
-        setEdit(false); setAccountAddingLogin(false); setRelationEdit(false); setTaskEdit(false);
+        setEdit(false); setAccountAddingLogin(false); setRelationEdit(false);
         setRelationToDelete(null); setDeleteOpen(false); setPendingImage(null);
         setRelationTarget(""); setRelationLabel(""); setRelationSource(""); setRelationVerifiedAt("");
         setRelationError(""); setRelationDeleteError("");
     }, [params.id, kind === "account" && snapshot.status !== "unlocked"]);
+	const accountViewport = useAccountDetailViewport(kind === "account" && snapshot.status === "unlocked");
 	const liveById = useMemo(() => new Map(data.assets.filter((entry) => !entry.deleted && entry.kind !== "vault").map((item) => [item.id, item])), [data.assets]);
 	const relations = useMemo(() => data.relations.filter(
 		(r) =>
@@ -337,33 +326,6 @@ function LegacyAssetDetail() {
 			}
 		}
 	}
-	const ownTasks = data.tasks.filter(
-		(x) => !x.deleted && x.assetId === asset?.id && !x.impactSnapshot,
-	);
-	const maintenanceTask = ownTasks.filter((task) => task.maintenancePlan)
-		.sort((a, b) => Number(!!b.maintenancePlan?.active) - Number(!!a.maintenancePlan?.active) || a.dueDate.localeCompare(b.dueDate) || a.id.localeCompare(b.id))[0];
-	const impactTasks = data.tasks
-		.filter((task) =>
-			!task.deleted && task.impactSnapshot?.accountId === asset?.id,
-		)
-		.sort((a, b) => a.done === b.done ? a.createdAt.localeCompare(b.createdAt) : Number(a.done) - Number(b.done));
-	const impactCounts = {
-		all: impactTasks.length,
-		pending: impactTasks.filter((task) => !task.done).length,
-		done: impactTasks.filter((task) => task.done).length,
-	};
-	const visibleImpactTasks = impactTasks.filter((task) =>
-		impactFilter === "all" || (impactFilter === "done" ? task.done : !task.done),
-	);
-	const impactToGenerate = asset?.kind === "account"
-		? buildImpactTasks(asset, data.relations, [...liveById.values()], data.tasks, new Date().toISOString(), (linked) => `${t("checkConnection")}: ${linked.name}`)
-			.filter((task) => !generatedImpactKeys.current.has(task.dedupeKey))
-		: [];
-	const impactToUpgrade = asset?.kind === "account"
-		? upgradeLegacyImpactTasks(asset, data.relations, [...liveById.values()], data.tasks, new Date().toISOString())
-			.filter((task) => !generatedImpactKeys.current.has(task.dedupeKey))
-		: [];
-	const impactPendingCount = impactToGenerate.length + impactToUpgrade.length;
 	const relatedAssets = Array.from(new Map(relations.map((relation) => {
 		const linked = liveById.get(relation.from === asset?.id ? relation.to : relation.from);
 		return [linked?.id, linked] as const;
@@ -895,27 +857,6 @@ function LegacyAssetDetail() {
 			setRenewalBusy(false);
 		}
 	}
-	async function createImpact() {
-		if (!asset || impactInFlight.current || impactPendingCount === 0) return;
-		impactInFlight.current = true;
-		setImpactBusy(true);
-		try {
-			for (const task of impactToUpgrade) {
-				await save("task", task);
-				generatedImpactKeys.current.add(task.dedupeKey);
-			}
-			if (impactToGenerate.length) {
-				await saveBatch(impactToGenerate.map((value) => ({ type: "task" as const, value })));
-				for (const task of impactToGenerate) generatedImpactKeys.current.add(task.dedupeKey);
-			}
-			notify(t("saved"));
-		} catch {
-			notify(t("error"));
-		} finally {
-			impactInFlight.current = false;
-			setImpactBusy(false);
-		}
-	}
 	const attachmentSection = (
 				<section className="card asset-attachments-card">
 					<div className="card-header">
@@ -1053,7 +994,7 @@ function LegacyAssetDetail() {
 		asset.kind === "project" ? <p className="asset-quiet-empty">{t("noMatches")}</p> : <Empty hint={false} />
 	);
 	return (
-		<main className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
+		<main ref={accountViewport} className={`page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
             <ReminderTaskContext assetId={asset.id} />
             {kind === "project" && <div className="asset-project-action-bar">
               <Button variant="primary" onClick={() => setEdit(true)}>{t("edit")}</Button>
@@ -1069,7 +1010,7 @@ function LegacyAssetDetail() {
 						<ArrowLeft size={16} />
 						{t("back")}
 					</Link></TextLink>}
-					{kind === "account" && <span className="account-detail-avatar"><Mail size={30} /></span>}
+					{kind === "account" && <span className="account-detail-avatar">{asset.category === "email" ? <Mail size={30}/> : asset.category === "phone" ? <Smartphone size={30}/> : <UserRound size={30}/>}</span>}
 					<div className="eyebrow">
 						{t(kind)} · {niceCategory(asset.category || (kind === "account" ? "other" : ""), t)}
 					</div>
@@ -1079,7 +1020,7 @@ function LegacyAssetDetail() {
 					</p>}
 					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 				</div>
-				{kind === "account" ? <div className="actions"><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button><Button onClick={() => { setAccountAddingLogin(true); setEdit(true); }}><Plus size={17} />{t("add")}</Button></div> : kind !== "project" && <div className="actions">
+				{kind === "account" ? <div className="actions"><Button onClick={() => { setAccountAddingLogin(true); setEdit(true); }}><Plus size={17} />{t("add")}</Button><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button></div> : kind !== "project" && <div className="actions">
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 					<Button
 						variant="danger"
@@ -1337,6 +1278,7 @@ function LegacyAssetDetail() {
 								<div className="actions">
 									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
 									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button>
+                                    <AccountDetailActions asset={asset} entry={currentLogin?.entry} />
 								</div>
 								{relationSearch}
 								<details className="account-graph-guide"><summary>{t("accountGraphHelp")}</summary><p><span>{t("accountGraphDirection")}</span><span>{t("relationGraphLegend")}</span></p></details>
@@ -1351,46 +1293,13 @@ function LegacyAssetDetail() {
 						asset.kind === "project" ? <p className="asset-quiet-empty">{t("none")}</p> : <Empty hint={false} />
 					)}
 				</DetailDisclosure>
+                {kind === "account" && <RelatedAccounts asset={asset} entry={currentLogin?.entry} />}
 			</div>
 			{asset.kind === "project" && <DetailDisclosure className="asset-project-media-disclosure" collapsible label={t("attachments")}>{attachmentSection}</DetailDisclosure>}
 			{asset.kind === "account" && <aside className="account-login-column">
                 <AccountLoginSummary key={`${asset.id}:${currentLogin?.key ?? "empty"}:${currentLogin?.entry.modifiedAt ?? ""}`} asset={asset} current={currentLogin} total={accountChoices.length} index={accountChoices.findIndex(choice => choice.key === currentLogin?.key)} onSwitch={() => { if (currentLogin) setAccountSelection({ assetId: asset.id, key: nextAccountLogin(accountChoices, currentLogin.key)?.key ?? "" }); }} onEdit={() => { setAccountAddingLogin(false); setEdit(true); }} />
-                <AccountDetailActions asset={asset} entry={currentLogin?.entry} />
+                <AccountHistory key={currentLogin?.entry.id ?? "empty"} entry={currentLogin?.entry} asset={asset} />
                 {asset.attachments.length > 0 && <details className="account-existing-attachments"><summary>{t("attachments")}</summary>{attachmentSection}</details>}
-				<details className="card impact-checklist account-impact-details"><summary><Network size={21} /><span>{t("accountImpactTitle")}</span><ChevronRight size={18} /></summary>
-					<div className="card-header">
-						<div>
-							<h2>{t("impact")}</h2>
-							<p>{t("accountImpactGuide")}</p>
-						</div>
-						<Button
-							size="small"
-							disabled={impactBusy || impactPendingCount === 0}
-							onClick={() => void createImpact()}
-						>
-							{t("makeChecklist")} · {impactPendingCount}
-						</Button>
-					</div>
-					<fieldset className="tabs task-filters" aria-label={t("taskFilter")}>
-						{(["all", "pending", "done"] as const).map((value) => (
-							<button
-								type="button"
-								key={value}
-								aria-pressed={impactFilter === value}
-								onClick={() => setImpactFilter(value)}
-							>
-								{t(value)} · {impactCounts[value]}
-							</button>
-						))}
-					</fieldset>
-					{visibleImpactTasks.length ? (
-						<div className="list">
-							{visibleImpactTasks.map((task) => (
-								<ImpactTaskRow task={task} showTaskLink key={task.id} />
-							))}
-						</div>
-					) : <Empty hint={false} />}
-				</details>
             </aside>}
 
 			{(asset.kind === "item" || asset.kind === "subscription") && (
@@ -1555,23 +1464,12 @@ function LegacyAssetDetail() {
 						</div>
 					}
 				>
-					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={accountAddingLogin ? undefined : asset} template={accountAddingLogin ? { name: currentLogin?.entry.title ?? asset.name, url: currentLogin?.entry.url || asset.url, category: asset.category } : undefined} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} onSaved={accountAddingLogin ? () => { void navigate({ to: "/accounts" }); } : undefined} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
+					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={accountAddingLogin ? undefined : asset} template={accountAddingLogin ? { name: currentLogin?.entry.title ?? asset.name, url: currentLogin?.entry.url || asset.url, category: asset.category, sourceEntryId: currentLogin?.entry.id } : undefined} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} onSaved={accountAddingLogin ? () => { void navigate({ to: "/accounts" }); } : undefined} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
 						kind={kind}
 						asset={asset}
 						categories={data.categories}
 						onClose={() => setEdit(false)}
 					/>}
-				</Suspense>
-			)}
-			{taskEdit && (
-				<Suspense
-					fallback={
-						<div className="toast" role="status">
-							{t("loading")}
-						</div>
-					}
-				>
-					<TaskEditor assetId={asset.id} className={kind === "account" ? "account-detail-dialog" : undefined} onClose={() => setTaskEdit(false)} />
 				</Suspense>
 			)}
 			{relationEdit && (

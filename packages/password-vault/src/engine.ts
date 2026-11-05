@@ -10,6 +10,7 @@ export { checkBytes, checkHeader, fail, safeError, VAULT_MAX_BYTES } from './hea
 export const VAULT_LINK_FIELD = 'KeepAny.LinkedAssetIds';
 export const VAULT_AI_KEY_BINDING_FIELD = 'KeepAny.AiKeyBinding';
 export const VAULT_USERNAME_ALIASES_FIELD = 'KeepAny.UsernameAliases';
+export const VAULT_TEMPLATE_SOURCE_FIELD = 'KeepAny.TemplateSourceId';
 export const VAULT_IMPORT_DRAFT_FIELD = 'KeepAny.ImportDraft';
 export const VAULT_IMPORT_DRAFT_MAX_BYTES = 16 * 1024 * 1024;
 
@@ -119,6 +120,7 @@ export function normalizeDraft(draft: VaultEntryDraft): VaultEntryDraft {
   if (!Array.isArray(draft.linkedAssetIds) || draft.linkedAssetIds.length > 100
     || draft.linkedAssetIds.some((id) => typeof id !== 'string' || id.length < 1 || id.length > 128 || id.includes('\0'))) fail('vault-invalid');
   if (draft.aiKeyBinding !== undefined && !validAiKeyBinding(draft.aiKeyBinding)) fail('vault-invalid');
+  if (draft.templateSourceId !== undefined && !validTemplateSource(draft.templateSourceId)) fail('vault-invalid');
   const { usernameAliases, ...fields } = draft;
   const aliases = normalizeUsernameAliases(usernameAliases, draft.username);
   return { ...fields, title: draft.title.trim(), linkedAssetIds: [...new Set(draft.linkedAssetIds)],
@@ -140,7 +142,7 @@ export function sameVaultDraft(first: VaultEntryDraft, second: VaultEntryDraft):
   const key = (value: VaultEntryDraft) => {
     const draft = normalizeDraft(value);
     return [draft.id, draft.title, draft.username, draft.password, draft.url, draft.notes,
-      draft.usernameAliases ?? [], [...draft.linkedAssetIds].sort(),
+      draft.usernameAliases ?? [], [...draft.linkedAssetIds].sort(), draft.templateSourceId ?? null,
       draft.aiKeyBinding ? [draft.aiKeyBinding.version, draft.aiKeyBinding.provider, draft.aiKeyBinding.baseURL] : null];
   };
   return JSON.stringify(key(first)) === JSON.stringify(key(second));
@@ -184,12 +186,23 @@ function usernameAliasesOf(entry: KdbxEntry): string[] | undefined {
   catch { return undefined; }
 }
 
+function validTemplateSource(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= 128 && value.trim() === value && !value.includes('\0');
+}
+
+function templateSourceOf(entry: KdbxEntry): string | undefined {
+  const value = text(entry, VAULT_TEMPLATE_SOURCE_FIELD);
+  return validTemplateSource(value) ? value : undefined;
+}
+
 export function draftOf(entry: KdbxEntry): VaultEntryDraft {
   const aiKeyBinding = aiKeyBindingOf(entry);
   const usernameAliases = usernameAliasesOf(entry);
+  const templateSourceId = templateSourceOf(entry);
   return { id: entry.uuid.id, title: text(entry, 'Title'), username: text(entry, 'UserName'),
     password: text(entry, 'Password'), url: text(entry, 'URL'), notes: text(entry, 'Notes'), linkedAssetIds: links(entry),
     ...(usernameAliases ? { usernameAliases } : {}),
+    ...(templateSourceId ? { templateSourceId } : {}),
     ...(aiKeyBinding ? { aiKeyBinding } : {}) };
 }
 
@@ -203,8 +216,11 @@ function safeUrl(value: string): string {
 
 export function summaryOf(entry: KdbxEntry): VaultEntrySummary {
   const usernameAliases = usernameAliasesOf(entry);
+  const templateSourceId = templateSourceOf(entry);
   return { id: entry.uuid.id, title: text(entry, 'Title'), username: text(entry, 'UserName'),
     ...(usernameAliases ? { usernameAliases } : {}),
+    ...(templateSourceId ? { templateSourceId } : {}),
+    ...(aiKeyBindingOf(entry) ? { isAiKey: true as const } : {}),
     url: safeUrl(text(entry, 'URL')), linkedAssetIds: links(entry),
     modifiedAt: (entry.times.lastModTime ?? new Date(0)).toISOString(), historyCount: entry.history.length };
 }
@@ -214,6 +230,8 @@ export function applyDraft(entry: KdbxEntry, draft: VaultEntryDraft): void {
   entry.fields.set('UserName', draft.username);
   if (draft.usernameAliases?.length) entry.fields.set(VAULT_USERNAME_ALIASES_FIELD, ProtectedValue.fromString(JSON.stringify(draft.usernameAliases)));
   else entry.fields.delete(VAULT_USERNAME_ALIASES_FIELD);
+  if (draft.templateSourceId) entry.fields.set(VAULT_TEMPLATE_SOURCE_FIELD, ProtectedValue.fromString(draft.templateSourceId));
+  else entry.fields.delete(VAULT_TEMPLATE_SOURCE_FIELD);
   entry.fields.set('Password', ProtectedValue.fromString(draft.password));
   entry.fields.set('URL', draft.url);
   entry.fields.set('Notes', ProtectedValue.fromString(draft.notes));

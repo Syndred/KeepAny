@@ -16,6 +16,8 @@ export type VaultEntryDraft = {
   username: string;
   /** Additional exact login identifiers, protected inside the KDBX entry. */
   usernameAliases?: string[];
+  /** Exact source of an explicitly requested template copy, kept in encrypted KDBX. */
+  templateSourceId?: string;
   password: string;
   url: string;
   notes: string;
@@ -29,6 +31,9 @@ export type VaultEntrySummary = {
   title: string;
   username: string;
   usernameAliases?: string[];
+  templateSourceId?: string;
+  /** A metadata-only marker so account suggestions never include service keys. */
+  isAiKey?: true;
   url: string;
   linkedAssetIds: string[];
   modifiedAt: string;
