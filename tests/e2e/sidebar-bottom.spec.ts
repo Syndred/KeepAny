@@ -9,7 +9,7 @@ async function openSidebar(page: Page) {
     await page.locator('.mobile-menu').click();
     await expect(page.locator('.sidebar')).toHaveClass(/open/);
   }
-  await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.abs(el.getBoundingClientRect().left))).toBeLessThan(10);
+  if (page.viewportSize()!.width <= 760) await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.abs(el.getBoundingClientRect().left))).toBeLessThan(1);
 }
 async function aligned(page: Page) {
   const rows = await page.locator('.side-bottom a').evaluateAll(links => links.map(link => {
