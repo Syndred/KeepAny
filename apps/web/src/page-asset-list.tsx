@@ -322,8 +322,8 @@ function CategoryStrip({
 			</section>}
 			{manage && (
 				<Dialog title={editingCategory ? t("categoryEdit") : manage === "new" ? t("newCategory") : t("categoryManage")} closeDisabled={categoryBusy} onClose={closeManager} onKeyDown={(event) => {
-					// The active keyboard drag must reach dnd-kit's document listener.
-					if (["ArrowLeft", "ArrowRight"].includes(event.key) && event.target instanceof Element && event.target.closest('.asset-category-order .drag-handle[aria-pressed="true"]')) event.preventBaseUIHandler();
+					// Active drag movement and cancellation must reach dnd-kit before the popup closes.
+					if (["ArrowLeft", "ArrowRight", "Escape"].includes(event.key) && event.target instanceof Element && event.target.closest('.asset-category-order .drag-handle[aria-pressed="true"]')) event.preventBaseUIHandler();
 				}}>
 				<div className="asset-category-inline">
 					{(!memberCategory || editingCategory) && <div className="field">
