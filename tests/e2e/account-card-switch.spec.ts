@@ -51,6 +51,8 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} notes and ind
   await page.getByRole('dialog').getByRole('button', { name: t('cancel'), exact: true }).click();
   for (const width of [390, 768, 1280, 1920]) {
    await page.setViewportSize({ width, height: 900 });
+   if (width < 768) await expect.poll(() => page.locator('.sidebar').evaluate(el => el.getBoundingClientRect().right)).toBeLessThanOrEqual(1);
+   else await expect.poll(() => page.locator('.sidebar').evaluate(el => el.getBoundingClientRect().left)).toBeGreaterThanOrEqual(0);
    await expect(cards.locator('.compact-account-row')).toHaveCount(3);
    const emptyLayout = await cards.evaluate(el => ({ height: el.getBoundingClientRect().height, loginRow: el.querySelector('.compact-account-row')!.getBoundingClientRect().height, noteRow: el.querySelector('[data-login-notes]')!.closest('.compact-account-row')!.getBoundingClientRect().height }));
    await whole.click();
