@@ -41,7 +41,7 @@
 .topbar { min-height: 64px; gap: 10px; }
 .topbar-page-label { flex: none; font-size: 12px; font-weight: 650; }
 .topbar-back-link { display: inline-flex; align-items: center; gap: 5px; width: fit-content; min-width: 44px; min-height: 44px; color: var(--ink); text-decoration: none; }
-.topbar-back-link:hover { text-decoration: underline; }
+.topbar-back-link:hover .text-link, .topbar-back-link:focus-visible .text-link { background: var(--accent); text-decoration-color: var(--ink); }
 .topbar-spacer { flex: 1; }
 .top-search { width: 190px; min-height: 34px; border: 2px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); }
 .top-search-trigger { display: flex; flex: none; align-items: center; gap: 7px; cursor: pointer; }

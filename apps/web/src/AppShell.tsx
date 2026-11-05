@@ -33,6 +33,7 @@ import { PasswordVaultProvider } from "./components/PasswordVaultProvider";
 import { buildGlobalSearchIndex, searchGlobalIndex, type GlobalSearchLabels } from "./global-search";
 import { requestSearchLocation } from "./search-location";
 import "./shell-restoration.css";
+import "./components/ui/text-link.css";
 import { ReminderRuntime } from "./ReminderRuntime";
 const AiDialog = lazy(() =>
 	import("./workflow-ai-dialog").then((module) => ({ default: module.AiDialog })),
@@ -60,6 +61,8 @@ export function AppShell() {
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
 	const [pendingHiddenIds, setPendingHiddenIds] = useState<string[] | null>(null);
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
+	const hash = useRouterState({ select: (s) => s.location.hash });
+	const privateAccountDetail = ["/accounts", "/assets/account", "/assets/vault"].includes(pathname) && hash.startsWith("login-detail-");
 	const navigate = useNavigate();
 	useEffect(() => {
 		if (pathname !== "/accounts") setPendingAccountName("");
@@ -299,7 +302,7 @@ export function AppShell() {
 						>
 							<Menu size={20} />
 						</Button>
-						{detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" ? { kind: workspaceReturn.view } : {}}><ArrowLeft size={15}/>{t("back")}</Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><ArrowLeft size={15}/>{t("back")}</Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><ArrowLeft size={15}/>{t("workflowBackToProject")}</Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><ArrowLeft size={15}/>{t("collectionBack")}</Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><ArrowLeft size={15}/>{t("backToOverview")}</Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+						{privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><span className="text-link"><ArrowLeft size={15}/>{t("backToOverview")}</span></Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 							<kbd>⌘ K</kbd>
@@ -327,7 +330,7 @@ export function AppShell() {
 						}) : <p>{t("none")}</p>}</div>
 						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
 					</div>}
-					<ReminderRuntime hideBanner={pathname === "/" || /^\/(accounts|assets\/(account|vault))\/?$/.test(pathname) || pathname === "/assets" || /^\/assets\/(item|subscription|category|project|domains)(?:\/|$)/.test(pathname)} />
+					<ReminderRuntime hideBanner />
 					{data.loading ? (
 						<main className="page">
 							<div className="notice" role="status">

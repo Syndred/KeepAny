@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Mail, Pencil, Plus } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Mail, Pencil, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { newAsset, type Relation } from "../../../../packages/domain/src";
 import type { VaultEntryDraft } from "../../../../packages/password-vault/src";
@@ -12,7 +12,6 @@ import { AccountLoginSummary } from "./AccountLoginSummary";
 import { AccountEntryDialog } from "./AccountEntryDialog";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
-import { TextLink } from "./ui/text-link";
 import "../account-detail.css";
 const Graph = lazy(() => import("../account-family-graph-view").then(module => ({ default: module.AssetRelationGraph })));
 
@@ -35,7 +34,6 @@ export function PrivateAccountDetail({ entry }: { entry: PasswordVaultEntrySumma
         catch { setError(t("pwVaultError")); } finally { setBusy(false); }
     }
     return <main className="page asset-detail asset-detail-account account-relation-layout">
-        <TextLink asChild><Link className="account-detail-back" to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink>
         <div className="page-header"><div><span className="account-detail-avatar"><Mail size={30} /></span><h1 title={entry.title}>{entry.title}</h1><div className="eyebrow">{niceCategory("other", t)}</div></div><div className="actions"><Button onClick={() => setEdit("new")}><Plus size={17} />{t("add")}</Button><Button variant="primary" onClick={() => setEdit("edit")}><Pencil size={17} />{t("edit")}</Button></div></div>
         <div className="asset-detail-secondary"><section id="account-relations" tabIndex={-1} className="card asset-relations-card"><header className="card-header"><div><h2>{t("accountRelationMap")}</h2><p>{t("accountConnectionCount", { count: linked.length })}</p></div><Button size="small" variant="primary" onClick={() => setEdit("links")}><Plus size={16} />{t("addRelation")}</Button></header><Suspense fallback={<p role="status">{t("loading")}</p>}><Graph root={asset} assets={[asset, ...linked]} relations={relations} matches={new Set()} selectedEdgeId={edgeId} onSelectEdge={setEdgeId} onVisit={target => void navigate({ to: "/assets/$kind/$id", params: { kind: target.kind, id: target.id } })} onDeleteRelations={rows => { if (session?.getSnapshot().status === "unlocked") { setError(""); setRemove({ ids: rows.map(row => row.to), expected: session.readEntry(entry.id) }); } }} /></Suspense></section></div>
         <aside className="account-login-column"><AccountLoginSummary key={`${current?.key}:${entry.modifiedAt}`} asset={asset} current={current} total={choices.length} index={choices.findIndex(choice => choice.key === current?.key)} onSwitch={() => current && setSelected(nextAccountLogin(choices, current.key)?.key ?? "")} onEdit={() => setEdit("edit")} /><AccountDetailActions asset={asset} entry={entry} privateOnly onUnlink={linked.length ? () => { if (session?.getSnapshot().status === "unlocked") { setError(""); setRemove({ ids: linked.map(row => row.id), expected: session.readEntry(entry.id) }); } } : undefined} /></aside>

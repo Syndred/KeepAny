@@ -399,7 +399,7 @@ function LegacyAssetDetail() {
 			</div>
 		</main>
 	);
-    if (asset.kind === "account" && snapshot.status !== "unlocked") return <main className="page unified-accounts-page"><TextLink asChild><Link to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink><Suspense fallback={<p role="status">{t("loading")}</p>}><PasswordVaultPanel assets={data.assets} renderAccounts={() => null} notify={notify} /></Suspense></main>;
+    if (asset.kind === "account" && snapshot.status !== "unlocked") return <main className="page unified-accounts-page"><Suspense fallback={<p role="status">{t("loading")}</p>}><PasswordVaultPanel assets={data.assets} renderAccounts={() => null} notify={notify} /></Suspense></main>;
     const subscriptionRates = readSubscriptionRates(data.preferences.find(p=>p.id === subscriptionRatesId)?.value);
     const cnySubscription = asset.kind === 'subscription' ? subscriptionCny(asset, subscriptionRates) : null;
 
@@ -1066,7 +1066,6 @@ function LegacyAssetDetail() {
                 <DropdownMenuItem disabled={deleteBusy} onClick={() => { setDeleteError(""); setDeleteOpen(true); }}>{t("delete")}</DropdownMenuItem>
               </DropdownMenuContent></DropdownMenu>
             </div>}
-			{kind === "account" && <TextLink asChild><Link className="account-detail-back" to="/accounts"><ArrowLeft size={16} />{t("accountBack")}</Link></TextLink>}
 			<div className="page-header">
 				<div>
 					{kind !== "project" && kind !== "account" && <TextLink asChild><Link className="back-link" to={catalogReturn?.view === "all" ? "/assets" : "/assets/$kind"} params={catalogReturn?.view === "all" ? {} : { kind: catalogReturn?.view === "domains" ? "domains" : returnKind }} onClick={() => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); }}>
