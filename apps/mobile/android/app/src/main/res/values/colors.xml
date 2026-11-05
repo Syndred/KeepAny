@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="keepany_canvas">#fff9ec</color>
+    <color name="colorPrimary">#ffd24c</color>
+    <color name="colorPrimaryDark">#20304a</color>
+    <color name="colorAccent">#ffd24c</color>
+</resources>

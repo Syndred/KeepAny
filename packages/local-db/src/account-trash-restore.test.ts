@@ -145,7 +145,7 @@ describe("account restoration after re-import", () => {
 	it("sees another repository's re-import after reading the old account list", async () => {
 		const name = `account-restore-${crypto.randomUUID()}`;
 		const first = await openLocalRepository(name);
-		const second = new LocalRepository(first.db, first.fileStore);
+		const second = new LocalRepository(first.records, first.fileStore);
 		try {
 			const old = account(),
 				current = account();

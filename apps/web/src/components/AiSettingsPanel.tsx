@@ -225,6 +225,16 @@ export function AiSettingsPanel() {
 			controller.current?.abort();
 		};
 	}, []);
+	useEffect(() => {
+		const clearNativeSecrets = () => {
+			saveGeneration.current += 1;
+			setMaster("");
+			setDraft(current => ({ ...current, apiKey: "" }));
+			invalidateTest();
+		};
+		window.addEventListener("keepany-native-background", clearNativeSecrets);
+		return () => window.removeEventListener("keepany-native-background", clearNativeSecrets);
+	}, [invalidateTest]);
 	const changeDraft = (next: AiConfigurationInput) => {
 		if (savingRef.current) return;
 		saveGeneration.current += 1;
@@ -317,7 +327,7 @@ export function AiSettingsPanel() {
 					return;
 				}
 			}
-			ai.saveConfiguration({
+			await ai.saveConfiguration({
 				...input,
 				...(savedEntryId ? { vaultEntryId: savedEntryId } : {}),
 				apiKey:
@@ -327,6 +337,11 @@ export function AiSettingsPanel() {
 						? undefined
 						: input.apiKey,
 			});
+            if (!mounted.current) return;
+            if (input.keySource === "vault" && session?.getSnapshot().status !== "unlocked") {
+              setMessage("aiSettingsVaultSavedNotActivated");
+              return;
+            }
 			setDraft({
 				...input,
 				...(savedEntryId ? { vaultEntryId: savedEntryId } : {}),
@@ -341,6 +356,10 @@ export function AiSettingsPanel() {
 			);
 		} catch (caught) {
 			if (!mounted.current) return;
+			if (caught instanceof Error && caught.message === "vault-locked") {
+				setMessage("pwVaultOperationLocked");
+				return;
+			}
 			if (savedEntryId && isCurrent()) {
 				// A metadata-only retry reuses the entry already saved to KDBX.
 				setDraft({ ...input, vaultEntryId: savedEntryId, apiKey: "" });
@@ -351,18 +370,23 @@ export function AiSettingsPanel() {
 			if (mounted.current) setSaving(false);
 		}
 	};
-	const clear = () => {
+	const clear = async () => {
+    if (savingRef.current || vaultBusy) return;
+    savingRef.current = true; setSaving(true);
 		invalidateTest();
 		setMessage("");
 		setError("");
 		try {
-			ai.clearConfiguration();
+			await ai.clearConfiguration();
+      if (!mounted.current) return;
 			setDraft(createDefaultAiConfiguration("deepseek", "vault"));
 			setMaster("");
 			setMessage("aiSettingsCleared");
 		} catch (caught) {
-			reportError(caught);
-		}
+			if (mounted.current) reportError(caught);
+		} finally {
+      savingRef.current = false; if (mounted.current) setSaving(false);
+    }
 	};
 	const activate = () => {
 		invalidateTest();

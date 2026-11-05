@@ -1,3 +1,4 @@
+import { NativeDatasetPanel } from "./components/NativeDatasetPanel";
 import { useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -34,5 +35,5 @@ export function IntakePage() {
 
 export function BackupPage() {
 	const { t } = useTranslation();
-	return <main className="page intake-restored"><PageTitle title={t("backupAndRestore")} action={<Link className="button" to="/intake">{t("captureTab")}</Link>} /><IntakeTools section="backup" onCsvStaged={() => undefined} /></main>;
+	return <main className="page intake-restored"><PageTitle title={t("backupAndRestore")} action={<Link className="button" to="/intake">{t("captureTab")}</Link>} /><IntakeTools section="backup" onCsvStaged={() => undefined} /><NativeDatasetPanel /></main>;
 }

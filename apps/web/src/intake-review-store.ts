@@ -11,21 +11,21 @@ export { previewReviewedAssetMerge } from '../../../packages/local-db/src/intake
 
 export async function confirmReviewedAssetMerge(input: merge.ConfirmReviewedAssetMergeInput): Promise<Asset> {
   const repository = await localRepository();
-  return merge.confirmReviewedAssetMerge(repository.db, repository.fileStore, input);
+  return merge.confirmReviewedAssetMerge(repository.records, repository.fileStore, input);
 }
 export async function pendingReviewedAssetMerges(): Promise<merge.PendingReviewedAssetMerge[]> {
   const repository = await localRepository();
-  return merge.pendingReviewedAssetMerges(repository.db, repository.fileStore);
+  return merge.pendingReviewedAssetMerges(repository.records, repository.fileStore);
 }
 export async function retryReviewedAssetMerges(): Promise<void> {
   const repository = await localRepository();
   for (const entry of await repository.fileStore.importJournal.toArray()) {
-    if (entry.reviewedAssetMerge) await merge.replayReviewedAssetMerge(repository.db, repository.fileStore, entry.id);
+    if (entry.reviewedAssetMerge) await merge.replayReviewedAssetMerge(repository.records, repository.fileStore, entry.id);
   }
 }
 export async function cancelReviewedAssetMerge(candidateId: string): Promise<'cancelled' | 'completed'> {
   const repository = await localRepository();
-  return merge.cancelReviewedAssetMerge(repository.db, repository.fileStore, candidateId);
+  return merge.cancelReviewedAssetMerge(repository.records, repository.fileStore, candidateId);
 }
 
 export async function stageReviewedCandidates(rows: ReviewedCandidate[], isCurrent?: () => boolean): Promise<ReviewedCandidate[]> {

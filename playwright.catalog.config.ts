@@ -10,6 +10,7 @@ export default defineConfig({
 	testDir: "./tests/e2e",
 	testMatch: [
 		"sidebar-bottom.spec.ts",
+        "mobile-bottom-nav.spec.ts",
 		"catalog-categories.spec.ts",
         "assets-approved.spec.ts",
         "overview-approved.spec.ts",

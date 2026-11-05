@@ -4,15 +4,15 @@ import { resources } from '../../apps/web/src/i18n';
 import { acceptanceCandidate } from './helpers/acceptance-candidate';
 
 const identity = () => acceptanceCandidate().release.webFiles.find(f => f.path === 'index.html')!.sha256;
+const panel = (page: Page) => page.viewportSize()!.width <= 760 ? page.locator('.mobile-more-dialog') : page.locator('.sidebar');
 async function openSidebar(page: Page) {
-  if (page.viewportSize()!.width <= 760 && !await page.locator('.sidebar').evaluate(el => el.classList.contains('open'))) {
-    await page.locator('.mobile-menu').click();
-    await expect(page.locator('.sidebar')).toHaveClass(/open/);
+  if (page.viewportSize()!.width <= 760 && !await page.locator('.mobile-more-dialog').isVisible()) {
+    await page.locator('#mobile-more-trigger').click();
+    await expect(page.locator('.mobile-more-dialog')).toBeVisible();
   }
-  if (page.viewportSize()!.width <= 760) await expect.poll(() => page.locator('.sidebar').evaluate(el => Math.abs(el.getBoundingClientRect().left))).toBeLessThan(1);
 }
 async function aligned(page: Page) {
-  const rows = await page.locator('.side-bottom a').evaluateAll(links => links.map(link => {
+  const rows = await page.locator('.side-bottom a:visible').evaluateAll(links => links.map(link => {
     const rect = link.getBoundingClientRect(), icon = link.querySelector('svg')!.getBoundingClientRect();
     const range = document.createRange(); range.selectNodeContents(link.lastChild!);
     return { x: rect.x, width: rect.width, height: rect.height, iconX: icon.x, iconWidth: icon.width, textX: range.getBoundingClientRect().x };
@@ -34,32 +34,32 @@ for (const locale of ['zh-CN', 'en'] as const) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole('heading', { level: 1 }).first().waitFor();
     await openSidebar(page);
-    const trash = page.locator('.sidebar-trash');
-    expect(await page.locator('.side-bottom a').evaluateAll(els => els.map(e => e.getAttribute('href')))).toEqual(['/trash', '/backup', '/settings']);
+    const trash = panel(page).locator('.sidebar-trash');
+    expect(await page.locator('.side-bottom a:visible').evaluateAll(els => els.map(e => e.getAttribute('href')))).toEqual(['/trash', '/backup', '/settings']);
     const geometry = await aligned(page);
     await expect(trash).toBeInViewport();
-    await page.locator('.sidebar').screenshot({ path: info.outputPath('default.png') });
-    await trash.hover(); await page.locator('.sidebar').screenshot({ path: info.outputPath('hover.png') });
+    await panel(page).screenshot({ path: info.outputPath('default.png') });
+    await trash.hover(); await panel(page).screenshot({ path: info.outputPath('hover.png') });
     await page.mouse.move(width - 1, 1); await page.keyboard.press('Tab'); await trash.focus();
     expect(await trash.evaluate(el => el.matches(':focus-visible'))).toBe(true);
-    await page.locator('.sidebar').screenshot({ path: info.outputPath('focus.png') });
+    await panel(page).screenshot({ path: info.outputPath('focus.png') });
     await trash.hover(); await page.mouse.down();
     expect(await trash.evaluate(el => el.matches(':active'))).toBe(true);
-    await page.locator('.sidebar').screenshot({ path: info.outputPath('pressed.png') });
+    await panel(page).screenshot({ path: info.outputPath('pressed.png') });
     await page.mouse.up();
     await expect(page.getByRole('heading', { level: 1, name: t('trash'), exact: true })).toBeVisible();
     await page.reload(); await expect(page.getByRole('heading', { level: 1, name: t('trash'), exact: true })).toBeVisible();
     await openSidebar(page); await expect(trash).toHaveAttribute('aria-current', 'page');
-    await page.locator('.sidebar').screenshot({ path: info.outputPath('selected.png') });
-    await page.locator('.side-bottom a[href="/backup"]').click(); await expect(page).toHaveURL(/\/backup$/);
+    await panel(page).screenshot({ path: info.outputPath('selected.png') });
+    await panel(page).locator('.side-bottom a[href="/backup"]').click(); await expect(page).toHaveURL(/\/backup$/);
     await expect(page.getByRole('heading', { level: 1, name: t('backupAndRestore'), exact: true })).toBeVisible();
-    await openSidebar(page); await page.locator('.side-bottom a[href="/settings"]').click();
+    await openSidebar(page); await panel(page).locator('.side-bottom a[href="/settings"]').click();
     await expect(page.getByRole('heading', { level: 1, name: t('settings'), exact: true })).toBeVisible();
     await openSidebar(page); await trash.focus(); await page.keyboard.press('Enter');
     await expect(page.getByRole('heading', { level: 1, name: t('trash'), exact: true })).toBeVisible();
     if (width <= 760) {
-      await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
-      await openSidebar(page); await page.locator('.mobile-close').click(); await expect(page.locator('.sidebar')).not.toHaveClass(/open/);
+      await expect(page.locator('.mobile-more-dialog')).toBeHidden();
+      await openSidebar(page); await panel(page).getByRole('button', { name: t('close'), exact: true }).click(); await expect(page.locator('.mobile-more-dialog')).toBeHidden();
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['SB01','SB02','SB03'], locale, width, candidate: identity(), result: 'passed', geometry, screenshots: ['default','hover','focus','pressed','selected'].map(state => info.outputPath(`${state}.png`)) }), contentType: 'application/json' });
@@ -74,15 +74,15 @@ for (const locale of ['zh-CN', 'en'] as const) {
       await expect(page.locator('#collection-name')).toHaveValue(name);
       await page.getByRole('button', { name: t('collectionSave'), exact: true }).click();
       await expect(page.locator('.sidebar-collection')).toHaveCount(index + 1);
-      if (index === 0) await page.locator('.sidebar').screenshot({ path: info.outputPath('single-collection.png') });
+      if (index === 0) await panel(page).screenshot({ path: info.outputPath('single-collection.png') });
       if (index < 7) await page.locator('.sidebar a[href="/collections"]').click();
     }
     await page.reload(); await expect(page.locator('.sidebar-collection')).toHaveCount(8);
     for (const width of [390, 768, 1280, 1920, 1991]) {
       await page.setViewportSize({ width, height: 620 }); await openSidebar(page);
-      await page.locator('.side-bottom a[href="/settings"]').scrollIntoViewIfNeeded();
-      await expect(page.locator('.sidebar-trash')).toBeInViewport(); await aligned(page);
-      await page.locator('.sidebar').screenshot({ path: info.outputPath(`multiple-${width}.png`) });
+      await panel(page).locator('.side-bottom a[href="/settings"]').scrollIntoViewIfNeeded();
+      await expect(panel(page).locator('.sidebar-trash')).toBeInViewport(); await aligned(page);
+      await panel(page).screenshot({ path: info.outputPath(`multiple-${width}.png`) });
     }
     await info.attach('contract-results.json', { body: JSON.stringify({ ids: ['SB04'], locale, candidate: identity(), result: 'passed', screenshots: ['single-collection', ...[390,768,1280,1920,1991].map(width => `multiple-${width}`)].map(name => info.outputPath(`${name}.png`)) }), contentType: 'application/json' });
   });

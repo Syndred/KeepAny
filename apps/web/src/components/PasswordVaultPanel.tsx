@@ -1,3 +1,5 @@
+import { deliverExportFile, fileDeliveryMessage, hasFileDeliveryHandler } from "../file-delivery";
+import { hasPlatformSettings } from "../platform-settings";
 import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
 import "../trash.css";
@@ -7,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { MIN_MASTER_PASSWORD_LENGTH } from "../../../../packages/password-vault/src/policy";
-import { type PasswordVaultEntryDraft, type PasswordVaultEntrySummary, usePasswordVault } from "./PasswordVaultProvider";
+import { type PasswordVaultEntryDraft, type PasswordVaultEntrySummary, type PasswordVaultSession, usePasswordVault } from "./PasswordVaultProvider";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Dialog } from "./ui/dialog";
@@ -53,6 +55,18 @@ type ManualCopy = { label: string; value: string; privateValue?: boolean };
 
 const MIN_MASTER_LENGTH = MIN_MASTER_PASSWORD_LENGTH;
 
+/** File reads may outlive a native background event or the importing panel. */
+export async function importPickedVaultFile(
+	file: Pick<File, "arrayBuffer">,
+	password: string,
+	session: Pick<PasswordVaultSession, "importKdbx">,
+	canContinue: () => boolean,
+): Promise<void> {
+	const bytes = new Uint8Array(await file.arrayBuffer());
+	if (!canContinue()) throw Error("vault-locked");
+	await session.importKdbx(bytes, password);
+}
+
 function blankDraft(linkedAssetId?: string): PasswordVaultEntryDraft {
 	return {
 		title: "",
@@ -80,7 +94,7 @@ function errorKey(error: unknown, context: "operation" | "import" = "operation")
 		case "invalid-password":
 			return "pwVaultWrongPassword";
 		case "vault-locked":
-			return "pwVaultLockedError";
+			return hasPlatformSettings() ? "pwVaultOperationLocked" : "pwVaultLockedError";
 		case "vault-memory":
 			return "pwVaultMemoryUnavailable";
 		case "stale":
@@ -172,6 +186,10 @@ export function PasswordVaultPanel({
 	const [readyError, setReadyError] = useState<string | null>(null);
 	const [messageKey, setMessageKey] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
+	const exportInFlight = useRef(false);
+	const importInFlight = useRef(false);
+	const backgroundRevision = useRef(0);
+	const native = hasPlatformSettings();
 	const [master, setMaster] = useState("");
 	const [masterConfirm, setMasterConfirm] = useState("");
 	const [search, setSearch] = useState("");
@@ -258,11 +276,24 @@ export function PasswordVaultPanel({
 	}, [unlinkTarget, snapshot.status, snapshot.entries]);
 
 	useEffect(() => {
+		const clearNativeSecrets = () => {
+			backgroundRevision.current += 1;
+			setMaster(""); setMasterConfirm(""); setShowMaster(false);
+			setImportPassword(""); setCurrentMaster(""); setNewMaster(""); setNewMasterConfirm("");
+		};
+		window.addEventListener("keepany-native-background", clearNativeSecrets);
+		return () => {
+			backgroundRevision.current += 1;
+			window.removeEventListener("keepany-native-background", clearNativeSecrets);
+		};
+	}, []);
+
+	useEffect(() => {
 		if (snapshot.status === "unlocked") return;
 		unlinkedFocus.current = null;
 		copyGeneration.current += 1;
 		setAccountLinksOpen(false);
-		setMessageKey(null);
+		if (!exportInFlight.current) setMessageKey(null);
 		setEditorId(null);
 		setDraft(null);
 		setMaster("");
@@ -278,17 +309,17 @@ export function PasswordVaultPanel({
 		setDeleteTarget(null);
 		setPurgeTarget(null);
 		setEntryActionError("");
-		setImportFile(null);
+		if (!native) setImportFile(null);
 		setImportPassword("");
 		setImportError("");
-		setImportOpen(false);
+		if (!native) setImportOpen(false);
 		if (notice !== "pwVaultLockedElsewhere") setSmartImportOpen(false);
 		setChangeMasterOpen(false);
-		setBusy(false);
+		if (!native) setBusy(false);
 		setCurrentMaster("");
 		setNewMaster("");
 		setNewMasterConfirm("");
-	}, [snapshot.status, notice]);
+	}, [snapshot.status, notice, native]);
 
 	useEffect(() => {
 		if (
@@ -375,6 +406,20 @@ export function PasswordVaultPanel({
 
 	function clearMessage() {
 		setMessageKey(null);
+	}
+	function openChangeMaster() {
+		clearMessage();
+		setCurrentMaster("");
+		setNewMaster("");
+		setNewMasterConfirm("");
+		setChangeMasterOpen(true);
+	}
+	function closeChangeMaster() {
+		setChangeMasterOpen(false);
+		setCurrentMaster("");
+		setNewMaster("");
+		setNewMasterConfirm("");
+		clearMessage();
 	}
 
 	function retryReady() {
@@ -617,11 +662,15 @@ export function PasswordVaultPanel({
 	}
 
 	function openImport() {
+		setImportFile(null);
+		setImportPassword("");
+		clearMessage();
 		setImportError("");
 		setImportOpen(true);
 	}
 	function closeImport() {
 		if (busy) return;
+		clearMessage();
 		setImportOpen(false);
 		setImportFile(null);
 		setImportPassword("");
@@ -629,10 +678,12 @@ export function PasswordVaultPanel({
 	}
 	async function importVault(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
-		if (busy || !session || !importFile || !importPassword) {
+		if (busy || importInFlight.current || !session || !["empty", "unlocked"].includes(session.getSnapshot().status) || !importFile || !importPassword) {
 			if (!importFile) { setImportError("pwVaultNoFile"); announce("pwVaultNoFile"); }
 			return;
 		}
+		importInFlight.current = true;
+		const startedBeforeBackground = backgroundRevision.current;
 		setBusy(true);
 		clearMessage();
 		setImportError("");
@@ -642,8 +693,8 @@ export function PasswordVaultPanel({
 				announce("pwVaultFileTooLarge");
 				return;
 			}
-			const bytes = new Uint8Array(await importFile.arrayBuffer());
-			await session.importKdbx(bytes, importPassword);
+			await importPickedVaultFile(importFile, importPassword, session, () =>
+				startedBeforeBackground === backgroundRevision.current && ["empty", "unlocked"].includes(session.getSnapshot().status));
 			setImportOpen(false);
 			setImportFile(null);
 			setImportPassword("");
@@ -654,16 +705,24 @@ export function PasswordVaultPanel({
 			setImportError(key);
 			announce(key);
 		} finally {
+			importInFlight.current = false;
 			setBusy(false);
 		}
 	}
 
 	async function exportVault() {
-		if (busy || !session || snapshot.status !== "unlocked") return;
+		if (busy || exportInFlight.current || !session || snapshot.status !== "unlocked") return;
+    exportInFlight.current = true;
 		setBusy(true);
 		clearMessage();
 		try {
 			const bytes = await session.exportKdbx();
+      if (hasFileDeliveryHandler()) {
+        announce("exportFileOpening");
+        const result = await deliverExportFile({ name: t("pwVaultExportFilename"), mimeType: "application/octet-stream", bytes });
+        announce(fileDeliveryMessage(result));
+        return;
+      }
 			const url = URL.createObjectURL(
 				new Blob([new Uint8Array(bytes).buffer], {
 					type: "application/octet-stream",
@@ -678,6 +737,7 @@ export function PasswordVaultPanel({
 		} catch (error) {
 			announce(errorKey(error));
 		} finally {
+      exportInFlight.current = false;
 			setBusy(false);
 		}
 	}
@@ -928,7 +988,7 @@ export function PasswordVaultPanel({
 					</Button>
 				</div>
 			) : null}
-{!renderDetailActions && (renderAccounts ? snapshot.status !== "unlocked" && <div className="account-unlock-gate">{vaultAccess}</div> : vaultAccess)}
+{!renderDetailActions && !(native && importOpen && snapshot.status === "locked") && (renderAccounts ? snapshot.status !== "unlocked" && <div className="account-unlock-gate">{vaultAccess}</div> : vaultAccess)}
 			{!renderDetailActions && snapshot.status === "unlocked" && (
 				<>
 					{!trashOnly && <>{!renderAccounts && <div className="password-vault-toolbar">
@@ -990,7 +1050,7 @@ export function PasswordVaultPanel({
 							<VaultIconButton
 								label={t("pwVaultChangeMaster")}
 								disabled={busy}
-								onClick={() => setChangeMasterOpen(true)}
+								onClick={openChangeMaster}
 							>
 								<KeyRound size={18} />
 							</VaultIconButton>
@@ -1277,8 +1337,10 @@ export function PasswordVaultPanel({
 				<Dialog
 					title={t("pwVaultImportTitle")}
                     returnFocusTo={snapshot.status === "unlocked" ? () => toolTrigger("links") : undefined}
+					closeDisabled={busy}
 					onClose={closeImport}
 				>
+          {native && snapshot.status === "locked" && <><p role="status">{t("pwVaultImportUnlock")}</p>{vaultAccess}</>}
 					<form
 						className="password-vault-dialog-form"
 						onSubmit={(event) => void importVault(event)}
@@ -1286,6 +1348,7 @@ export function PasswordVaultPanel({
 						<p className="password-vault-dialog-hint">
 							{t("pwVaultImportHint")}
 						</p>
+						{messageKey && <p className="field-error" role="alert">{t(messageKey)}</p>}
 						<div className="field">
 							<label htmlFor="password-vault-import-file">
 								{t("pwVaultImportFile")}
@@ -1312,7 +1375,7 @@ export function PasswordVaultPanel({
 								value={importPassword}
 								onChange={(event) => setImportPassword(event.target.value)}
 								autoComplete="off"
-								disabled={busy}
+								disabled={busy || snapshot.status === "locked"}
 								required
 							/>
 						</div>
@@ -1325,7 +1388,7 @@ export function PasswordVaultPanel({
 							>
 								{t("cancel")}
 							</Button>
-							<Button type="submit" variant="primary" disabled={busy}>
+							<Button type="submit" variant="primary" disabled={busy || snapshot.status === "locked"}>
 								<Upload size={15} /> {t("pwVaultImportNow")}
 							</Button>
 						</div>
@@ -1335,15 +1398,17 @@ export function PasswordVaultPanel({
 			{snapshot.status === "unlocked" && changeMasterOpen && (
 				<Dialog
 					title={t("pwVaultChangeMasterTitle")}
+                    closeDisabled={busy}
                     returnFocusTo={() => toolTrigger("links")}
 					onClose={() => {
-						if (!busy) setChangeMasterOpen(false);
+						if (!busy) closeChangeMaster();
 					}}
 				>
 					<form
 						className="password-vault-dialog-form"
 						onSubmit={(event) => void changeMasterPassword(event)}
 					>
+						{messageKey && <p className="field-error" role="alert">{t(messageKey)}</p>}
 						<div className="field">
 							<label htmlFor="password-vault-current-master">
 								{t("pwVaultCurrentMaster")}
@@ -1399,7 +1464,7 @@ export function PasswordVaultPanel({
 							<Button
 								type="button"
 								disabled={busy}
-								onClick={() => setChangeMasterOpen(false)}
+								onClick={closeChangeMaster}
 							>
 								{t("cancel")}
 							</Button>

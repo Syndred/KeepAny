@@ -112,7 +112,7 @@ describe('RxDB + free Dexie local repository', () => {
 
   it('rejects stale submission edits without rolling back verification and evidence', async () => {
     const db = await openLocalRepository(name());
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     try {
       const site = project('Submission site');
       await db.save('asset', site);
@@ -154,7 +154,7 @@ describe('RxDB + free Dexie local repository', () => {
 
   it('checks the live close round before the final decision and local archive', async () => {
     const db = await openLocalRepository(name());
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     try {
       const site = project('Close race site');
       await db.save('asset', site);
@@ -365,11 +365,11 @@ describe('RxDB + free Dexie local repository', () => {
     await db.save('relation', legacy);
     await db.deleteEntity('relation', legacy.id);
     let targetLookups = 0;
-    const originalGet = db.get.bind(db);
-    const getSpy = vi.spyOn(db, 'get').mockImplementation(async (type, id) => {
+    const originalGet = db.records.get.bind(db.records);
+    const getSpy = vi.spyOn(db.records, 'get').mockImplementation(async (id, includeDeleted) => {
       // Simulate the endpoint disappearing after the preliminary check.
-      if (type === 'asset' && id === account.id && ++targetLookups === 2) return null;
-      return originalGet(type, id);
+      if (id === `asset:${account.id}` && ++targetLookups === 2) return null;
+      return originalGet(id, includeDeleted);
     });
     await expect(db.restoreEntity('relation', legacy.id)).rejects.toThrow('relation-endpoint');
     getSpy.mockRestore();
@@ -443,7 +443,7 @@ describe('RxDB + free Dexie local repository', () => {
   for (const mixedEntrypoints of [false, true]) {
     it(`keeps a committed stable identity and relation across two repository instances using ${mixedEntrypoints ? 'mixed batch entrypoints' : 'reviewed batches'}`, async () => {
       const dbName = name(), first = await openLocalRepository(dbName);
-      const second = new LocalRepository(first.db, first.fileStore);
+      const second = new LocalRepository(first.records, first.fileStore);
       // The existing same-process queue is not sufficient across tabs: assert both
       // repository wrappers also request the shared browser lock for this database.
       const request = vi.fn(async (_name: string, action: () => Promise<unknown>) => action());
@@ -581,7 +581,7 @@ describe('RxDB + free Dexie local repository', () => {
   it('keeps a concurrent external asset edit, cancels the orphan renewal, then permits retry and export', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     const { expected, next, event } = renewalFixture();
     await db.save('asset', expected);
     const storage = db.db.records.storageInstance;
@@ -619,7 +619,7 @@ describe('RxDB + free Dexie local repository', () => {
   it('keeps a committed renewal after journal cleanup fails and another caller edits the asset', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     const { expected, next, event } = renewalFixture();
     await db.save('asset', expected);
     const deletion = vi.spyOn(db.fileStore.renewalJournal, 'delete').mockRejectedValueOnce(Error('injected-cleanup'));
@@ -682,7 +682,7 @@ describe('RxDB + free Dexie local repository', () => {
     const pending = db.recordRenewal(expected, next, event);
     await atWrite;
     let exported = false;
-    const exportPromise = new LocalRepository(db.db, db.fileStore).exportArchive().then(archive => { exported = true; return archive; });
+    const exportPromise = new LocalRepository(db.records, db.fileStore).exportArchive().then(archive => { exported = true; return archive; });
     await new Promise(resolve => setTimeout(resolve, 10));
     expect(exported).toBe(false);
     release();
@@ -743,7 +743,7 @@ describe('RxDB + free Dexie local repository', () => {
 
   it('records one active loan with its borrower, rejects repeated and stale actions, then clears the borrower on return', async () => {
     const db = await openLocalRepository(name());
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     const loan = itemFixture();
     await db.save('asset', loan.expected);
     const secondLoan = itemFixture(loan.expected);
@@ -849,7 +849,7 @@ describe('RxDB + free Dexie local repository', () => {
 
   it('cancels an orphan item history when an external asset edit wins the storage CAS', async () => {
     const db = await openLocalRepository(name());
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     const loan = itemFixture();
     await db.save('asset', loan.expected);
     const storage = db.db.records.storageInstance;
@@ -915,7 +915,7 @@ describe('RxDB + free Dexie local repository', () => {
   it('keeps a committed item event after journal cleanup fails and the asset is edited, deleted, restored and backed up', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     const loan = itemFixture();
     await db.save('asset', loan.expected);
     const deletion = vi.spyOn(db.fileStore.renewalJournal, 'delete').mockRejectedValueOnce(Error('injected-cleanup'));
@@ -948,7 +948,7 @@ describe('RxDB + free Dexie local repository', () => {
 
   it('journals item status with CAS and keeps loans, maintenance, archive and purchase price separate', async () => {
     const db = await openLocalRepository(name());
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     try {
       const item = { ...newAsset('item'), name: 'Camera', amount: 1234, currency: 'USD' as const,
         itemPurchasePriceKnown: true, itemStartDate: '2026-09-01', itemWarrantyStatus: 'inWarranty' as const };
@@ -1063,7 +1063,7 @@ describe('RxDB + free Dexie local repository', () => {
   it('deduplicates pending item reminders and preserves every task completion after reopen and retry', async () => {
     const dbName = name();
     const db = await openLocalRepository(dbName);
-    const otherTab = new LocalRepository(db.db, db.fileStore);
+    const otherTab = new LocalRepository(db.records, db.fileStore);
     const item = itemFixture().expected;
     await db.save('asset', item);
     const task: Task = { id: crypto.randomUUID(), name: 'Service camera', assetId: item.id,

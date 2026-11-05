@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { liveQuery } from "dexie";
 import type {
 	Asset,
 	Category,
@@ -9,7 +8,6 @@ import type {
 	Task,
 } from "../../../packages/domain/src";
 import {
-	database,
 	type PendingCategoryEdit,
 	localRepository,
 	type RecordRow,
@@ -23,14 +21,14 @@ export function useData() {
 		let dispose: (() => void) | undefined;
 		void localRepository().then((repository) => {
 			if (!active) return;
-			const subscription = liveQuery(async () => {
-				const candidates = await repository.fileStore.intakeReview.where("status").equals("accepted").toArray();
+			const unsubscribe = repository.observe(async () => {
+				const candidates = await repository.fileStore.intakeReview.equals("status", "accepted");
 				return candidates.map(projectGlobalSearchCandidate);
-			}).subscribe({
+			}, {
 				next: (candidates) => { if (active) { setReviewedCandidates(candidates); setReviewedCandidatesLoaded(true); } },
 				error: () => { if (active) { setReviewedCandidates([]); setReviewedCandidatesLoaded(false); } },
 			});
-			dispose = () => subscription.unsubscribe();
+			dispose = unsubscribe;
 		}).catch(() => { if (active) setReviewedCandidatesLoaded(false); });
 		return () => { active = false; dispose?.(); };
 	}, []);
@@ -42,14 +40,14 @@ export function useData() {
 		let dispose: (() => void) | undefined;
 		void localRepository().then((repository) => {
 			if (!active) return;
-			const subscription = liveQuery(async () => {
+			const unsubscribe = repository.observe(async () => {
 				const pending = await Promise.all((["project", "account", "subscription", "item", "vault"] as const).map((kind) => repository.getPendingCategoryEdit(kind)));
 				return pending.filter((edit): edit is PendingCategoryEdit => edit !== null);
-			}).subscribe({
+			}, {
 				next: (pending) => { setPendingCategoryEdits(pending); setCategoryEditsError(false); setCategoryEditsLoading(false); },
 				error: () => { setCategoryEditsError(true); setCategoryEditsLoading(false); },
 			});
-			dispose = () => subscription.unsubscribe();
+			dispose = unsubscribe;
 		}).catch(() => { if (active) { setCategoryEditsError(true); setCategoryEditsLoading(false); } });
 		return () => { active = false; dispose?.(); };
 	}, []);
@@ -59,22 +57,15 @@ export function useData() {
 	useEffect(() => {
 		let dispose: (() => void) | undefined;
 		let active = true;
-		database()
-			.then((db) => {
+		localRepository()
+			.then((repository) => {
 				if (!active) return;
-				const sub = db.records.find().$.subscribe({
-					next: (docs) => {
-						setRows(docs.map((d) => d.toJSON() as RecordRow));
-						setLoading(false);
-					},
-					error: (e) => setError(String(e)),
+				dispose = repository.observe(current => current.allRecords(), {
+					next: (rows) => { setRows(rows); setLoading(false); setError(""); },
+					error: (error) => { setError(String(error)); setLoading(false); },
 				});
-				dispose = () => sub.unsubscribe();
 			})
-			.catch((e) => {
-				setError(String(e));
-				setLoading(false);
-			});
+			.catch((e) => { if (active) { setError(String(e)); setLoading(false); } });
 		return () => {
 			active = false;
 			dispose?.();

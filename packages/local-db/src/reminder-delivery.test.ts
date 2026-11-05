@@ -17,13 +17,13 @@ describe("atomic local reminder delivery", () => {
 		const db = await openLocalRepository(name());
 		try {
 			const task = taskFixture(); await db.save("task", task);
-			const other = new LocalRepository(db.db, db.fileStore);
+			const other = new LocalRepository(db.records, db.fileStore);
 			const deliver = vi.fn();
 			const input = { id: receipt("a"), sourceType: "task" as const, expected: task, expectedPreference: null, scheduledAt: task.reminder.at };
 			const attempts = await Promise.all([db.deliverReminderIfCurrent(input, deliver), other.deliverReminderIfCurrent(input, deliver)]);
 			expect(attempts.filter(Boolean)).toHaveLength(1);
 			expect(deliver).toHaveBeenCalledTimes(1);
-			expect(await new LocalRepository(db.db, db.fileStore).deliverReminderIfCurrent(input, deliver)).toBe(false);
+			expect(await new LocalRepository(db.records, db.fileStore).deliverReminderIfCurrent(input, deliver)).toBe(false);
 		} finally { await db.close(); }
 	});
 	it("rejects old task and preference snapshots before emitting a notification", async () => {
@@ -77,7 +77,7 @@ describe("atomic local reminder delivery", () => {
 			const task = taskFixture(); await db.save("task", task);
 			const preview = await db.get<Task>("task", task.id);
 			if (!preview) throw Error("task-missing");
-			await new LocalRepository(db.db, db.fileStore).saveTaskIfCurrent(preview, { ...preview, name: "Edited after preview" });
+			await new LocalRepository(db.records, db.fileStore).saveTaskIfCurrent(preview, { ...preview, name: "Edited after preview" });
 			await expect(db.setTaskDone(preview.id, preview.done, preview.reminder?.at, preview)).rejects.toThrow("task-stale");
 			const current = await db.get<Task>("task", task.id);
 			if (!current) throw Error("task-missing");

@@ -177,7 +177,7 @@ it('serializes two FileStore handles directly through Dexie, without relying on 
   const secondStore = new FileStore(name);
   try {
     const service = await target(first), row = await stage(first, pdf(), draft(service.id));
-    const results = await Promise.all([confirmReviewedExpense(first.db, first.fileStore, row), confirmReviewedExpense(first.db, secondStore, row)]);
+    const results = await Promise.all([confirmReviewedExpense(first.records, first.fileStore, row), confirmReviewedExpense(first.records, secondStore, row)]);
     expect(results[0]).toEqual(results[1]); expect(await first.list('history')).toHaveLength(1);
     expect(await first.fileStore.importJournal.count()).toBe(0);
   } finally { await first.close(); secondStore.close(); }
@@ -188,11 +188,11 @@ it('refuses confirmation while a durable restore or archive merge is pending, ev
   try {
     const service = await target(repository), row = await stage(repository, pdf(), draft(service.id));
     await repository.fileStore.journal.add({ id: 'pending-restore', rows: [] });
-    await expect(confirmReviewedExpense(repository.db, repository.fileStore, row)).rejects.toThrow('restore-recovery-pending');
+    await expect(confirmReviewedExpense(repository.records, repository.fileStore, row)).rejects.toThrow('restore-recovery-pending');
     await repository.fileStore.journal.clear();
     await repository.fileStore.archiveMerge.add({ id: 'active', phase: 'applying', archiveHash: 'a'.repeat(64),
       targetFingerprint: 'b'.repeat(64), changes: [], addedFileIds: [], insertedFileIds: [] });
-    await expect(confirmReviewedExpense(repository.db, repository.fileStore, row)).rejects.toThrow('archive-merge-pending');
+    await expect(confirmReviewedExpense(repository.records, repository.fileStore, row)).rejects.toThrow('archive-merge-pending');
     expect(await repository.list('history')).toEqual([]); expect(await repository.fileStore.importJournal.count()).toBe(0);
     expect(await getReviewedCandidate(repository.fileStore, row.id)).toEqual(row);
     await repository.fileStore.archiveMerge.clear();
@@ -204,14 +204,14 @@ it('refuses confirmation while a durable restore or archive merge is pending, ev
 it('rejects an export when another handle freezes a new uncommitted confirmation after the initial recovery pass', async () => {
   const repository = await openLocalRepository(databaseName());
   const FileStore = repository.fileStore.constructor as new (name: string) => Repository['fileStore'];
-  const secondStore = new FileStore(repository.db.name);
+  const secondStore = new FileStore(repository.records.name);
   try {
     const service = await target(repository), row = await stage(repository, pdf(), draft(service.id));
     const read = repository.allRecords.bind(repository);
     const insertFailure = vi.spyOn(repository.db.records, 'insert').mockRejectedValueOnce(Error('injected-history-write'));
     const concurrent = vi.spyOn(repository, 'allRecords').mockImplementationOnce(async () => {
       const snapshot = await read();
-      await expect(confirmReviewedExpense(repository.db, secondStore, row)).rejects.toThrow('injected-history-write');
+      await expect(confirmReviewedExpense(repository.records, secondStore, row)).rejects.toThrow('injected-history-write');
       return snapshot;
     });
     await expect(repository.exportArchive()).rejects.toThrow('review-expense-pending');

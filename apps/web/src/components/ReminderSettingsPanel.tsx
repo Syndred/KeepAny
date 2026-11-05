@@ -6,7 +6,7 @@ import { browserReminderPermission, defaultReminderSettings, readReminderSetting
 import { useAppContext } from "../view-shared";
 import { Button } from "./ui/button";
 
-export function ReminderSettingsPanel() {
+export function ReminderSettingsPanel({ native = false }: { native?: boolean }) {
 	const { data } = useAppContext();
 	const { t } = useTranslation();
 	const preference = data.preferences.find((row) => row.id === REMINDER_SETTINGS_ID) ?? null;
@@ -61,7 +61,7 @@ export function ReminderSettingsPanel() {
 	}
 	return <section className="card padded">
 		<h2>{t("reminderSettingsTitle")}</h2>
-		<p className="muted">{t("reminderRuntimeScope")}</p>
+		<p className="muted">{t(native ? "nativeReminderRuntimeScope" : "reminderRuntimeScope")}</p>
 		<form className="reminder-settings-form" onSubmit={(event) => { event.preventDefault(); void persist(draft); }}>
 			<div className="form-grid">
 				<label><input type="checkbox" checked={draft.enabled} disabled={busy || data.loading} onChange={(event) => change({ enabled: event.target.checked })} /> {t("reminderEnabled")}</label>
@@ -69,13 +69,13 @@ export function ReminderSettingsPanel() {
 				<label className="field" htmlFor="reminder-lead-days">{t("reminderLeadDays")}<Input id="reminder-lead-days" type="number" min="0" max="3650" required value={draft.leadDays} disabled={busy || data.loading} onChange={(event) => change({ leadDays: event.target.valueAsNumber })} /></label>
 				<label className="field" htmlFor="reminder-clock">{t("reminderClockTime")}<Input id="reminder-clock" type="time" required value={draft.time} disabled={busy || data.loading} onChange={(event) => change({ time: event.target.value })} /></label>
 				<label className="field" htmlFor="reminder-time-zone">{t("reminderTimeZone")}<Input id="reminder-time-zone" required value={draft.timeZone} disabled={busy || data.loading} onChange={(event) => change({ timeZone: event.target.value })} /></label>
-				<label><input type="checkbox" checked={draft.browserEnabled} disabled={busy || data.loading || (permission !== "granted" && !draft.browserEnabled)} onChange={(event) => change({ browserEnabled: event.target.checked })} /> {t("reminderBrowserEnabled")}</label>
+				{!native && <label><input type="checkbox" checked={draft.browserEnabled} disabled={busy || data.loading || (permission !== "granted" && !draft.browserEnabled)} onChange={(event) => change({ browserEnabled: event.target.checked })} /> {t("reminderBrowserEnabled")}</label>}
 			</div>
-			<p role="status">{t(`reminderPermission_${permission}`)}</p>
+			{!native && <p role="status">{t(`reminderPermission_${permission}`)}</p>}
 			<div className="toolbar">
 				<Button type="submit" variant="primary" disabled={busy || data.loading}>{t("save")}</Button>
-				{permission === "default" && <Button type="button" disabled={busy || data.loading} onClick={() => void allowBrowser()}>{t("reminderEnableBrowser")}</Button>}
-				{permission === "granted" && <Button type="button" disabled={busy} onClick={() => { const result = showBrowserReminder(t("reminderTestTitle"), t("reminderTestBody"), "keepany-reminder-test"); setMessage(result === "shown" ? "reminderTestBody" : "reminderBrowserFailed"); }}>{t("reminderTest")}</Button>}
+				{!native && permission === "default" && <Button type="button" disabled={busy || data.loading} onClick={() => void allowBrowser()}>{t("reminderEnableBrowser")}</Button>}
+				{!native && permission === "granted" && <Button type="button" disabled={busy} onClick={() => { const result = showBrowserReminder(t("reminderTestTitle"), t("reminderTestBody"), "keepany-reminder-test"); setMessage(result === "shown" ? "reminderTestBody" : "reminderBrowserFailed"); }}>{t("reminderTest")}</Button>}
 			</div>
 			{message && <p role="status">{t(message)}</p>}
 		</form>

@@ -1,3 +1,6 @@
+import { ExportFileLink } from "./components/ExportFileLink";
+import { hasFileDeliveryHandler } from "./file-delivery";
+import { getDatasetAdapter } from "./native-datasets";
 import { validateCaptureImage } from "./workflow-image";
 import { Textarea } from "./components/ui/textarea";
 import { Input } from "./components/ui/input";
@@ -191,7 +194,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 				url: address,
 				name: `keepany-${new Date().toISOString().slice(0, 10)}.ka1`,
 			});
-			setMessage(t("backupReady"));
+			setMessage(t(hasFileDeliveryHandler() ? "exportFileReady" : "backupReady"));
 		} catch {
 			setMessage(t("error"));
 		} finally {
@@ -582,11 +585,11 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 						</Button>
 						{readyDownload && (
 							<Button asChild variant="primary">
-								<a href={readyDownload.url} download={readyDownload.name}><Download size={16} />{t("saveBackupFile")}</a>
+								<ExportFileLink href={readyDownload.url} download={readyDownload.name} onDeliveryMessage={key => setMessage(t(key))}><Download size={16} />{t("saveBackupFile")}</ExportFileLink>
 							</Button>
 						)}
 					</div>
-					<p className="intake-backup-status" role="status">{readyDownload ? t("backupReady") : t("intakeBackupIdle")}</p>
+					<p className="intake-backup-status" role="status">{readyDownload ? t(hasFileDeliveryHandler() ? "exportFileReady" : "backupReady") : t("intakeBackupIdle")}</p>
 					<RestoreRecoveryPanel />
 					<details className="intake-secondary">
 						<summary>{t("restoreBackup")}</summary>
@@ -605,7 +608,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 								}}
 							/>
 						</div>
-						<small>{t("restoreHint")}</small>
+						<small>{t(getDatasetAdapter() ? "localDatasetRestoreHint" : "restoreHint")}</small>
 						{readyArchive && <p role="status">{t("restorePreviewSummary", { count: archiveCount, reviewCount: archiveReviewCount })}</p>}
 						{readyArchive && archiveHasVault && <p>{t("restoreContainsVault")}</p>}
 						<div className="actions">

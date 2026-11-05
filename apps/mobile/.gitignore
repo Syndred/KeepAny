@@ -1,0 +1,3 @@
+# This task ships Android only. Keep the untracked historical iOS copy local.
+/ios/
+/dist/

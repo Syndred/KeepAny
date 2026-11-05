@@ -398,3 +398,42 @@ describe("AI settings credential boundary", () => {
 		});
 	});
 });
+
+
+describe("confirmed native metadata persistence", () => {
+  it("publishes only after the durable write confirms, then serializes a following clear", async () => {
+    const saved = storage();
+    let confirm!: () => void;
+    const store = new AiSettingsStore({ ...saved, setItem: (key, value) => new Promise<void>(resolve => {
+      confirm = () => { saved.setItem(key, value); resolve(); };
+    }) });
+    const saving = store.saveConfiguration({ ...configuration, apiKey: "synthetic-secret" });
+    expect(store.getSnapshot().configured).toBe(false);
+    const clearing = store.clearConfiguration();
+    confirm();
+    await saving;
+    await clearing;
+    expect(store.getSnapshot().configured).toBe(false);
+    expect(saved.getItem(AI_SETTINGS_STORAGE_KEY)).toBeNull();
+  });
+  it("never revives a vault key when the vault locks during a native write", async () => {
+    let confirm!: () => void;
+    const session = vault(binding);
+    const store = new AiSettingsStore({ ...storage(), setItem: () => new Promise<void>(resolve => { confirm = resolve; }) });
+    store.attachVault(session);
+    const saving = store.saveConfiguration({ ...configuration, keySource: "vault", vaultEntryId: "entry", autoActivate: true });
+    session.update({ status: "locked", entries: [] });
+    confirm();
+    await saving;
+    expect(store.getSnapshot().connection).toBeNull();
+  });
+  it("does not report success on asynchronous persistence rejection", async () => {
+    let reject!: (reason: Error) => void;
+    const store = new AiSettingsStore({ ...storage(), setItem: () => new Promise<void>((_, fail) => { reject = fail; }) });
+    const saving = store.saveConfiguration({ ...configuration, apiKey: "synthetic-secret" });
+    expect(saving, "save must return its durable write confirmation").toBeInstanceOf(Promise);
+    reject(Error("synthetic disk error"));
+    await expect(saving).rejects.toThrow("aiSettingsStorageFailed");
+    expect(store.getSnapshot().configured).toBe(false);
+  });
+});

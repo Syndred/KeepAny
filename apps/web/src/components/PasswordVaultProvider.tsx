@@ -47,6 +47,12 @@ const PasswordVaultContext = createContext<PasswordVaultContextValue | null>(
 	null,
 );
 
+/** Event binding stays independent of visibility heuristics and in-flight writes. */
+export function bindNativeVaultLifecycle(target: EventTarget, lock: () => void): () => void {
+  target.addEventListener("keepany-native-background", lock);
+  return () => target.removeEventListener("keepany-native-background", lock);
+}
+
 export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 	const sessionRef = useRef<PasswordVaultSession | null>(null);
 	const loadRef = useRef<Promise<void> | null>(null);
@@ -56,6 +62,7 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 	const listenersRef = useRef(new Set<() => void>());
 	const channelRef = useRef<BroadcastChannel | null>(null);
 	const writesInFlightRef = useRef(0);
+  const lockRevisionRef = useRef(0);
 	const pendingExternalRevisionRef = useRef<string | null | undefined>(
 		undefined,
 	);
@@ -153,10 +160,17 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 					read: () => readPasswordVault(),
 					write: async (bytes: Uint8Array, expectedRevision: string | null) => {
 						writesInFlightRef.current += 1;
+            const startedBeforeLock = lockRevisionRef.current;
 						let completed = false;
 						try {
 							const record = await savePasswordVault(bytes, expectedRevision);
 							completed = true;
+              if (startedBeforeLock !== lockRevisionRef.current) {
+                if (mountedRef.current) setNotice("pwVaultCommitLocked");
+                // The encrypted write may complete after the session was invalidated.
+                // Re-read its revision while remaining locked, including empty-vault adoption.
+                pendingExternalRevisionRef.current = record.revision;
+              }
 							channelRef.current?.postMessage({
 								type: "revision",
 								revision: record.revision,
@@ -165,7 +179,7 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 							return record;
 						} finally {
 							writesInFlightRef.current -= 1;
-							if (!completed) queueMicrotask(flushPendingExternalRevision);
+							if (!completed || startedBeforeLock !== lockRevisionRef.current) queueMicrotask(flushPendingExternalRevision);
 						}
 					},
 				});
@@ -202,11 +216,14 @@ export function PasswordVaultProvider({ children }: { children: ReactNode }) {
 
 	const lock = useCallback(() => {
 		setNotice(null);
+    lockRevisionRef.current += 1;
 		const session = sessionRef.current;
-		if (!session || snapshotRef.current.status !== "unlocked") return;
+		if (!session) return;
 		session.lock();
 		emit(session.getSnapshot());
 	}, [emit]);
+
+	useEffect(() => bindNativeVaultLifecycle(window, lock), [lock]);
 
 	useEffect(() => {
 		if (snapshot.status === "unlocked") setNotice(null);

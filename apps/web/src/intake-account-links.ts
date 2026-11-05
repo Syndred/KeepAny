@@ -68,7 +68,7 @@ function matchesIdentity(asset: Asset, identity: AccountIdentityPreview): boolea
 }
 const accountLinkLocks = new Map<string, Promise<void>>();
 async function withAccountLinkLock<T>(repository: LocalRepository, action: () => Promise<T>): Promise<T> {
-	const name = `keepany-intake-account-links:${repository.db.name}`;
+	const name = `keepany-intake-account-links:${repository.records.name}`;
 	const previous = accountLinkLocks.get(name) ?? Promise.resolve();
 	const run = previous.then(() => {
 		const locks = typeof navigator === "undefined" ? undefined : navigator.locks;

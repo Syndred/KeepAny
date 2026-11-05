@@ -1,3 +1,4 @@
+import { hasPlatformSettings } from "./platform-settings";
 import { openReminderCenter } from "./reminder-navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ export function ReminderRuntime({ hideBanner = false }: { hideBanner?: boolean }
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
+	const native = hasPlatformSettings();
 	const [now, setNow] = useState(Date.now);
 	const [browserFailed, setBrowserFailed] = useState(false);
 	const running = useRef(false);
@@ -39,7 +41,7 @@ export function ReminderRuntime({ hideBanner = false }: { hideBanner?: boolean }
 				await repository.deliverReminderIfCurrent({ id, sourceType: reminder.sourceType, expected: reminder.source, expectedPreference: preference, scheduledAt: reminder.scheduledAt }, () => {
 					// A committed receipt must be dispatched even when its reactive update rerenders this effect.
 					delivered++;
-					if (settings.browserEnabled) {
+					if (!native && settings.browserEnabled) {
 						const body = t("reminderDueBody", { time: new Date(reminder.dueAt).toLocaleString(i18n.language, { timeZone: reminder.sourceType === "task" && "reminder" in reminder.source && reminder.source.reminder ? reminder.source.reminder.timeZone : settings.subscriptionOverrides[reminder.source.id]?.timeZone ?? settings.timeZone }) });
 						const outcome = showBrowserReminder(reminder.source.name, body, id, () => {
 							window.focus();
@@ -53,11 +55,11 @@ export function ReminderRuntime({ hideBanner = false }: { hideBanner?: boolean }
 			if (delivered) notify(t("reminderArrived", { count: delivered }));
 		})().catch(() => { /* Recovery or stale data will be retried on the next tick. */ }).finally(() => { running.current = false; });
 		return () => { active = false; };
-	}, [due, preference, settings, data.loading, now, t, i18n.language, navigate, notify]);
+	}, [due, preference, settings, data.loading, now, t, i18n.language, navigate, notify, native]);
 	if (hideBanner || !due.length) return null;
 	return <aside className="card reminder-runtime-banner" aria-label={t("reminderDueTitle")}>
 		<strong>{t("reminderDueCount", { count: due.length })}</strong>
 		<div className="toolbar">{due.slice(0, 3).map((reminder) => <TextLink key={`${reminder.sourceType}:${reminder.source.id}`} asChild>{reminder.sourceType === "task" ? <button type="button" className="text-link reminder-entry-button" onClick={() => openReminderCenter({ taskId: reminder.source.id })}>{reminder.source.name}</button> : <Link to="/assets/$kind/$id" params={{ kind: "subscription", id: reminder.source.id }}>{reminder.source.name} · {t("reminderDueSubscription")}</Link>}</TextLink>)}{due.length > 3 && <TextLink asChild><button type="button" className="text-link reminder-entry-button" onClick={() => openReminderCenter()}>{t("reminderEntryOpen")}</button></TextLink>}</div>
-		{browserFailed && <p role="status">{t("reminderBrowserFailed")}</p>}
+		{!native && browserFailed && <p role="status">{t("reminderBrowserFailed")}</p>}
 	</aside>;
 }

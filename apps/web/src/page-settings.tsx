@@ -1,3 +1,4 @@
+import { hasPlatformSettings, setPlatformSetting } from "./platform-settings";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,7 +12,8 @@ import { PageTitle, useAppContext } from "./view-shared";
 import "./settings-intake-restoration.css";
 
 export function SettingsPage() {
-  const { data, notify } = useAppContext();
+  const { notify } = useAppContext();
+  const native = hasPlatformSettings();
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const [persistent, setPersistent] = useState<boolean | null>(null);
@@ -35,10 +37,11 @@ export function SettingsPage() {
       document.getElementById("mcp-panel-title")?.focus();
   }, [assistantOpen]);
   useEffect(() => {
+    if (native) return;
     let current = true;
     void navigator.storage?.persisted?.().then(value => { if (current) setPersistent(value); });
     return () => { current = false; };
-  }, []);
+  }, [native]);
 	return (
 		<main className="page settings-restored">
 			<PageTitle title={t("settings")} />
@@ -48,10 +51,12 @@ export function SettingsPage() {
 					<Select
 						aria-labelledby="settings-language-label"
 						value={i18n.language}
-						onValueChange={(selectValue) => {
+						onValueChange={async (selectValue) => {
 							const value = selectValue;
-							localStorage.setItem("keepany-language", value);
-							void i18n.changeLanguage(value);
+							try {
+                await setPlatformSetting("keepany-language", value);
+                await i18n.changeLanguage(value);
+              } catch { notify(t("platformSettingFailed")); }
 						}}
 					>
 						<SelectOption value="zh-CN">{t("languageChinese")}</SelectOption>
@@ -60,9 +65,9 @@ export function SettingsPage() {
 				</section>
 				<section className="card padded">
 					<h2>{t("storage")}</h2>
-					<p>{t("storageHint")}</p>
+					<p>{t(native ? "nativeStorageHint" : "storageHint")}</p>
 					<div className="actions">
-						<Button
+						{!native && <Button
 							onClick={async () => {
 								const value = await navigator.storage?.persist?.();
 								setRequested(true);
@@ -71,7 +76,7 @@ export function SettingsPage() {
 							}}
 						>
 							{t("persist")}
-						</Button>
+						</Button>}
 						<Link className="button" to="/backup">
 							{t("backupAndRestore")}
 						</Link>
@@ -81,13 +86,13 @@ export function SettingsPage() {
 					)}
 				</section>
 			</div>
-			<ReminderSettingsPanel />
+			<ReminderSettingsPanel native={native} />
 			<details id="assistant" className="settings-section" open={assistantOpen} onToggle={event => setAssistantOpen(event.currentTarget.open)}>
-				<summary><span><strong>{t("settingsAssistantAccess")}</strong><small>{t("settingsAssistantHint")}</small></span></summary>
+				<summary><span><strong>{t("settingsAssistantAccess")}</strong><small>{t(native ? "nativeSettingsAssistantHint" : "settingsAssistantHint")}</small></span></summary>
 				<div className="settings-section-body">
 					<div className="actions"><Button onClick={() => window.dispatchEvent(new Event("keepany-open-ai-dialog"))}>{t("settingsAskAssistant")}</Button></div>
 					<AiSettingsPanel />
-					<McpPanel />
+					{!native && <McpPanel />}
 				</div>
 			</details>
 			<details id="advanced-settings" className="settings-section" open={advancedOpen} onToggle={event => setAdvancedOpen(event.currentTarget.open)}>

@@ -1,6 +1,7 @@
-import Dexie, { type Table } from 'dexie';
-import type { RxDatabase } from 'rxdb';
+import Dexie from 'dexie';
+import type { RecordBackend, SideTable, SideStoreRuntime, SideTableRef } from './storage-contracts';
 import { z } from 'zod';
+import { reviewedAcceptanceSchema, type ReviewedAcceptance } from './intake-receipt';
 import { assetSchema, currencies, historySchema, parseMinorUnits, type Asset, type History } from '../../domain/src';
 import type { RecordRow } from './index';
 
@@ -9,7 +10,7 @@ import type { RecordRow } from './index';
 const draftText = z.string().max(1024 * 1024);
 export const reviewedExpenseDraftSchema = z.object({
   assetId: z.string().max(96), title: draftText, amount: draftText,
-  currency: z.enum(currencies), eventDate: draftText, source: draftText, note: draftText,
+  currency: z.enum(currencies), currencyConfirmed: z.boolean().optional(), eventDate: draftText, source: draftText, note: draftText,
 }).strict();
 export type ReviewedExpenseDraft = z.infer<typeof reviewedExpenseDraftSchema>;
 const draftAssetSchema = z.unknown().transform((value, context) => {
@@ -54,7 +55,7 @@ export type ReviewedAssetMergeReceipt = z.infer<typeof reviewedAssetMergeReceipt
 export const reviewedCandidateSchema = z.object({
   id: z.string().min(1).max(100), fileHash: z.string().regex(/^[a-f0-9]{64}$/),
   fileName: z.string().min(1).max(1024), rowNumber: z.number().int().min(1).max(100000),
-  source: z.enum(['pdf', 'ai']).optional(), sourceText: z.string().max(2 * 1024 * 1024).optional(),
+  source: z.enum(['pdf', 'ai', 'text']).optional(), sourceText: z.string().max(2 * 1024 * 1024).optional(),
   sourceTextRef: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   ai: z.object({ provider: z.string().min(1).max(64), model: z.string().min(1).max(160),
     evidence: z.string().min(1).max(2000), missingFields: z.array(z.string().max(60)).max(20),
@@ -63,58 +64,73 @@ export const reviewedCandidateSchema = z.object({
   reviewMode: z.enum(['asset', 'expense']).optional(), expenseDraft: reviewedExpenseDraftSchema.optional(),
   historyId: z.string().max(96).optional(),
   merge: reviewedAssetMergeReceiptSchema.optional(),
-  status: z.enum(['pending', 'accepted', 'ignored']),
+  acceptedRecord: reviewedAcceptanceSchema.optional(), withdrawnAt: z.string().datetime().optional(),
+  status: z.enum(['pending', 'accepted', 'ignored', 'withdrawn']),
 }).strict().superRefine((row, context) => {
   const suffix = row.source === 'pdf' ? '' : `-${row.rowNumber}`;
-  const prefix = row.source === 'pdf' ? 'pdf' : row.source === 'ai' ? 'ai' : 'csv';
+  const prefix = row.source === 'pdf' ? 'pdf' : row.source === 'ai' ? 'ai' : row.source === 'text' ? 'text' : 'csv';
   if (row.id !== `${prefix}-${row.fileHash}${suffix}` ||
     row.asset.id !== `${prefix}-${row.fileHash.slice(0, 48)}${suffix}` ||
-    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.rowNumber < 2)) {
+    (row.source === 'pdf' ? row.rowNumber !== 1 || !row.sourceText : row.source === 'ai' ? row.rowNumber < 1 || !row.sourceText || !row.ai : row.source === 'text' ? !row.sourceText : row.rowNumber < 2)) {
     context.addIssue({ code: 'custom', message: 'review-id' });
+  }
+  if ((row.status === 'withdrawn') !== !!row.withdrawnAt || row.acceptedRecord && (!['accepted', 'withdrawn'].includes(row.status) ||
+    (row.reviewMode === 'expense' ? row.acceptedRecord.type !== 'history' || row.acceptedRecord.value.id !== row.historyId : row.merge || row.acceptedRecord.type !== 'asset' || row.acceptedRecord.value.id !== row.asset.id))) context.addIssue({ code: 'custom', message: 'review-acceptance' });
+  if (row.acceptedRecord) {
+    const record = row.acceptedRecord;
+    const expected = record.type === 'history' ? expenseHistory(row, record.value.createdAt) : assetSchema.safeParse({ ...row.asset, name: row.asset.name.trim(), updatedAt: record.value.updatedAt }).data;
+    if (!expected || record.value.deleted || record.value.purged || JSON.stringify(record.value) !== JSON.stringify(expected)) context.addIssue({ code: 'custom', message: 'review-acceptance-snapshot' });
   }
   if ((row.source === 'ai') !== Boolean(row.ai)) context.addIssue({ code: 'custom', message: 'review-ai-source' });
   if (row.sourceTextRef && (row.source || row.sourceText !== undefined || row.sourceTextRef !== row.fileHash)) context.addIssue({ code: 'custom', message: 'review-source-reference' });
   if (row.source && row.sourceText && row.sourceText.length > 20000) context.addIssue({ code: 'custom', message: 'review-source-limit' });
-  if (row.merge && (row.status !== 'accepted' || row.reviewMode === 'expense' || row.merge.before.kind !== row.asset.kind ||
+  if (row.merge && (!['accepted', 'withdrawn'].includes(row.status) || row.reviewMode === 'expense' || row.merge.before.kind !== row.asset.kind ||
     row.merge.targetId === row.asset.id)) context.addIssue({ code: 'custom', message: 'review-merge-receipt' });
   if (row.reviewMode === 'expense') {
-    if (row.source !== 'pdf' || !row.expenseDraft || (row.status === 'accepted' &&
-      (row.historyId !== reviewedExpenseHistoryId(row.fileHash) || !expenseHistory(row)))) {
+    if (!canReviewExpense(row) || !row.expenseDraft || (['accepted', 'withdrawn'].includes(row.status) &&
+      (row.historyId !== reviewedCandidateExpenseHistoryId(row) || !expenseHistory(row)))) {
       context.addIssue({ code: 'custom', message: 'review-expense' });
     }
   } else if (row.historyId !== undefined || (row.status === 'accepted' && !row.merge && (!assetSchema.safeParse(row.asset).success ||
     (row.source === 'pdf' && !row.kindSelected)))) context.addIssue({ code: 'custom', message: 'review-accepted' });
   if (row.status === 'accepted' && !row.merge && row.source === 'ai' && row.asset.kind === 'subscription' && row.ai?.missingFields.some(field => ['amount', 'currency', 'cycle'].includes(field))) context.addIssue({ code: 'custom', message: 'review-ai-missing' });
-  if (row.status !== 'accepted' && row.historyId !== undefined) context.addIssue({ code: 'custom', message: 'review-history' });
+  if (!['accepted', 'withdrawn'].includes(row.status) && row.historyId !== undefined) context.addIssue({ code: 'custom', message: 'review-history' });
 });
 
 export type ReviewedCandidate = z.infer<typeof reviewedCandidateSchema>;
 export interface IntakeReviewStorage {
-  intakeReview: Table<ReviewedCandidate, string>;
-  importJournal?: Table<ReviewedImportJournal, string>;
-  transaction: Dexie['transaction'];
+  intakeReview: SideTable<ReviewedCandidate>;
+  importJournal?: SideTable<ReviewedImportJournal>;
+  transaction<T>(mode: 'r' | 'rw', tables: SideTableRef | readonly (SideTableRef | string)[], action: (scope: this) => Promise<T>): Promise<T>;
+  records: RecordBackend;
+  outsideTransaction: SideStoreRuntime['outsideTransaction'];
+  waitFor: SideStoreRuntime['waitFor'];
 }
 export interface ReviewedImportJournal {
   id: string; rows: RecordRow[]; reviewedExpense?: ReviewedCandidate;
+  /** Historical durable intent, retained without restarting the retired withdrawal workflow. */
+  reviewedWithdrawal?: { expected: ReviewedCandidate; before: ReviewedAcceptance; after: ReviewedAcceptance; recordedAt: string };
   reviewedAssetMerge?: { expectedCandidate: ReviewedCandidate; receipt: ReviewedAssetMergeReceipt };
 }
 export interface ReviewedExpenseStorage extends IntakeReviewStorage {
-  importJournal: Table<ReviewedImportJournal, string>;
-  archiveMerge?: Pick<Table<{ id: string }, string>, 'name' | 'count'>;
-  journal?: Pick<Table<{ id: string }, string>, 'name' | 'count'>;
+  importJournal: SideTable<ReviewedImportJournal>;
+  archiveMerge?: Pick<SideTable<{ id: string }>, 'name' | 'count'>;
+  journal?: Pick<SideTable<{ id: string }>, 'name' | 'count'>;
 }
 export interface PendingReviewedExpenseConfirmation {
   candidateId: string; historyId: string; committed: boolean;
 }
 
 export const reviewedExpenseHistoryId = (fileHash: string): string => `pdf-expense-${fileHash}`;
+export const canReviewExpense = (row: Pick<ReviewedCandidate, 'source'>): boolean => row.source === 'pdf' || row.source === undefined;
+export const reviewedCandidateExpenseHistoryId = (row: Pick<ReviewedCandidate, 'source' | 'fileHash' | 'rowNumber'>): string => row.source === 'pdf' ? reviewedExpenseHistoryId(row.fileHash) : `csv-expense-${row.fileHash}-${row.rowNumber}`;
 export const reviewedExpenseJournalId = (candidateId: string): string => `review-expense:${candidateId}`;
 
 // Draft strings may be incomplete. Validation happens only at confirmation.
-function expenseHistory(row: { fileHash: string; expenseDraft?: ReviewedExpenseDraft }, createdAt = new Date().toISOString()): History | null {
+function expenseHistory(row: Pick<ReviewedCandidate, 'source' | 'fileHash' | 'rowNumber' | 'expenseDraft'>, createdAt = new Date().toISOString()): History | null {
   const draft = row.expenseDraft;
-  if (!draft?.amount.trim() || draft.amount.trim().length > 32) return null;
-  const parsed = historySchema.safeParse({ id: reviewedExpenseHistoryId(row.fileHash), action: 'expense',
+  if (!draft?.amount.trim() || draft.amount.trim().length > 32 || draft.currencyConfirmed === false) return null;
+  const parsed = historySchema.safeParse({ id: reviewedCandidateExpenseHistoryId(row), action: 'expense',
     assetId: draft.assetId, title: draft.title.trim(), amount: parseMinorUnits(draft.amount, draft.currency),
     currency: draft.currency, eventDate: draft.eventDate, source: draft.source.trim(), note: draft.note,
     createdAt, deleted: false });
@@ -171,7 +187,8 @@ export async function migrateLegacyIntakeReview(store: IntakeReviewStorage,
   legacy.version(1).stores({ rows: 'id, fileHash, status' });
   try {
     const rows = parseReviewedCandidates(await legacy.table('rows').toArray());
-    await store.transaction('rw', store.intakeReview, async () => {
+    await store.transaction('rw', store.intakeReview, async (store) => {
+
       if (assetIds) {
         const final = new Map(parseReviewedCandidates(await store.intakeReview.toArray()).map(row => [row.id, row]));
         for (const row of rows) if (!final.has(row.id)) final.set(row.id, row);
@@ -188,7 +205,8 @@ export async function stageReviewedCandidates(store: IntakeReviewStorage, input:
   if (!input.length) return [];
   const rows = parseReviewedCandidates(input);
   if (rows.some(row => row.fileHash !== rows[0].fileHash || row.status !== 'pending')) throw Error('review-stage');
-  await store.transaction('rw', store.intakeReview, async () => {
+  await store.transaction('rw', store.intakeReview, async (store) => {
+
     for (const row of rows) {
       if (!isCurrent()) throw Error('review-cancelled');
       const existing = await store.intakeReview.get(row.id);
@@ -197,7 +215,7 @@ export async function stageReviewedCandidates(store: IntakeReviewStorage, input:
       if (!isCurrent()) throw Error('review-cancelled');
     }
   });
-  return store.intakeReview.where('fileHash').equals(rows[0].fileHash).sortBy('rowNumber');
+  return (await store.intakeReview.equals('fileHash', rows[0].fileHash)).sort((a, b) => a.rowNumber - b.rowNumber);
 }
 
 export async function listReviewedCandidates(store: IntakeReviewStorage): Promise<ReviewedCandidate[]> {
@@ -212,7 +230,7 @@ export async function getReviewedCandidate(store: IntakeReviewStorage, id: strin
 
 export async function editReviewedCandidate(store: IntakeReviewStorage, id: string, asset: Asset,
   kindSelected?: boolean, resolvedField?: string): Promise<boolean> {
-  return reviewTransaction(store, async () => {
+  return reviewTransaction(store, async (store) => {
     await assertReviewEditable(store, id);
     const row = await store.intakeReview.get(id);
     if (row?.status !== 'pending') return false;
@@ -227,7 +245,7 @@ export async function decideReviewedCandidate(store: IntakeReviewStorage, id: st
   if (row?.status !== 'pending') return;
   if (status === 'accepted' && row.reviewMode === 'expense') throw Error('review-expense-confirm-required');
   if (status === 'accepted' && !(await assetExists(row.asset.id))) throw Error('review-asset-missing');
-  await reviewTransaction(store, async () => {
+  await reviewTransaction(store, async (store) => {
     await assertReviewEditable(store, id);
     const current = await store.intakeReview.get(id);
     if (current?.status !== 'pending') return;
@@ -236,7 +254,7 @@ export async function decideReviewedCandidate(store: IntakeReviewStorage, id: st
   });
 }
 
-function reviewTransaction<T>(store: IntakeReviewStorage, action: () => Promise<T>): Promise<T> {
+function reviewTransaction<T>(store: IntakeReviewStorage, action: (scope: IntakeReviewStorage) => Promise<T>): Promise<T> {
   return store.transaction('rw', [store.intakeReview, ...(store.importJournal ? [store.importJournal] : [])], action);
 }
 async function assertReviewEditable(store: IntakeReviewStorage, id: string): Promise<void> {
@@ -246,7 +264,7 @@ async function assertReviewEditable(store: IntakeReviewStorage, id: string): Pro
 
 export async function setReviewedCandidateMode(store: IntakeReviewStorage, id: string, reviewMode: 'asset' | 'expense',
   initialDraft?: ReviewedExpenseDraft): Promise<boolean> {
-  return reviewTransaction(store, async () => {
+  return reviewTransaction(store, async (store) => {
     await assertReviewEditable(store, id);
     const row = await getReviewedCandidate(store, id);
     if (row?.status !== 'pending') return false;
@@ -260,7 +278,7 @@ export async function setReviewedCandidateMode(store: IntakeReviewStorage, id: s
 }
 
 export async function editReviewedExpenseDraft(store: IntakeReviewStorage, id: string, expenseDraft: ReviewedExpenseDraft): Promise<boolean> {
-  return reviewTransaction(store, async () => {
+  return reviewTransaction(store, async (store) => {
     await assertReviewEditable(store, id);
     const row = await getReviewedCandidate(store, id);
     if (row?.status !== 'pending') return false;
@@ -270,20 +288,22 @@ export async function editReviewedExpenseDraft(store: IntakeReviewStorage, id: s
   });
 }
 
-async function storedEntity(db: RxDatabase, type: 'asset' | 'history', id: string): Promise<unknown> {
-  const [row] = await db.records.storageInstance.findDocumentsById([`${type}:${id}`], false);
+async function storedEntity(db: RecordBackend, type: 'asset' | 'history', id: string): Promise<unknown> {
+  const [row] = await db.getMany([`${type}:${id}`], false);
   return row ? JSON.parse((row as RecordRow).payload) : null;
 }
 
 /** Freeze the exact reviewed draft before crossing the FileStore/RxDB boundary. */
-export async function confirmReviewedExpense(db: RxDatabase, store: ReviewedExpenseStorage, input: ReviewedCandidate): Promise<History> {
+export async function confirmReviewedExpense(db: RecordBackend, store: ReviewedExpenseStorage, input: ReviewedCandidate): Promise<History> {
   const expected = reviewedCandidateSchema.parse(input);
   if (expected.source !== 'pdf' || expected.reviewMode !== 'expense' || expected.status === 'ignored') throw Error('review-expense-invalid');
   const history = expenseHistory(expected);
   if (!history) throw Error('review-expense-invalid');
   const id = reviewedExpenseJournalId(expected.id);
   await store.transaction('rw', [store.intakeReview, store.importJournal,
-    ...(store.archiveMerge ? [store.archiveMerge.name] : []), ...(store.journal ? [store.journal.name] : [])], async () => {
+    ...(store.archiveMerge ? [store.archiveMerge.name] : []), ...(store.journal ? [store.journal.name] : [])], async (store) => {
+    const db = store.records;
+
     if (await store.archiveMerge?.count()) throw Error('archive-merge-pending');
     if (await store.journal?.count()) throw Error('restore-recovery-pending');
     const current = await getReviewedCandidate(store, expected.id);
@@ -295,12 +315,12 @@ export async function confirmReviewedExpense(db: RxDatabase, store: ReviewedExpe
     }
     if (current.status === 'accepted') {
       if (current.reviewMode !== 'expense' || !sameReviewedCandidate(current, { ...expected, status: 'accepted', historyId: history.id })) throw Error('review-expense-stale');
-      const saved = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedEntity(db, 'history', history.id)));
+      const saved = await store.outsideTransaction(() => storedEntity(db, 'history', history.id));
       if (!matchesExpenseReceipt(current, saved)) throw Error('review-expense-recovery-conflict');
       return;
     }
     if (!sameReviewedCandidate(current, expected)) throw Error('review-expense-stale');
-    const target = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedEntity(db, 'asset', history.assetId)));
+    const target = await store.outsideTransaction(() => storedEntity(db, 'asset', history.assetId));
     const parsedTarget = assetSchema.safeParse(target);
     if (!parsedTarget.success || parsedTarget.data.deleted || !['subscription', 'account'].includes(parsedTarget.data.kind)) throw Error('review-expense-target');
     await store.importJournal.add({ id, reviewedExpense: expected, rows: [{ id: `history:${history.id}`, type: 'history',
@@ -316,8 +336,10 @@ export async function confirmReviewedExpense(db: RxDatabase, store: ReviewedExpe
 }
 
 /** IndexedDB serializes edits, confirmation and replay even without Web Locks. */
-export async function replayReviewedExpense(db: RxDatabase, store: ReviewedExpenseStorage, id: string): Promise<History | null> {
-  return store.transaction('rw', store.intakeReview, store.importJournal, async () => {
+export async function replayReviewedExpense(_db: RecordBackend, store: ReviewedExpenseStorage, id: string): Promise<History | null> {
+  return store.transaction('rw', [store.intakeReview, store.importJournal], async (store) => {
+    const db = store.records;
+
     const journal = await store.importJournal.get(id);
     if (!journal) return null;
     const parsed = reviewedCandidateSchema.safeParse(journal.reviewedExpense);
@@ -331,18 +353,18 @@ export async function replayReviewedExpense(db: RxDatabase, store: ReviewedExpen
     const current = await getReviewedCandidate(store, before.id);
     if (!current || (!sameReviewedCandidate(current, before) && !sameReviewedCandidate(current, accepted))) throw Error('review-expense-recovery-conflict');
     const confirmedHistory = history;
-    await Dexie.waitFor(Dexie.ignoreTransaction(async () => {
+    await store.outsideTransaction(async () => {
       let saved = await storedEntity(db, 'history', confirmedHistory.id);
       if (!saved) {
         const target = assetSchema.safeParse(await storedEntity(db, 'asset', confirmedHistory.assetId));
         if (!target.success || target.data.deleted || !['subscription', 'account'].includes(target.data.kind)) throw Error('review-expense-target');
-        try { await db.records.insert(planned); }
+        try { await db.insert(planned); }
         catch (error) { if (!await storedEntity(db, 'history', confirmedHistory.id)) throw error; }
         saved = await storedEntity(db, 'history', confirmedHistory.id);
       }
       const actual = historySchema.safeParse(saved);
       if (!actual.success || JSON.stringify(actual.data) !== JSON.stringify(confirmedHistory)) throw Error('review-expense-recovery-conflict');
-    }));
+    });
     // Both changes share the FileStore transaction: an error or crash after the
     // RxDB write retains the original frozen intent and never a false receipt.
     await store.intakeReview.put(accepted);
@@ -351,7 +373,7 @@ export async function replayReviewedExpense(db: RxDatabase, store: ReviewedExpen
   });
 }
 
-export async function pendingReviewedExpenseConfirmations(db: RxDatabase, store: ReviewedExpenseStorage): Promise<PendingReviewedExpenseConfirmation[]> {
+export async function pendingReviewedExpenseConfirmations(db: RecordBackend, store: ReviewedExpenseStorage): Promise<PendingReviewedExpenseConfirmation[]> {
   const pending: PendingReviewedExpenseConfirmation[] = [];
   for (const journal of await store.importJournal.toArray()) {
     if (!journal.reviewedExpense) continue;
@@ -365,17 +387,19 @@ export async function pendingReviewedExpenseConfirmations(db: RxDatabase, store:
 
 // A cancellation can unlock an uncommitted draft. Once the History exists,
 // complete the frozen receipt or preserve its conflict; never erase a payment.
-export async function cancelReviewedExpenseConfirmation(db: RxDatabase, store: ReviewedExpenseStorage,
+export async function cancelReviewedExpenseConfirmation(db: RecordBackend, store: ReviewedExpenseStorage,
   candidateId: string): Promise<'cancelled' | 'completed'> {
   const id = reviewedExpenseJournalId(candidateId);
-  const cancelled = await store.transaction('rw', store.intakeReview, store.importJournal, async () => {
+  const cancelled = await store.transaction('rw', [store.intakeReview, store.importJournal], async (store) => {
+    const db = store.records;
+
     const journal = await store.importJournal.get(id);
     if (!journal) return true;
     const parsed = reviewedCandidateSchema.safeParse(journal.reviewedExpense);
     const current = await getReviewedCandidate(store, candidateId);
     if (!parsed.success || parsed.data.id !== candidateId || parsed.data.status !== 'pending' ||
       !current || !sameReviewedCandidate(current, parsed.data)) throw Error('review-expense-recovery-conflict');
-    const history = await Dexie.waitFor(Dexie.ignoreTransaction(() => storedEntity(db, 'history', reviewedExpenseHistoryId(parsed.data.fileHash))));
+    const history = await store.outsideTransaction(() => storedEntity(db, 'history', reviewedExpenseHistoryId(parsed.data.fileHash)));
     if (history) return false;
     await store.importJournal.delete(id);
     return true;

@@ -31,7 +31,7 @@ it('merges only explicitly selected fields, keeps identity and relations, and re
     await repository.save('asset', neighbor);
     const relation = { id: crypto.randomUUID(), from: input.expectedTarget.id, to: neighbor.id, label: 'Owner', createdAt: new Date().toISOString(), verifiedAt: '', deleted: false };
     await repository.save('relation', relation);
-    const actual = await confirmReviewedAssetMerge(repository.db, repository.fileStore, input);
+    const actual = await confirmReviewedAssetMerge(repository.records, repository.fileStore, input);
     expect(actual).toEqual({ ...input.expectedTarget, description: 'New text', updatedAt: actual.updatedAt });
     expect(await repository.get('asset', input.expectedCandidate.asset.id)).toBeNull();
     expect(await repository.get('relation', relation.id)).toEqual(relation);
@@ -40,7 +40,7 @@ it('merges only explicitly selected fields, keeps identity and relations, and re
       status: 'accepted', asset: input.expectedCandidate.asset, sourceText: input.expectedCandidate.sourceText,
       merge: { targetId: actual.id, fields: ['description'], before: input.expectedTarget, after: actual },
     });
-    await confirmReviewedAssetMerge(repository.db, repository.fileStore, input);
+    await confirmReviewedAssetMerge(repository.records, repository.fileStore, input);
     expect(await repository.get('asset', actual.id)).toEqual(actual);
     expect(await repository.fileStore.importJournal.count()).toBe(0);
   } finally { await repository.close(); }
@@ -51,10 +51,10 @@ it('allows an unchecked invalid URL draft while rejecting a selected invalid URL
   try {
     const row = candidate(); row.asset.url = 'unfinished URL';
     const input = await setup(repository, row);
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, { ...input, fields: ['url'] })).rejects.toThrow('review-merge-invalid');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, { ...input, fields: ['url'] })).rejects.toThrow('review-merge-invalid');
     expect(await repository.get('asset', input.expectedTarget.id)).toEqual(input.expectedTarget);
     expect(await repository.fileStore.importJournal.count()).toBe(0);
-    await confirmReviewedAssetMerge(repository.db, repository.fileStore, input);
+    await confirmReviewedAssetMerge(repository.records, repository.fileStore, input);
     expect((await getReviewedCandidate(repository.fileStore, row.id))?.asset.url).toBe('unfinished URL');
     expect((await repository.get<Asset>('asset', input.expectedTarget.id))?.url).toBe(input.expectedTarget.url);
   } finally { await repository.close(); }
@@ -69,7 +69,7 @@ it('requires explicit fields and a live same-type target and refuses identity, m
     }
     for (const expectedTarget of [{ ...input.expectedTarget, kind: 'account' as const },
       { ...input.expectedTarget, deleted: true }, { ...input.expectedTarget, id: input.expectedCandidate.asset.id }]) {
-      await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, { ...input, expectedTarget })).rejects.toThrow('review-merge-target');
+      await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, { ...input, expectedTarget })).rejects.toThrow('review-merge-target');
     }
     expect(await repository.get('asset', input.expectedTarget.id)).toEqual(input.expectedTarget);
     expect((await getReviewedCandidate(repository.fileStore, input.expectedCandidate.id))?.status).toBe('pending');
@@ -81,12 +81,12 @@ it('refuses a stale reviewed draft or changed target before freezing any intent'
   try {
     const input = await setup(repository);
     await editReviewedCandidate(repository.fileStore, input.expectedCandidate.id, { ...input.expectedCandidate.asset, name: 'Newer candidate' });
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, input)).rejects.toThrow('review-merge-stale');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, input)).rejects.toThrow('review-merge-stale');
     const nextCandidate = await getReviewedCandidate(repository.fileStore, input.expectedCandidate.id);
     if (!nextCandidate) throw Error('fixture-candidate-missing');
     const newerTarget = { ...input.expectedTarget, notes: 'A concurrent note', updatedAt: new Date().toISOString() };
     await repository.save('asset', newerTarget);
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, { ...input, expectedCandidate: nextCandidate })).rejects.toThrow('review-merge-stale');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, { ...input, expectedCandidate: nextCandidate })).rejects.toThrow('review-merge-stale');
     expect(await repository.get('asset', newerTarget.id)).toEqual(newerTarget);
     expect(await repository.fileStore.importJournal.count()).toBe(0);
   } finally { await repository.close(); }
@@ -100,13 +100,13 @@ it('retains a frozen draft after a failed write, blocks edits, supports cancella
       if (context === 'intake-asset-merge') throw Error('synthetic-write-failed');
       return original(rows, context);
     });
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, input)).rejects.toThrow('synthetic-write-failed');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, input)).rejects.toThrow('synthetic-write-failed');
     failure.mockRestore();
-    expect(await pendingReviewedAssetMerges(repository.db, repository.fileStore)).toEqual([{ candidateId: input.expectedCandidate.id, targetId: input.expectedTarget.id, committed: false }]);
+    expect(await pendingReviewedAssetMerges(repository.records, repository.fileStore)).toEqual([{ candidateId: input.expectedCandidate.id, targetId: input.expectedTarget.id, committed: false }]);
     await expect(editReviewedCandidate(repository.fileStore, input.expectedCandidate.id, input.expectedCandidate.asset)).rejects.toThrow('review-merge-pending');
-    expect(await cancelReviewedAssetMerge(repository.db, repository.fileStore, input.expectedCandidate.id)).toBe('cancelled');
+    expect(await cancelReviewedAssetMerge(repository.records, repository.fileStore, input.expectedCandidate.id)).toBe('cancelled');
     expect(await repository.get('asset', input.expectedTarget.id)).toEqual(input.expectedTarget);
-    await confirmReviewedAssetMerge(repository.db, repository.fileStore, input);
+    await confirmReviewedAssetMerge(repository.records, repository.fileStore, input);
     expect((await getReviewedCandidate(repository.fileStore, input.expectedCandidate.id))?.status).toBe('accepted');
     expect(await repository.fileStore.importJournal.count()).toBe(0);
   } finally { await repository.close(); }
@@ -117,11 +117,11 @@ it('replays an interruption after the RxDB CAS without losing the old values or 
   try {
     const input = await setup(repository);
     const failure = vi.spyOn(repository.fileStore.intakeReview, 'put').mockRejectedValueOnce(Error('synthetic-receipt-interruption'));
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, input)).rejects.toThrow('synthetic-receipt-interruption');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, input)).rejects.toThrow('synthetic-receipt-interruption');
     failure.mockRestore();
-    expect(await pendingReviewedAssetMerges(repository.db, repository.fileStore)).toEqual([{ candidateId: input.expectedCandidate.id, targetId: input.expectedTarget.id, committed: true }]);
+    expect(await pendingReviewedAssetMerges(repository.records, repository.fileStore)).toEqual([{ candidateId: input.expectedCandidate.id, targetId: input.expectedTarget.id, committed: true }]);
     expect((await getReviewedCandidate(repository.fileStore, input.expectedCandidate.id))?.status).toBe('pending');
-    expect(await cancelReviewedAssetMerge(repository.db, repository.fileStore, input.expectedCandidate.id)).toBe('completed');
+    expect(await cancelReviewedAssetMerge(repository.records, repository.fileStore, input.expectedCandidate.id)).toBe('completed');
     expect((await getReviewedCandidate(repository.fileStore, input.expectedCandidate.id))?.merge?.before).toEqual(input.expectedTarget);
     expect(await repository.list('asset')).toHaveLength(1);
     expect(await repository.fileStore.importJournal.count()).toBe(0);
@@ -133,13 +133,13 @@ it('does not overwrite a newer target edit when an interrupted merge is retried'
   try {
     const input = await setup(repository);
     const failure = vi.spyOn(repository.fileStore.intakeReview, 'put').mockRejectedValueOnce(Error('interrupted'));
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, input)).rejects.toThrow('interrupted');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, input)).rejects.toThrow('interrupted');
     failure.mockRestore();
     const merged = await repository.get<Asset>('asset', input.expectedTarget.id);
     if (!merged) throw Error('fixture-target-missing');
     const newer = { ...merged, description: 'A later edit', updatedAt: new Date().toISOString() };
     await repository.save('asset', newer);
-    await expect(replayReviewedAssetMerge(repository.db, repository.fileStore, reviewedAssetMergeJournalId(input.expectedCandidate.id))).rejects.toThrow('review-merge-conflict');
+    await expect(replayReviewedAssetMerge(repository.records, repository.fileStore, reviewedAssetMergeJournalId(input.expectedCandidate.id))).rejects.toThrow('review-merge-conflict');
     expect(await repository.get('asset', newer.id)).toEqual(newer);
     expect(await repository.fileStore.importJournal.count()).toBe(1);
     expect((await getReviewedCandidate(repository.fileStore, input.expectedCandidate.id))?.status).toBe('pending');
@@ -150,7 +150,7 @@ it('encrypted backup restores accepted merge receipts by the target ID with no p
   const repository = await openLocalRepository(dbName()), restored = await openLocalRepository(dbName());
   try {
     const input = await setup(repository);
-    await confirmReviewedAssetMerge(repository.db, repository.fileStore, input);
+    await confirmReviewedAssetMerge(repository.records, repository.fileStore, input);
     const accepted = await listReviewedCandidates(repository.fileStore);
     const encrypted = await encryptBackup(await repository.exportArchive(), 'synthetic-merge-password');
     await restored.restoreArchive(await decryptBackup(encrypted, 'synthetic-merge-password'));
@@ -176,7 +176,7 @@ it('reopens an interrupted merge safely instead of treating its target as an ins
   try {
     const input = await setup(repository);
     const failure = vi.spyOn(repository.fileStore.intakeReview, 'put').mockRejectedValueOnce(Error('interrupted-receipt'));
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, input)).rejects.toThrow('interrupted-receipt');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, input)).rejects.toThrow('interrupted-receipt');
     failure.mockRestore();
     await repository.close();
     repository = await openLocalRepository(name);
@@ -196,11 +196,11 @@ it('blocks backup and restore while an uncommitted merge intent is frozen', asyn
       if (context === 'intake-asset-merge') throw Error('write-failed');
       return original(rows, context);
     });
-    await expect(confirmReviewedAssetMerge(repository.db, repository.fileStore, input)).rejects.toThrow('write-failed');
+    await expect(confirmReviewedAssetMerge(repository.records, repository.fileStore, input)).rejects.toThrow('write-failed');
     failure.mockRestore();
     await expect(repository.exportArchive()).rejects.toThrow('review-merge-pending');
     await expect(repository.restoreArchive(archive)).rejects.toThrow('review-merge-pending');
-    await cancelReviewedAssetMerge(repository.db, repository.fileStore, input.expectedCandidate.id);
+    await cancelReviewedAssetMerge(repository.records, repository.fileStore, input.expectedCandidate.id);
     expect(await repository.exportArchive()).toBeInstanceOf(Uint8Array);
   } finally { await repository.close(); }
 });
@@ -241,7 +241,7 @@ it('purges a merged target receipt and moves the CSV source carrier to its remai
       asset: { ...source.asset, id: `csv-${source.fileHash.slice(0, 48)}-3`, name: 'Remaining candidate' } };
     // The stage input is a complete source group; existing carrier and its draft are preserved.
     await stageReviewedCandidates(repository.fileStore, [input.expectedCandidate, remaining]);
-    await confirmReviewedAssetMerge(repository.db, repository.fileStore, input);
+    await confirmReviewedAssetMerge(repository.records, repository.fileStore, input);
     await repository.deleteEntity('asset', input.expectedTarget.id);
     await repository.purgeTrash(await repository.previewTrashPurge([{ type: 'asset', id: input.expectedTarget.id }]));
     const rows = await listReviewedCandidates(repository.fileStore);

@@ -1,3 +1,7 @@
+import { getPlatformSetting } from "./platform-settings";
+import { fileDeliveryCopy } from "./file-delivery-copy";
+import { nativeDatasetsCopy } from "./native-datasets-copy";
+import { nativePlatformCopy } from "./native-platform-copy";
 import { reminderCenterCopy } from "./reminder-center-copy";
 import { reminderEntryCopy } from "./reminder-entry-copy";
 import i18n from "i18next";
@@ -2416,6 +2420,8 @@ Object.assign(
 		]),
 	),
 );
+Object.assign(copy, fileDeliveryCopy, nativeDatasetsCopy, nativePlatformCopy);
+copy.mobileMore = ["更多", "More"];
 export const resources = {
 	en: {
 		translation: Object.fromEntries(
@@ -2439,7 +2445,7 @@ i18n.use(initReactI18next).init({
 	lng:
 		typeof window === "undefined"
 			? "en"
-			: localStorage.getItem("keepany-language") ||
+			: getPlatformSetting("keepany-language") ||
 				(navigator.language.startsWith("zh") ? "zh-CN" : "en"),
 	fallbackLng: "en",
 	interpolation: { escapeValue: false },

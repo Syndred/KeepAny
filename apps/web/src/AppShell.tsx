@@ -13,7 +13,7 @@ import {
 	Bell,
 	LayoutDashboard,
 	Layers,
-	Menu,
+	Ellipsis,
 	Plus,
 	Search,
 	Settings,
@@ -39,6 +39,7 @@ import { requestSearchLocation } from "./search-location";
 import "./shell-restoration.css";
 import "./components/ui/text-link.css";
 import { ReminderRuntime } from "./ReminderRuntime";
+import { Dialog } from "./components/ui/dialog";
 const AiDialog = lazy(() =>
 	import("./workflow-ai-dialog").then((module) => ({ default: module.AiDialog })),
 );
@@ -73,6 +74,23 @@ export function AppShell() {
 		if (pathname !== "/accounts") setPendingAccountName("");
 		if (pathname) { setSearchOpen(false); setSearch(""); setMobile(false); }
 	}, [pathname]);
+
+    useEffect(() => {
+        const onBack = (event: Event) => {
+            if (event.defaultPrevented) return;
+            if (mobile) { event.preventDefault(); setMobile(false); }
+            else if (searchOpen) { event.preventDefault(); setSearchOpen(false); setSearch(""); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(".top-search-trigger")?.focus()); }
+        };
+        window.addEventListener("keepany-native-back", onBack);
+        return () => window.removeEventListener("keepany-native-back", onBack);
+    }, [mobile, searchOpen]);
+    useEffect(() => {
+        const wide = window.matchMedia("(min-width: 761px)");
+        const close = () => { if (wide.matches) setMobile(false); };
+        wide.addEventListener("change", close);
+        return () => wide.removeEventListener("change", close);
+    }, []);
+
 	useEffect(() => {
 		const open = () => setAi(true);
 		window.addEventListener("keepany-open-ai-dialog", open);
@@ -82,6 +100,7 @@ export function AppShell() {
 		const keys = (event: KeyboardEvent) => {
 			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
 				event.preventDefault();
+				setMobile(false);
 				setSearchOpen(true);
 				window.requestAnimationFrame(() => topSearchInputRef.current?.focus());
 			} else if (event.key === "Escape") {
@@ -251,13 +270,26 @@ export function AppShell() {
 			setToast(t("error"));
 		});
 	}
+	const additionalNavigation = <>
+					<div className="sidebar-custom">
+						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
+						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)} title={collection.name}><span>{collection.name}</span></Link>)}
+						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => { if(category.scope === 'catalog'||category.kind==='project'){setMobile(false);void navigate({to:'/assets/category/$categoryId',params:{categoryId:category.id}});}else selectCategory(category.kind, category.name, category.id); }} title={catalogCategoryLabel(category,t)}><span>{catalogCategoryLabel(category,t)}</span></button>)}
+						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
+					</div>
+					<div className="side-bottom">
+						<Link to="/trash" className="sidebar-trash sidebar-customize" aria-current={pathname === "/trash" ? "page" : undefined} onClick={() => setMobile(false)}><Trash2 size={15}/>{t("trash")}</Link>
+                      <Link to="/backup" className="sidebar-customize" onClick={() => setMobile(false)}><Plus size={15}/>{t("backupAndRestore")}</Link>
+                      <Link to="/settings" className="sidebar-customize" onClick={() => setMobile(false)}><Settings size={15}/>{t("settings")}</Link>
+					</div>
+	</>;
 	return (
 		<AppContext.Provider value={context}>
 			<PasswordVaultProvider>
 			<McpRuntimeProvider assets={liveAssets(data)}>
 			<div className="shell">
 				<aside
-					className={`sidebar ${mobile ? "open" : ""}`}
+					className="sidebar"
 				>
 					<div className="brand">
 						<span className="brand-mark" aria-hidden="true">K</span>
@@ -265,15 +297,6 @@ export function AppShell() {
 							<strong>{t("brandName")}</strong>
 							<small>{t("workspaceTagline")}</small>
 						</div>
-						<Button
-							className="mobile-close"
-							variant="ghost"
-							size="icon"
-							onClick={() => setMobile(false)}
-							aria-label={t("close")}
-						>
-							<X size={18} />
-						</Button>
 					</div>
 
 					<div className="sidebar-section-label">{t("workspaceSection")}</div>
@@ -287,37 +310,10 @@ export function AppShell() {
 							onNavigate={() => setMobile(false)}
 						/>
 					</nav>
-					<div className="sidebar-custom">
-						<div className="sidebar-section-label">{t("collectionsTitle")}</div>
-						{collections.map((collection) => <Link key={collection.id} to="/collections/$id" params={{ id: collection.id }} className="sidebar-category sidebar-collection" aria-current={collectionDetailId === collection.id ? "page" : undefined} onClick={() => setMobile(false)} title={collection.name}><span>{collection.name}</span></Link>)}
-						{customCategories.map((category) => <button type="button" key={category.id} className="sidebar-category" onClick={() => { if(category.scope === 'catalog'||category.kind==='project'){setMobile(false);void navigate({to:'/assets/category/$categoryId',params:{categoryId:category.id}});}else selectCategory(category.kind, category.name, category.id); }} title={catalogCategoryLabel(category,t)}><span>{catalogCategoryLabel(category,t)}</span></button>)}
-						<Link to="/collections" className="sidebar-customize" aria-current={/^\/collections\/?$/.test(pathname) ? "page" : undefined} onClick={() => setMobile(false)}><Plus size={15}/>{t("customizeSidebar")}</Link>
-					</div>
-					<div className="side-bottom">
-						<Link to="/trash" className="sidebar-trash sidebar-customize" aria-current={pathname === "/trash" ? "page" : undefined} onClick={() => setMobile(false)}><Trash2 size={15}/>{t("trash")}</Link>
-                      <Link to="/backup" className="sidebar-customize" onClick={() => setMobile(false)}><Plus size={15}/>{t("backupAndRestore")}</Link>
-                      <Link to="/settings" className="sidebar-customize" onClick={() => setMobile(false)}><Settings size={15}/>{t("settings")}</Link>
-					</div>
+					{additionalNavigation}
 				</aside>
-				{mobile && (
-					<button
-						type="button"
-						className="mobile-scrim"
-						aria-label={t("close")}
-						onClick={() => setMobile(false)}
-					/>
-				)}
 				<div className="main">
 					<header className="topbar">
-						<Button
-							className="mobile-menu"
-							variant="ghost"
-							size="icon"
-							onClick={() => setMobile(true)}
-							aria-label={t("navigation")}
-						>
-							<Menu size={20} />
-						</Button>
 						{unifiedDetailReturn ? <Link className="topbar-page-label topbar-back-link" {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><span className="text-link"><ArrowLeft size={15}/>{t("backToOverview")}</span></Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
 						<div className="topbar-spacer"/>
 						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
@@ -363,6 +359,27 @@ export function AppShell() {
 					)}
 				</div>
 			</div>
+
+            <nav className="mobile-nav" aria-label={t("navigation")}>
+                {orderedNavigation.filter(item => item.visible).map(item => {
+                    const active = item.id === "overview" ? pathname === "/" : item.active;
+                    const Icon = item.icon;
+                    return <Link key={item.id} to={item.to} activeOptions={{ exact: true }}
+                        aria-current={active ? "page" : undefined} onClick={() => setMobile(false)}>
+                        <Icon size={18}/><span>{item.label}</span>
+                    </Link>;
+                })}
+                <button type="button" id="mobile-more-trigger" aria-haspopup="dialog" aria-expanded={mobile}
+                    aria-current={!workspacePathGroup(pathname) && pathname !== "/" ? "page" : undefined}
+                    onClick={() => { setSearchOpen(false); setMobile(true); }}>
+                    <Ellipsis size={18}/><span>{t("mobileMore")}</span>
+                </button>
+            </nav>
+            {mobile && <Dialog title={t("mobileMore")} className="mobile-more-dialog" onClose={() => setMobile(false)}
+                returnFocusTo={() => topSearchInputRef.current ?? document.getElementById("mobile-more-trigger")}>
+                {additionalNavigation}
+            </Dialog>}
+
 			{data.error && !remindersOpen && (
 				<div className="toast error" role="alert">
 					{t("error")}

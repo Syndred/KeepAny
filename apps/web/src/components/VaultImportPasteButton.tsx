@@ -2,6 +2,7 @@ import { Check, ClipboardPaste } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/button";
+import { readClipboardText } from "../clipboard-access";
 
 /** Explicit clipboard access; never apply a late read to another or edited field. */
 export function VaultImportPasteButton({
@@ -45,7 +46,7 @@ export function VaultImportPasteButton({
 					const request = ++generation.current;
 					setStatus("pending");
 					try {
-						const text = await navigator.clipboard.readText();
+						const text = await readClipboardText();
 						if (request !== generation.current) return;
 						pasteHandler.current(text);
 						setStatus("done");

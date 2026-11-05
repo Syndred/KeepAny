@@ -169,7 +169,7 @@ test('concurrent subscription editors accept one asset snapshot and do not creat
   try {
     const subscription = newAsset('subscription'), project = newAsset('project');
     await repository.saveBatch([subscription, project].map(value => ({ type: 'asset' as const, value })));
-    const otherTab = new LocalRepository(repository.db, repository.fileStore);
+    const otherTab = new LocalRepository(repository.records, repository.fileStore);
     const links = [{ id: project.id, kind: 'project' as const, label: 'Project' }];
     const outcomes = await Promise.allSettled([
       repository.saveSubscription(subscription, { ...subscription, name: 'First' }, links),
