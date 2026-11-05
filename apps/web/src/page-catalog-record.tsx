@@ -1,3 +1,4 @@
+import { AssetCardContent } from "./components/AssetSummaryCard";
 import { useEffect, useRef, useState } from "react";
 import "./workspaces.css";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
@@ -73,30 +74,7 @@ export function CatalogRecordCard({
 	categoryName: string;
 	onOpen?: () => void;
 }) {
-	const { t, i18n } = useTranslation();
-	return (
-		<Link
-			className="card catalog-record-card"
-			to="/records/$id"
-			params={{ id: record.id }}
-			onClick={onOpen}
-		>
-			<span className="muted">{categoryName || t("catalogUnclassified")}</span>
-			<strong>{record.asset.name}</strong>
-			{record.asset.url && (
-				<span className="catalog-record-url">{record.asset.url}</span>
-			)}
-			<span>
-				{t(record.asset.status)}
-				{record.asset.dueDate
-					? ` · ${date(record.asset.dueDate, i18n.language)}`
-					: ""}
-			</span>
-			{!!record.asset.tags.length && (
-				<span className="catalog-tags">{record.asset.tags.join(" · ")}</span>
-			)}
-		</Link>
-	);
+    return <Link className="asset-summary-card catalog-record-card" to="/records/$id" params={{id:record.id}} onClick={onOpen}><AssetCardContent asset={record.asset} categoryName={categoryName}/></Link>;
 }
 
 export function CatalogRecordPage({ recordId }: { recordId?: string } = {}) {

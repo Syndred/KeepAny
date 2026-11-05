@@ -1,7 +1,7 @@
 import { Input } from "./components/ui/input";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { newAsset, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
 import { CatalogRecordEditor } from './catalog-record-editor';
@@ -13,7 +13,7 @@ import { Dialog } from "./components/ui/dialog";
 import { Select, SelectOption } from "./components/ui/select";
 import { MoneyTotal } from "./components/AssetMetrics";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
-import { AssetViewToggle, useAssetView } from "./components/AssetViewToggle";
+import { SubscriptionRatesDialog } from "./components/SubscriptionRatesDialog";
 import { AssetKindList, LibraryCard, type AccountListFilters } from "./page-asset-list";
 import { FinancePage } from "./page-finance";
 import { matchesAssetSearch } from "./asset-search";
@@ -97,13 +97,13 @@ export function AccountsWorkspace() {
 	</main>;
 }
 
-function AssetCatalog({ categoryId }: { categoryId?: string }) {
+function AssetCatalog({ categoryId, kind, navigation }: { categoryId?: string; kind?: "item" | "subscription"; navigation: ReactNode }) {
 	const { data, search } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const summary = useWorkspaceSummary();
- const [assetView, setAssetView] = useAssetView();
-	const queryKey = `keepany-catalog-query-${categoryId ?? 'all'}`;
+ const [ratesOpen, setRatesOpen] = useState(false);
+	const queryKey = `keepany-catalog-query-${kind ?? categoryId ?? 'all'}`;
 	const [scope, setScope] = useState<CatalogScope>(() => { try { return catalogScope(sessionStorage.getItem("keepany-catalog-scope")); } catch { return "managed"; } });
  const [sort, setSort] = useState<CatalogSort>(() => sessionStorage.getItem("keepany-catalog-sort") === "due" ? "due" : "updated");
  const [query, setQuery] = useState(() => sessionStorage.getItem(queryKey) ?? "");
@@ -115,12 +115,12 @@ function AssetCatalog({ categoryId }: { categoryId?: string }) {
 	useEffect(() => {
 		if (data.loading || restoredScroll.current) return;
 		const saved = readWorkspaceReturn();
-		if (!saved || saved.view !== 'all') return;
+		if (!saved || saved.view !== (kind ?? 'all')) return;
 		const frame = requestAnimationFrame(() => { window.scrollTo(0, saved.scrollY); restoredScroll.current = true; });
 		return () => cancelAnimationFrame(frame);
-	}, [data.loading, categoryId]);
+	}, [data.loading, categoryId, kind]);
 	function rememberCatalog(assetId: string) {
-		sessionStorage.setItem(workspaceReturnKey, JSON.stringify({ view: 'all', assetId, query, scrollY: window.scrollY }));
+		sessionStorage.setItem(workspaceReturnKey, JSON.stringify({ view: kind ?? 'all', assetId, query, scrollY: window.scrollY }));
 	}
 	const [createOpen, setCreateOpen] = useState(false);
 	const [createKind, setCreateKind] = useState<'record' | 'item' | 'subscription'>('record');
@@ -129,12 +129,12 @@ function AssetCatalog({ categoryId }: { categoryId?: string }) {
 	const [editor, setEditor] = useState<AssetKind | null>(null);
 	const categories = catalogCategories(data.categories);
 	const category = categories.find(value => value.id === categoryId);
-	const assets = liveAssets(data).filter((asset) => ["item", "subscription"].includes(asset.kind));
+	const assets = liveAssets(data).filter((asset) => kind ? asset.kind === kind : ["item", "subscription"].includes(asset.kind));
 	const visible = catalogAssets(assets, ["managed", "all", "archived"].includes(scope) ? scope : "managed", sort).filter((asset) => [search, query].every((value) => matchesAssetSearch(asset, value)));
-	const records = catalogRecords(data.assets,data.categories).filter(record => (categoryId === undefined || record.categoryId === categoryId) && (scope === 'all' || isManagedAsset(record.asset) === (scope === 'managed')) && [search,query].every(value=>matchesAssetSearch(record.asset,value)));
+	const records = catalogRecords(data.assets,data.categories).filter(record => !kind && (categoryId === undefined || record.categoryId === categoryId) && (scope === 'all' || isManagedAsset(record.asset) === (scope === 'managed')) && [search,query].every(value=>matchesAssetSearch(record.asset,value)));
 	const rows = [...records.map(record=>({record,asset:record.asset})),...(categoryId===undefined?visible.map(asset=>({record:undefined,asset})):[])].sort((a,b) => (sort === 'due' ? (a.asset.dueDate || a.asset.warrantyDate || '9999').localeCompare(b.asset.dueDate || b.asset.warrantyDate || '9999') : b.asset.updatedAt.localeCompare(a.asset.updatedAt)) || a.asset.name.localeCompare(b.asset.name));
 	const hash = useRouterState({select:state=>state.location.hash});
-	useEffect(()=>{if(hash === 'new' && !data.loading){setNewCategory(categoryId ?? '');setRecordEdit(true);void navigate({hash:'',replace:true});}},[hash,data.loading,categoryId,navigate]);
+	useEffect(()=>{if(hash === 'new' && !data.loading){setNewCategory(categoryId ?? '');if(kind)setEditor(kind);else setRecordEdit(true);void navigate({hash:'',replace:true});}},[hash,data.loading,categoryId,kind,navigate]);
 
 	function create(event: FormEvent) {
 		event.preventDefault();
@@ -143,19 +143,24 @@ function AssetCatalog({ categoryId }: { categoryId?: string }) {
 	const hasResults = (categoryId === undefined && visible.length > 0) || records.length > 0;
 	if(data.loading)return <main className="page"><p role="status">{t('loading')}</p></main>;
 	return <main className="page workspace-catalog">
-		<PageTitle title={categoryId === undefined ? t('assetsWorkspace') : category ? catalogCategoryLabel(category,t) : t('catalogUnclassified')} subtitle={t('catalogSubtitle')}
-			action={<Button variant="primary" onClick={() => { setCreateKind('record');setNewCategory(category?.id ?? ''); if(categoryId !== undefined)setRecordEdit(true);else setCreateOpen(true); }}><Plus size={17} />{t("workspaceAddAsset")}</Button>} />
-		{categoryId === undefined && <div className="workspace-summary-grid">
-			<section className="card"><span>{t("workspacePurchaseTotal")}</span><strong><MoneyTotal totals={summary.purchases} empty={t("workspaceAmountMissing")} /></strong></section>
-			<section className="card"><span>{t("workspaceRecordedSpending")}</span><strong><MoneyTotal totals={summary.spending} empty={t("financeNoRecords")} /></strong></section>
-			<section className="card"><span>{t("workspaceMonthlyPlan")}</span><strong><MoneyTotal totals={summary.monthly} empty={t("financeNoPlan")} /></strong></section>
-			<section className="card"><span>{t("workspaceUpcoming")}</span><strong>{summary.upcoming}</strong></section>
-		</div>}
-		<div className="workspace-catalog-controls"><label className="field">{t("assetStatusView")}<Select value={scope} onValueChange={value => { setScope(value as CatalogScope); sessionStorage.setItem("keepany-catalog-scope", value); }}>{(["managed", "all", "archived"] as const).map(value => <SelectOption key={value} value={value}>{t(value === "managed" ? "managedAssets" : value === "all" ? "all" : "archivedAssets")}</SelectOption>)}</Select></label><label className="field">{t("assetSort")}<Select value={sort} onValueChange={value => { setSort(value as CatalogSort); sessionStorage.setItem("keepany-catalog-sort", value); }}><SelectOption value="updated">{t("recentlyUpdated")}</SelectOption><SelectOption value="due">{t("nearestDue")}</SelectOption></Select></label></div>
-		<div className="workspace-search"><label className="asset-account-search"><Search size={18} /><Input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label><AssetViewToggle value={assetView} onChange={setAssetView} /><span>{t("workspaceAssetCount", { count: (categoryId === undefined ? visible.length : 0) + records.length })}</span></div>
-		{hasResults ? <section className={`asset-list-content workspace-asset-grid${assetView === "list" ? " asset-dense-list" : ""}`} aria-label={t('catalogRecords')}>
+        <h1 className="sr-only">{kind ? t(kind) : categoryId === undefined ? t('assetsWorkspace') : category ? catalogCategoryLabel(category,t) : t('catalogUnclassified')}</h1>
+        <div className="catalog-summary-bar">
+            <div className="catalog-summary-stat"><span>{t("workspacePurchaseTotal")}</span><strong><MoneyTotal totals={summary.purchases} empty={t("workspaceAmountMissing")} /></strong></div>
+            <div className="catalog-summary-stat"><span>{t("workspaceRecordedSpending")}</span><strong><MoneyTotal totals={summary.displaySpending} empty={summary.unconvertedSpending ? "—" : t("financeNoRecords")} /></strong>{summary.unconvertedSpending > 0 && <small>{t("subscriptionCnyPartial",{count:summary.unconvertedSpending})}</small>}</div>
+            <div className="catalog-summary-stat"><span>{t("workspaceMonthlyPlan")}</span><strong><MoneyTotal totals={summary.monthlyCny} empty={summary.unconvertedSubscriptions ? "—" : t("financeNoPlan")} /></strong>{summary.unconvertedSubscriptions > 0 && <small role="status">{t('subscriptionCnyPartial',{count:summary.unconvertedSubscriptions})}</small>}<button type="button" className="catalog-rate-button" onClick={()=>setRatesOpen(true)}>{t('subscriptionRates')}</button></div>
+            <div className="catalog-summary-stat"><span>{t("workspaceUpcoming")}</span><strong>{summary.upcoming}</strong></div>
+            <Button variant="primary" onClick={() => { setCreateKind(kind ?? 'record');setNewCategory(category?.id ?? ''); if(categoryId !== undefined)setRecordEdit(true);else if(kind)setEditor(kind);else setCreateOpen(true); }}><Plus size={17} />{t("workspaceAddAsset")}</Button>
+        </div>
+        {navigation}
+        <div className="workspace-catalog-controls">
+            <label className="asset-account-search"><Search size={18} /><Input type="search" value={query} aria-label={t("workspaceSearch")} placeholder={t("workspaceSearch")} onChange={(event) => { setQuery(event.target.value); sessionStorage.setItem(queryKey, event.target.value); }} /></label>
+            <label className="field"><span className="sr-only">{t("assetStatusView")}</span><Select aria-label={t('assetStatusView')} value={scope} onValueChange={value => { setScope(value as CatalogScope); sessionStorage.setItem("keepany-catalog-scope", value); }}>{(["managed", "all", "archived"] as const).map(value => <SelectOption key={value} value={value}>{t(value === "managed" ? "managedAssets" : value === "all" ? "all" : "archivedAssets")}</SelectOption>)}</Select></label>
+            <label className="field"><span className="sr-only">{t("assetSort")}</span><Select aria-label={t('assetSort')} value={sort} onValueChange={value => { setSort(value as CatalogSort); sessionStorage.setItem("keepany-catalog-sort", value); }}><SelectOption value="updated">{t("recentlyUpdated")}</SelectOption><SelectOption value="due">{t("nearestDue")}</SelectOption></Select></label>
+        </div>
+        {ratesOpen && <SubscriptionRatesDialog onClose={()=>setRatesOpen(false)}/>}
+		<section className="asset-list-content workspace-asset-grid" aria-label={t('catalogRecords')}>
       {rows.map(({record,asset})=>record?<CatalogRecordCard key={record.id} record={record} onOpen={()=>sessionStorage.setItem('keepany-catalog-record-return',JSON.stringify({recordId:record.id,categoryId:categoryId??null}))} categoryName={catalogCategoryLabel(categories.find(category=>category.id===record.categoryId) ?? {id:'',kind:'project',name:t('catalogUnclassified'),order:0,deleted:false},t)}/>:<LibraryCard key={asset.id} asset={asset} search={search} summary={summary.summaries.get(asset.id)} onOpen={()=>rememberCatalog(asset.id)}/>)}
-		</section> : query || search ? <div className="empty"><strong>{t("noMatches")}</strong></div> : <Empty />}
+		{!hasResults && (query || search ? <div className="empty"><strong>{t("noMatches")}</strong></div> : <Empty />)}</section>
 		{createOpen && <Dialog title={t("workspaceAddAsset")} onClose={() => setCreateOpen(false)}><form className="workspace-create-form" onSubmit={create}>
 			<label className="field" htmlFor="workspace-create-kind">{t("workspaceAssetType")}<Select id="workspace-create-kind" value={createKind} onValueChange={(value) => setCreateKind(value as typeof createKind)}>{(['record','item','subscription'] as const).map(kind=><SelectOption key={kind} value={kind}>{t(kind==='record'?'catalogRecords':kind)}</SelectOption>)}</Select></label>
 			{createKind==='record'&&<label className="field" htmlFor="workspace-create-category">{t('category')}<Select id="workspace-create-category" value={newCategory} onValueChange={setNewCategory}><SelectOption value="">{t('catalogUnclassified')}</SelectOption>{categories.map(category=><SelectOption key={category.id} value={category.id}>{catalogCategoryLabel(category,t)}</SelectOption>)}</Select></label>}
@@ -169,7 +174,8 @@ function AssetCatalog({ categoryId }: { categoryId?: string }) {
 export function AssetsWorkspace({ view = "all", categoryId }: { view?: AssetView; categoryId?: string }) {
 	const {t}=useTranslation();const navigate=useNavigate();const registry=useCatalogCategories();const [manager,setManager]=useState<boolean|null>(null);
 	const selected=categoryId !== undefined ? (registry.categories.some(category=>category.id===categoryId)?categoryId:'') : (view==='project'||view==='domains'?registry.categories.find(category=>category.source===view)?.id ?? '':undefined);
-	return <div className="workspace-page"><AssetTabs view={selected!==undefined?'project':view} categories={registry.categories} categoryId={selected} onManage={setManager}/>{registry.error&&<div role="alert" className="notice">{t('error')}<Button onClick={registry.retry}>{t('retry')}</Button></div>}{view === "ledger" ? <FinancePage /> : view === 'item' || view==='subscription' ? <AssetKindList key={view} kind={view}/> : <AssetCatalog key={selected ?? 'all'} categoryId={selected}/>}{manager!==null&&<CatalogCategoryManager creating={manager} onClose={()=>setManager(null)} onCreated={id=>void navigate({to:'/assets/category/$categoryId',params:{categoryId:id}})}/>}</div>;
+    const navigation = <AssetTabs view={selected!==undefined?'project':view} categories={registry.categories} categoryId={selected} onManage={setManager}/>;
+    return <div className="workspace-page">{registry.error&&<div role="alert" className="notice">{t('error')}<Button onClick={registry.retry}>{t('retry')}</Button></div>}{view === "ledger" ? <>{navigation}<FinancePage /></> : <AssetCatalog key={view + (selected ?? 'all')} categoryId={selected} kind={view === 'item' || view === 'subscription' ? view : undefined} navigation={navigation}/>}{manager!==null&&<CatalogCategoryManager creating={manager} onClose={()=>setManager(null)} onCreated={id=>void navigate({to:'/assets/category/$categoryId',params:{categoryId:id}})}/>}</div>;
 }
 
 export function CategoryWorkspaceRoute(){const categoryId=useRouterState({select:state=>(state.matches.at(-1)?.params as {categoryId:string}).categoryId});return <AssetsWorkspace categoryId={categoryId}/>;}

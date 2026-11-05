@@ -12,17 +12,17 @@ export type FinanceEntryDraft = {
 };
 
 /** Shared fields for manually reviewed transactions and ordinary ledger entries. */
-export function FinanceEntryFields({ draft, targets, onChange, disabled, idPrefix, allowMultiple = false, preserveCurrency = false }: {
+export function FinanceEntryFields({ draft, targets, onChange, disabled, idPrefix, allowMultiple = false, preserveCurrency = false, cnyOnly = false, cnySubscriptions = false }: {
 	draft: FinanceEntryDraft; targets: Asset[];
 	onChange: (change: Partial<FinanceEntryDraft>) => void;
 	disabled: boolean; idPrefix: string;
-	allowMultiple?: boolean; preserveCurrency?: boolean;
+	allowMultiple?: boolean; preserveCurrency?: boolean; cnyOnly?: boolean; cnySubscriptions?: boolean;
 }) {
 	const { t } = useTranslation();
 	return <>
 		<div className="field"><label htmlFor={`${idPrefix}-asset`}>{t("financeRelatedAsset")}</label><Select id={`${idPrefix}-asset`} value={draft.assetId} disabled={disabled} onValueChange={(selectValue) => {
 			const asset = targets.find((item) => item.id === selectValue);
-			onChange({ assetId: selectValue, currency: preserveCurrency ? draft.currency : asset?.currency ?? draft.currency,
+			onChange({ assetId: selectValue, currency: cnyOnly || (cnySubscriptions && asset?.kind === "subscription") ? "CNY" : preserveCurrency ? draft.currency : asset?.currency ?? draft.currency,
 				...(allowMultiple ? {assetIds: [...new Set([selectValue,...(draft.assetIds ?? []).filter(id => id !== draft.assetId)])]} : {}) });
 		}}><SelectOption value="" disabled>{t("reviewSelectFinanceTarget")}</SelectOption>{draft.assetId && !targets.some((asset) => asset.id === draft.assetId) && <SelectOption value={draft.assetId} disabled>{t("financeMissingAsset")}</SelectOption>}{targets.map((asset) => <SelectOption key={asset.id} value={asset.id}>{asset.name} · {t(asset.kind)}</SelectOption>)}</Select></div>
 		{allowMultiple && <fieldset className="finance-owners" disabled={disabled}><legend>{t("financeAdditionalAssets")}</legend>
@@ -34,7 +34,7 @@ export function FinanceEntryFields({ draft, targets, onChange, disabled, idPrefi
 			</label>)}
 		</fieldset>}
 		<div className="field"><label htmlFor={`${idPrefix}-title`}>{t("financeRecordTitle")}</label><Input id={`${idPrefix}-title`} value={draft.title} disabled={disabled} onChange={(event) => onChange({ title: event.target.value })} /></div>
-		<div className="finance-form-pair"><div className="field"><label htmlFor={`${idPrefix}-amount`}>{t("financeAmount")}</label><Input id={`${idPrefix}-amount`} inputMode="decimal" value={draft.amount} disabled={disabled} onChange={(event) => onChange({ amount: event.target.value })} /></div><div className="field"><label htmlFor={`${idPrefix}-currency`}>{t("currency")}</label><Select id={`${idPrefix}-currency`} value={draft.currency} disabled={disabled} onValueChange={(selectValue) => onChange({ currency: selectValue as typeof currencies[number] })}>{currencies.map((currency) => <SelectOption key={currency} value={currency}>{currency}</SelectOption>)}</Select></div></div>
+		<div className="finance-form-pair"><div className="field"><label htmlFor={`${idPrefix}-amount`}>{t("financeAmount")}</label><Input id={`${idPrefix}-amount`} inputMode="decimal" value={draft.amount} disabled={disabled} onChange={(event) => onChange({ amount: event.target.value })} /></div><div className="field"><label htmlFor={`${idPrefix}-currency`}>{t("currency")}</label><Select id={`${idPrefix}-currency`} value={draft.currency} disabled={disabled} onValueChange={(selectValue) => onChange({ currency: selectValue as typeof currencies[number] })}>{(cnyOnly ? ["CNY"] as const : currencies).map((currency) => <SelectOption key={currency} value={currency}>{currency}</SelectOption>)}</Select></div></div>
 		<div className="field"><label htmlFor={`${idPrefix}-date`}>{t("financeDate")}</label><DatePicker id={`${idPrefix}-date`}  value={draft.eventDate} disabled={disabled} onValueChange={(dateValue) => onChange({ eventDate: dateValue })} /></div>
 		<div className="field"><label htmlFor={`${idPrefix}-source`}>{t("financeSource")}</label><Input id={`${idPrefix}-source`} value={draft.source} disabled={disabled} onChange={(event) => onChange({ source: event.target.value })} /></div>
 		<div className="field"><label htmlFor={`${idPrefix}-note`}>{t("financeNote")}</label><Textarea id={`${idPrefix}-note`} rows={2} value={draft.note} disabled={disabled} onChange={(event) => onChange({ note: event.target.value })} /></div>

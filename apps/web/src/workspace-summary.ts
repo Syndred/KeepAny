@@ -1,3 +1,4 @@
+import { historyCny, subscriptionMonthlyCny, type SubscriptionRates } from './subscription-cny';
 import { calendarDayDistance, effectiveFinanceEntry, historyAssetIds, monthlyMinorUnits, type Asset, type History, type Relation, type Task } from "../../../packages/domain/src";
 import type { VaultEntrySummary } from "../../../packages/password-vault/src";
 
@@ -22,14 +23,17 @@ function add(totals: MoneyTotals, currency: string, amount: bigint) {
 
 export function buildWorkspaceSummary(input: {
 	assets: readonly Asset[]; tasks: readonly Task[]; history: readonly History[];
-	relations: readonly Relation[]; today: string;
+	relations: readonly Relation[]; today: string; subscriptionRates?: SubscriptionRates;
 }) {
 	const assets = input.assets.filter((asset) => !asset.deleted && !asset.purged);
 	const byId = new Map(assets.map((asset) => [asset.id, asset]));
 	const spendingByAsset = new Map<string, MoneyTotals>();
 	const spending: MoneyTotals = new Map();
+ const displaySpending: MoneyTotals = new Map();
+ let unconvertedSpending = 0;
 	const purchases: MoneyTotals = new Map();
 	const monthly: MoneyTotals = new Map();
+ const monthlyCny: MoneyTotals = new Map();
 	const seenHistory = new Set<string>();
 	const spendingEntries = new Map<string, History>();
 	const entriesByAsset = new Map<string, Set<string>>();
@@ -48,6 +52,10 @@ export function buildWorkspaceSummary(input: {
 			const ids = entriesByAsset.get(owner) ?? new Set<string>(); ids.add(entry.id); entriesByAsset.set(owner, ids);
 		}
 		add(spending, entry.currency, BigInt(entry.amount));
+        if (owners.some(id => byId.get(id)?.kind === 'subscription') && entry.currency !== 'CNY') {
+            const converted = historyCny(entry,input.subscriptionRates ?? {});
+            if (converted === null) unconvertedSpending++; else add(displaySpending,'CNY',converted);
+        } else add(displaySpending,entry.currency,BigInt(entry.amount));
 	}
 	const tasksByAsset = new Map<string, { done: number; total: number }>();
 	for (const task of input.tasks) {
@@ -69,6 +77,7 @@ export function buildWorkspaceSummary(input: {
 		subscriptionsByProject.set(project.id, linked);
 	}
 	let upcoming = 0;
+ let unconvertedSubscriptions = 0;
 	const domains = assets.filter((asset) => asset.kind === "project")
 		.flatMap((project) => (project.projectDomains ?? []).filter(domain=>!domain.catalog?.deleted).map((domain) => ({ project, domain, remainingDays: daysBetween(input.today, domain.expiryDate) })));
 	for (const row of domains) if (row.remainingDays !== null && row.remainingDays >= 0 && row.remainingDays <= 30) upcoming += 1;
@@ -86,6 +95,8 @@ export function buildWorkspaceSummary(input: {
 		if (asset.kind === "subscription" && asset.status === "active") {
 			add(row.monthly, asset.currency, monthlyMinorUnits(asset));
 			add(monthly, asset.currency, monthlyMinorUnits(asset));
+   const cny = subscriptionMonthlyCny(asset, input.subscriptionRates ?? {});
+   if (cny === null) unconvertedSubscriptions++; else add(monthlyCny, "CNY", cny);
 			if (remainingDays !== null && remainingDays >= 0 && remainingDays <= 30) upcoming += 1;
 		}
 		if (asset.kind === "project") {
@@ -103,7 +114,7 @@ export function buildWorkspaceSummary(input: {
 		}
 		summaries.set(asset.id, row);
 	}
-	return { summaries, domains, purchases, spending, monthly, upcoming };
+	return { summaries, domains, purchases, spending, monthly, monthlyCny, upcoming, unconvertedSubscriptions, displaySpending, unconvertedSpending };
 }
 
 export function partitionAccountPasswords(entries: readonly VaultEntrySummary[], assets: readonly Asset[]) {

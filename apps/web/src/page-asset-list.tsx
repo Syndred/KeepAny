@@ -1,3 +1,4 @@
+import { AssetCardContent } from "./components/AssetSummaryCard";
 import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -407,14 +408,7 @@ function AccountCard({ asset, search, connectionCount, passwordCount }: { asset:
 }
 
 export function LibraryCard({ asset, search, summary, onOpen }: { asset: Asset; search: string; summary?: AssetSummary; onOpen?: () => void }) {
-	const { t, i18n } = useTranslation();
-	const Icon = asset.kind === "subscription" ? CreditCard : Package;
-	const coverId = asset.kind === "item" ? asset.itemMedia?.coverId : asset.attachments[0];
-	return <Link className="asset-library-card list-row" to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { rememberAssetList(asset, search); onOpen?.(); }}>
-		<div className="asset-library-body"><div className="asset-card-summary"><div className="asset-library-heading"><span className={`asset-kind-icon${coverId ? " has-image" : ""}`}>{coverId ? <AssetCover asset={asset} imageId={coverId} /> : <Icon size={19} strokeWidth={1.8} />}</span><strong title={asset.name}>{asset.name}</strong></div>{asset.description && <small>{asset.description}</small>}</div><div className="asset-card-facts"><div className="asset-library-meta">
-			{asset.kind === "subscription" ? <><span>{money(asset.amount, asset.currency, i18n.language)}</span><span>{asset.interval} {t(asset.cycle)}</span>{asset.dueDate && <span>{t("dueDate")}: {date(asset.dueDate, i18n.language)}</span>}</> : <>{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.location && <span>{asset.location}</span>}{asset.warrantyDate && <span>{t("warrantyDate")}: {date(asset.warrantyDate, i18n.language)}</span>}</>}
-		</div><AssetMetrics asset={asset} summary={summary} /></div><div className="asset-library-foot"><span className="chip">{asset.kind === "item" ? asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded") : t(asset.status)}</span>{asset.kind === "item" && asset.status !== "active" && <span className="chip">{t(asset.status)}</span>}<ArrowRight size={14} aria-hidden="true" /></div></div>
-	</Link>;
+    return <Link className="asset-summary-card" to="/assets/$kind/$id" params={{ kind: asset.kind, id: asset.id }} onClick={() => { rememberAssetList(asset, search); onOpen?.(); }}><AssetCardContent asset={asset}/></Link>;
 }
 
 export function AssetList() {
