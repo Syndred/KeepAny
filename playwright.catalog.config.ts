@@ -9,6 +9,7 @@ const port = Number(process.env.KEEPANY_CATALOG_PORT ?? "4399");
 export default defineConfig({
 	testDir: "./tests/e2e",
 	testMatch: [
+		"sidebar-bottom.spec.ts",
 		"catalog-categories.spec.ts",
         "assets-approved.spec.ts",
         "overview-approved.spec.ts",
