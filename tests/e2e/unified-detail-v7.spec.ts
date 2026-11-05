@@ -555,7 +555,7 @@ test.beforeAll(async ({}, info) => {
 					proposedUrl: "",
 					changeNote: "V7 fictional verification",
 				},
-				roundId: "v7-complex-brand-round",
+				roundId: crypto.randomUUID(),
 				at: stamp,
 				title: (step, name) => `V7 workflow ${step} ${name}`,
 			});
@@ -2112,3 +2112,4 @@ for (const locale of ["zh-CN", "en"] as const)
 			complex: true,
 		});
 	});
+
