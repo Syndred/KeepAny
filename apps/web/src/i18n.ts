@@ -446,6 +446,7 @@ const copy: Record<string, [string, string]> = {
 	categoryEditCancelled: ["分类改动已撤销。", "Category changes undone."],
 	categoryDuplicate: ["该分类已存在。", "This category already exists."],
 	newCategory: ["新增分类", "New category"],
+	categoryManage: ["分类管理", "Manage categories"],
 	categoryCollapse: ["收起", "Collapse"],
 	categoryHelp: [
 		"删除分类不会删除资产。",

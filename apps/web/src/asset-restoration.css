@@ -55,10 +55,8 @@
 .asset-category-inline {
 	display: grid;
 	gap: 12px;
-	margin: 14px 0 18px;
-	padding: 18px;
+	min-width: 0;
 }
-.asset-category-inline > .card-header { margin: 0; }
 .asset-category-inline > .field { max-width: 420px; }
 .asset-category-inline > .actions { justify-content: flex-start; }
 .asset-category-inline > .list { display: grid; gap: 10px; }
@@ -85,7 +83,7 @@
 	background: var(--paper);
 }
 .asset-category-members .card-header { gap: 8px; }
-.asset-category-members h3 { margin: 0; font-size: 14px; }
+.asset-category-members h3 { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 14px; }
 .asset-category-members .subtitle { margin: 5px 0 9px; font-size: 12px; }
 .asset-category-member-list { display: grid; gap: 5px; max-height: 220px; overflow-y: auto; }
 .asset-category-member-list label { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 7px; border-radius: 8px; cursor: pointer; }

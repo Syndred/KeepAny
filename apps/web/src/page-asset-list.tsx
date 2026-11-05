@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { normalizeCategoryName, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
 import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCategory, localRepository, retryCategoryEdit, save, saveAssetIfCurrent } from "../../../packages/local-db/src";
 import { Button } from "./components/ui/button";
+import { Dialog } from "./components/ui/dialog";
 import { matchesAssetSearch } from "./asset-search";
 import "./asset-restoration.css";
 import {
@@ -131,7 +132,7 @@ function CategoryStrip({
 			coordinateGetter: sortableKeyboardCoordinates,
 		}),
 	);
-	const [manage, setManage] = useState(false);
+	const [manage, setManage] = useState<false | "manage" | "new">(false);
 	const [name, setName] = useState("");
 	const [categoryError, setCategoryError] = useState("");
 	const addingCategory = useRef(false);
@@ -172,11 +173,16 @@ function CategoryStrip({
 	}
 	function openManager() {
 		selectManagedCategory(chosen);
-		setManage(true);
+		setManage("manage");
 	}
 	function openNewCategory() {
 		selectManagedCategory("");
-		setManage(true);
+		setManage("new");
+	}
+	function closeManager() {
+		if (categoryBusy) return;
+		setCategoryError("");
+		setManage(false);
 	}
 	async function resolveEdit(cancel: boolean) {
 		if (!pending || addingCategory.current) return;
@@ -299,8 +305,8 @@ function CategoryStrip({
 				<div className="actions"><Button variant="primary" disabled={categoryBusy} onClick={() => void resolveEdit(false)}>{t(pending.phase === "rolling-back" ? "categoryEditFinishCancel" : "categoryEditRetry")}</Button>{pending.phase !== "rolling-back" && <Button disabled={categoryBusy} onClick={() => void resolveEdit(true)}>{t("categoryEditCancel")}</Button>}</div>
 			</section>}
 			{manage && (
-				<section className="card asset-category-inline" aria-label={t("category")}>
-					<div className="card-header"><h3>{editingCategory ? t("categoryEdit") : memberCategory ? t("categoryMembers") : t("newCategory")}</h3></div>
+				<Dialog title={editingCategory ? t("categoryEdit") : manage === "new" ? t("newCategory") : t("categoryManage")} closeDisabled={categoryBusy} onClose={closeManager}>
+				<div className="asset-category-inline">
 					{(!memberCategory || editingCategory) && <div className="field">
 						<label htmlFor={categoryFieldId}>{t("categoryName")}</label>
 						<Input
@@ -362,10 +368,11 @@ function CategoryStrip({
 							{t("collectionSave")}
 						</Button>}
 						<Button onClick={openNewCategory} disabled={blocked}>{t("collectionAddAnother")}</Button>
-						<Button onClick={() => { setCategoryError(""); setManage(false); }} disabled={categoryBusy}>{t("categoryCollapse")}</Button>
+						<Button onClick={closeManager} disabled={categoryBusy}>{t("cancel")}</Button>
 					</div>
 					<p className="subtitle">{t("categoryHelp")}</p>
-				</section>
+				</div>
+				</Dialog>
 			)}
 		</>
 	);
