@@ -39,6 +39,28 @@ for(const locale of ['zh-CN','en'] as const){
   await page.screenshot({path:info.outputPath('asset-detail-reminder.png')});await expect(page.locator('.reminder-runtime-banner')).toHaveCount(0);
   await info.attach('contract-results.json',{body:JSON.stringify({ids:['U08'],locale,candidate:identity(),result:'passed'}),contentType:'application/json'});
  });
+ test(`${locale} U09 card surfaces keep colors during interaction`,async({page},info)=>{
+  await start(page,locale);await assets(page);
+  const samples=['Fixture receipt','Minimal adapter','Annual document','Fictional transit'];
+  const states=[];
+  for(const width of [390,768,1280,1920,2262]){
+   await page.setViewportSize({width,height:1000});await expect.poll(()=>page.locator('.asset-summary-card').first().evaluate(el=>el.getBoundingClientRect().width>0)).toBe(true);
+   for(const name of samples){
+    const card=page.locator('.asset-summary-card').filter({hasText:name});await page.mouse.move(0,0);await card.scrollIntoViewIfNeeded();
+    const read=()=>card.evaluate(el=>{const style=getComputedStyle(el);return {background:style.backgroundColor,transform:style.transform,outline:style.outlineColor,border:style.borderTopColor,focused:el.matches(':focus-visible')};});
+    const normal=await read();await card.hover();const hover=await read();
+    await info.attach(`surface-${width}-${name.replaceAll(' ','-')}.json`,{body:JSON.stringify({normal,hover}),contentType:'application/json'});
+    expect(hover.background).toBe(normal.background);expect(hover.transform).not.toBe('none');
+    await page.mouse.move(0,0);await page.keyboard.press('Tab');await card.focus();const focus=await read();expect(focus.background).toBe(normal.background);expect(focus.focused).toBe(true);expect(focus.outline).toBe(normal.border);
+    const box=await card.boundingBox();await page.mouse.move(box!.x+box!.width/2,box!.y+box!.height/2);await page.mouse.down();const pressed=await read();expect(pressed.background).toBe(normal.background);expect(pressed.transform).not.toBe('none');
+    if(name==='Fictional transit')await page.screenshot({path:info.outputPath(`surface-pressed-${width}.png`)});
+    await page.mouse.move(0,0);await page.mouse.up();states.push({width,name,normal,hover,focus,pressed});
+   }
+   await page.screenshot({path:info.outputPath(`surface-normal-${width}.png`)});
+  }
+  await info.attach('surface-all.json',{body:JSON.stringify(states),contentType:'application/json'});
+  await info.attach('contract-results.json',{body:JSON.stringify({ids:['U09'],locale,candidate:identity(),result:'passed'}),contentType:'application/json'});
+ });
  for(const width of [390,768,1280,1920,2262])test(`${locale} ${width} U02 U04 U08 unified asset entries`,async({page},info)=>{
   const copy=t(locale);await page.setViewportSize({width,height:1000});await start(page,locale);await assets(page);
   await expect(page.locator('a[href="/finance"]')).toHaveCount(0);await expect(page.locator('.reminder-runtime-banner')).toHaveCount(0);

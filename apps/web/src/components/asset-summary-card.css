@@ -1,5 +1,5 @@
 .asset-summary-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; width: 100%; padding: 14px; border: 2px solid var(--line); border-radius: 17px; background: var(--paper); color: var(--ink); box-shadow: var(--shadow); text-decoration: none; }
-.asset-summary-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+.asset-summary-card:focus-visible { outline: 3px solid var(--line); outline-offset: 4px; }
 .summary-card-head { min-width: 0; }
 .summary-card-head.has-photo { display: grid; grid-template-columns: 78px minmax(0,1fr); gap: 12px; }
 .summary-card-photo { height: 92px; border-radius: 11px; overflow: hidden; background: var(--paper-soft); }
@@ -27,7 +27,7 @@
 .summary-card-footer progress::-webkit-progress-bar { background: var(--line-soft); }
 .summary-card-footer progress::-webkit-progress-value { background: var(--yellow); }
 .summary-card-footer progress::-moz-progress-bar { background: var(--yellow); }
-@media(hover:hover) { .asset-summary-card:hover { background: var(--paper-soft); transform: translate(-1px,-1px); box-shadow: 4px 5px 0 var(--line); } }
+@media(hover:hover) { .asset-summary-card:hover { transform: translate(-1px,-1px); box-shadow: 4px 5px 0 var(--line); } }
 .asset-summary-card:active { transform: translate(1px,1px); box-shadow: 1px 2px 0 var(--line); }
 @media(max-width:480px) { .asset-summary-card { padding: 14px; } .summary-card-head.has-photo { grid-template-columns: 78px minmax(0,1fr); } }
 .wallet-card-face { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--line-soft); border-radius: 12px; background: var(--yellow-soft); min-width: 0; }

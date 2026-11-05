@@ -18,9 +18,9 @@ const run=spawnSync(process.execPath,['node_modules/@playwright/test/cli.js','te
 if(run.error||run.status!==0){writeFileSync(join(output,'result.json'),JSON.stringify({status:'incomplete',exitCode:run.status,error:run.error?.message}));process.exitCode=1;}else{
  const data=JSON.parse(readFileSync(report,'utf8'));const tests=[];
  const walk=suites=>suites.forEach(s=>{for(const spec of s.specs??[])tests.push(...spec.tests);walk(s.suites??[]);});walk(data.suites);
- if(data.errors?.length||tests.length!==12||tests.some(t=>t.status!=='expected'||t.results.length!==1||t.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
+ if(data.errors?.length||tests.length!==14||tests.some(t=>t.status!=='expected'||t.results.length!==1||t.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
  const receipts=tests.flatMap(t=>t.results[0].attachments??[]).filter(a=>a.name==='contract-results.json').map(a=>JSON.parse(a.path?readFileSync(a.path,'utf8'):Buffer.from(a.body,'base64').toString()));
- for(const id of ['U02','U04','U08'])if(!receipts.some(r=>r.ids.includes(id)))throw Error(`Missing ${id}`);
+ for(const id of ['U02','U04','U08','U09'])if(!receipts.some(r=>r.ids.includes(id)))throw Error(`Missing ${id}`);
  if(receipts.some(r=>r.candidate!==identity||r.result!=='passed'))throw Error('Candidate mismatch.');
  for(const locale of ['zh-CN','en'])for(const width of [390,768,1280,1920,2262])if(!receipts.some(r=>r.locale===locale&&r.width===width))throw Error(`Missing ${locale}/${width}`);
  writeFileSync(join(output,'result.json'),JSON.stringify({status:'machine-checks-passed',candidate:identity,tests:tests.length,manualVisual:'separate',controller:'separate',independentReview:'separate'},null,2));
