@@ -50,7 +50,7 @@ for(const language of ['zh-CN','en'] as const){const t:T=key=>(resources[languag
   await receipt(info,['NF02','NF05'],shots);
  });
  test(`${language} NF03 NF04 natural member and MCP lists`,async({page},info)=>{
-  const shots:string[]=[];await page.setViewportSize(sizes.at(-1)!);await samples(page,t);await page.goto('/collections');await ready(page);await page.locator('#collection-name').fill('Synthetic natural members');
+  const shots:string[]=[];await page.setViewportSize(sizes.at(-1)!);await samples(page,t);await page.goto('/collections');await ready(page);await page.locator('#collection-name').fill('Natural members');
   for(const size of sizes){await page.setViewportSize(size);await ready(page);await natural(page,'.collections-options');const last=page.locator('.collections-option input').last();await last.check();await last.uncheck();shots.push(await shot(page,`members-end-${language}-${size.width}`));}
   await page.locator('.collections-option input').last().check();await page.getByRole('button',{name:t('collectionSave'),exact:true}).click();await expect(page).toHaveURL(/\/collections\/.+/);await page.reload();await ready(page);await expect(page.locator('.collections-member-card')).toHaveCount(1);
   await page.goto('/collections');await ready(page);await page.locator('#collection-search').fill('synthetic no matching item');await expect(page.locator('.collections-option')).toHaveCount(0);await natural(page,'.collections-options');await page.locator('#collection-search').fill('');await expect(page.locator('.collections-option')).toHaveCount(24);
