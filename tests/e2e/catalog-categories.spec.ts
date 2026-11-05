@@ -442,9 +442,9 @@ test("CAT13 pictures, connections, cancel and recycle-bin restore stay usable", 
 	await expect(page.locator(".unified-detail-description img")).toHaveCount(1);
 	await page.getByRole('button',{name:'Add connection',exact:true}).click();
 	let form = page.getByRole('dialog');
-	await form.getByRole("combobox").click();
+	await form.locator("#detail-relation-target").click();
 	await page.getByRole("option", { name: "Related note", exact: true }).click();
-	await form.getByRole("textbox").fill("Reference");
+	await form.locator("#detail-relation-label").fill("Reference");
 	await form
 		.getByRole("button", { name: "Save", exact: true })
 		.click();
@@ -452,9 +452,9 @@ test("CAT13 pictures, connections, cancel and recycle-bin restore stay usable", 
 	await expect(page.locator('.unified-detail-relations .graph')).toHaveAttribute('data-layout-ready','true');
 	await expect(page.locator(".unified-detail-relations .react-flow__edge")).toHaveCount(1);
 	await page.getByRole('button',{name:'Add connection',exact:true}).click();form=page.getByRole('dialog');
-	await form.getByRole("combobox").click();
+	await form.locator("#detail-relation-target").click();
 	await page.getByRole("option", { name: "Related note", exact: true }).click();
-	await form.getByRole("textbox").fill("Reference");
+	await form.locator("#detail-relation-label").fill("Reference");
 	await form
 		.getByRole("button", { name: "Save", exact: true })
 		.click();
