@@ -27,6 +27,7 @@ export function AccountLoginSummary({ asset, current, total, index, onSwitch, on
     async function copy(field: string, value: string) {
         if (!value || session?.getSnapshot().status !== "unlocked") return;
         const request = ++generation.current;
+        setCopied("");
         try {
             if (!navigator.clipboard?.writeText) throw Error("clipboard");
             await navigator.clipboard.writeText(value);

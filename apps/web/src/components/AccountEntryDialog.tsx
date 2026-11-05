@@ -118,7 +118,8 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 		} catch (failure) {
 			setError(
 				t(
-					failure instanceof Error && failure.message === "vault-password"
+					failure instanceof Error && failure.message === "vault-memory" ? "pwVaultMemoryUnavailable"
+                    : failure instanceof Error && failure.message === "vault-password"
 						? "pwVaultUnlockFailed"
 						: "pwVaultError",
 				),
@@ -192,7 +193,8 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 			};
 			setError(
 				t(
-					["vault-stale", "asset-stale"].includes(reason)
+					reason === "vault-memory" ? partial ? "accountEntryPartialMemory" : "pwVaultMemoryUnavailable"
+                    : ["vault-stale", "asset-stale"].includes(reason)
                         ? partial ? "accountEntryPartialStale" : "assetStale"
 					: partial
 						? "accountEntryPartial"

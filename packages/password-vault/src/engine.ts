@@ -55,8 +55,15 @@ CryptoEngine.setArgon2Impl(async (password, salt, memory, iterations, length, pa
     password: new Uint8Array(password), salt: new Uint8Array(salt), memorySize: memory,
     iterations, parallelism, hashLength: length, outputType: 'binary' as const,
   };
-  const result = await (type === CryptoEngine.Argon2TypeArgon2d ? argon2d(options) : argon2id(options));
-  return result.slice().buffer;
+  try {
+    const result = await (type === CryptoEngine.Argon2TypeArgon2d ? argon2d(options) : argon2id(options));
+    return result.slice().buffer;
+  } catch (error) {
+    // hash-wasm ignores failed WASM memory.grow, then its typed-array view throws.
+    // Parameters were bounded above: retain the existing KDF and let the caller retry.
+    if (error instanceof RangeError && /^(Invalid typed array length(?:: ?\d+)?|Array buffer allocation failed|Invalid array buffer length)$/.test(error.message)) fail('vault-memory');
+    throw error;
+  }
 });
 
 export function credentials(password: string, creating = false): KdbxCredentials {

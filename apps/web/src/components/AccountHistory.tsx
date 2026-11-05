@@ -34,7 +34,7 @@ export function AccountHistory({ entry, asset }: { entry?: PasswordVaultEntrySum
                 asset: selected.asset, progress: progress.current, label: (kind, identifierKind) => t(`pwConnectKind_${identifierKind ?? kind}`) });
             setSelected(null); notify(t("pwVaultHistoryRestored"));
         } catch (cause) {
-            if (session.getSnapshot().status === "unlocked") setError(t(cause instanceof Error && ["vault-stale", "stale"].includes(cause.message) ? "pwVaultConflict" : "pwVaultError"));
+            if (session.getSnapshot().status === "unlocked") setError(t(cause instanceof Error && cause.message === "vault-memory" ? progress.current.accountChanged ? "accountHistoryPartialMemory" : "pwVaultMemoryUnavailable" : cause instanceof Error && ["vault-stale", "stale"].includes(cause.message) ? "pwVaultConflict" : "pwVaultError"));
         } finally { inFlight.current = false; setBusy(false); }
     }
     return <section className={`card account-history-card${history.rows.length ? "" : " is-empty"}`} aria-labelledby="account-history-title">
