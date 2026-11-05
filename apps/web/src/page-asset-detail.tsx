@@ -1244,11 +1244,11 @@ function LegacyAssetDetail() {
 				</form>
 			</Dialog>}
 {!unified && (			<div className="detail-grid asset-detail-secondary">
-				<DetailDisclosure id="account-relations" tabIndex={kind === "account" ? -1 : undefined} className="card asset-relations-card" collapsible={kind === "project"} label={t("projectRelatedDetails")}>
+				<DetailDisclosure id="account-relations" tabIndex={kind === "account" ? -1 : undefined} className="card asset-relations-card" collapsible={kind === "project"} label={t(kind === "account" ? "projectRelatedDetails" : "catalogRelated")}>
 					<div className="card-header">
 						<div>
-							<h2>{t(kind === "account" ? "accountRelationMap" : "relations")}</h2>
-							{relations.length > 0 && <p>{kind === "account" ? t("accountGraphCounts", { direct: directCount, indirect: Math.max(0, (family?.neighbors.length ?? 0) - directCount) }) : t("relationGraphLegend")}</p>}
+							<h2>{t(kind === "account" ? "accountRelationMap" : "catalogRelated")}</h2>
+							{kind === "account" && relations.length > 0 && <p>{t("accountGraphCounts", { direct: directCount, indirect: Math.max(0, (family?.neighbors.length ?? 0) - directCount) })}</p>}
 						</div>
 						<Button
 							variant="ghost"
