@@ -137,6 +137,8 @@
  .account-login-summary .card-header { padding-block:10px; }
  .account-login-value { padding-block:6px; }
  .account-note-summary { padding-block:12px; }
+ .account-relation-layout .asset-relations-card { padding-block:8px; }
+ .account-related-card { padding-block:10px; }
 }
 @media(min-width:1001px) and (max-width:1450px) {
  .account-relation-layout .account-graph-toolbar .relation-filter { flex-basis:160px; }
