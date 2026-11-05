@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@11.10.0",
   "scripts": {
-    "dev": "vite apps/web --host 127.0.0.1",
+    "dev": "vite apps/web --host 127.0.0.1 --port 5173 --strictPort",
     "build": "tsc --noEmit && vite build apps/web",
     "build:preview": "node scripts/build-preview-release.mjs",
     "verify:preview": "node scripts/verify-preview-release.mjs",

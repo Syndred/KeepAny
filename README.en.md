@@ -88,7 +88,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Development defaults to `http://127.0.0.1:5173/`, with storage separate from the portable app on port 4180. For the fixed local package, see [release/README.md](release/README.md).
+For daily development and acceptance, run `pnpm dev` from the main workspace on the `main` branch and use `http://127.0.0.1:5173/`. Source edits normally hot reload. Startup fails if that port is occupied rather than choosing another one. Merge changes from other workspaces into this checkout before expecting to see them here. Browser storage on 5173 is separate from the portable app on 4180; back it up before an explicit migration. For the fixed local package, see [release/README.md](release/README.md).
 
 ```bash
 pnpm typecheck

@@ -88,7 +88,7 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-开发地址默认是 `http://127.0.0.1:5173/`，与便携包的 4180 资料分开。发布固定本地包的操作见 [release/README.md](release/README.md)。
+日常开发与验收统一在主工作区的 `main` 分支运行 `pnpm dev`，打开 `http://127.0.0.1:5173/`。源码修改通常立即热更新；端口占用时启动会报错，不自动换端口。其他工作区的改动需先合入这里才会显示。5173与便携包4180的浏览器资料天然分开，迁移资料需先备份并明确执行。发布固定本地包的操作见 [release/README.md](release/README.md)。
 
 ```bash
 pnpm typecheck
