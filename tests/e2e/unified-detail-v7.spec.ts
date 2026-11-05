@@ -2011,16 +2011,17 @@ test("V701 category and all-list return origins; V711 overview account and legac
 	}
 	await enter(page, "ordinary");
 	await page
-		.getByRole("link", { name: t("catalogLegacy"), exact: true })
+		.getByRole("button", { name: t("detailMoreInfo"), exact: true })
 		.click();
-	await expect(page.locator(".asset-detail-project")).toBeVisible();
+	await expect(page.locator(".unified-detail-project-extras")).toBeVisible();
 	await expect(page.locator(".asset-project-profile-card")).toContainText(
 		"https://fictional.example.test/studio",
 	);
-    await page.locator('summary').filter({hasText:t('catalogRelated')}).click();
-    await expect(page.locator('.asset-detail-project .graph')).toHaveCount(0);
-    await expect(page.locator('.asset-relations-card .relation-list')).toBeVisible();
-    await page.locator('.asset-relations-card').getByRole('button',{name:t('addRelation'),exact:true}).click();
+    await page.locator('#project-detail-extras').getByRole('button',{name:t('close'),exact:true}).click();
+    await expect(page.locator('.unified-asset-detail .graph')).toHaveCount(0);
+    await page.getByRole('button',{name:t('catalogRelated'),exact:true}).click();
+    await expect(page.locator('.unified-detail-link-list')).toBeVisible();
+    await page.getByRole('dialog').getByRole('button',{name:t('addRelation'),exact:true}).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await page.getByRole('dialog').getByRole('button',{name:t('close'),exact:true}).click();
 	await screenshot(page, info, "legacy-consumer");
