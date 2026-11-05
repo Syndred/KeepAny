@@ -60,7 +60,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		return { entries, rows, asset: JSON.parse(rows.find(row => row.type === "asset" && JSON.parse(row.payload).id === fixture.project.id)!.payload) as Asset };
 	}
 	const goProject = async () => {await page.goto(`/assets/project/${fixture.project.id}`);await openProjectDetails(page);};
-	const edit = () => page.locator(".asset-project-action-bar").getByRole("button", { name: t("edit"), exact: true }).click();
+	const edit = () => page.locator(".asset-project-profile-card").getByRole("button", { name: t("supplementProfile"), exact: true }).click();
 	try {
         const actualCandidate = acceptanceCandidate();
         const indexSha256 = createHash("sha256").update(await (await page.request.get("/")).body()).digest("hex");
@@ -75,14 +75,14 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		await goProject();
 		await expect(page.locator(".asset-backlinks-card, .asset-project-materials, .asset-project-stats, [data-project-media-role]")).toHaveCount(0);
 		await openProjectDetails(page);
-		await expect(page.locator(".asset-attachments-card .image-item img")).toHaveCount(1);
+		await expect(page.locator(".unified-detail-gallery img")).toHaveCount(1);
 		await expect(page.locator(".asset-project-profile-card")).toContainText("Basic contact");
-		await expect(page.locator(`.asset-finance-card [data-bill-id="${fixture.expense.id}"]`)).toContainText(fixture.expense.title!);
-		const layout = await page.locator("main.asset-detail-project").evaluate(main => {
-			const hero = main.querySelector(":scope > .page-header")!.getBoundingClientRect();
-			const finance = main.querySelector(":scope > .asset-finance-card")!.getBoundingClientRect();
+		await expect(page.locator('.unified-detail-events > li').filter({hasText:fixture.expense.title!})).toContainText(fixture.expense.title!);
+		const layout = await page.locator("main.catalog-record-detail").evaluate(main => {
+			const hero = main.querySelector(".unified-detail-header")!.getBoundingClientRect();
+			const finance = main.querySelector(".unified-detail-history")!.getBoundingClientRect();
 			return { heroBottom: hero.bottom, financeTop: finance.top,
-				emptyMetaSpans: [...main.querySelectorAll(".asset-project-hero-meta > span")].filter(node => !node.textContent?.trim()).length,
+				emptyMetaSpans: [...main.querySelectorAll(".unified-detail-labels > span")].filter(node => !node.textContent?.trim()).length,
 				overflow: document.documentElement.scrollWidth > innerWidth + 1 };
 		});
 		await test.info().attach("project-expense-layout", { body: JSON.stringify(layout), contentType: "application/json" });
@@ -99,6 +99,7 @@ for (const [locale, width] of [["zh-CN", 390], ["en", 1280]] as const) test(`${l
 		await form.locator("#name").fill("Updated basic project"); await form.locator("#notes").fill("Updated ordinary note");
 		await form.locator("#tags").fill("legacy, retained");
 		await form.getByRole("button", { name: t("save"), exact: true }).click(); await expect(form).toHaveCount(0); await page.reload();
+		await openProjectDetails(page);
 		await expect(page.locator(".asset-project-profile-card")).toContainText("Updated ordinary note");
 		const result = await archive();
 		const { name, notes, tags, updatedAt, ...retained } = result.asset;
