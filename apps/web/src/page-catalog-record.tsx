@@ -1,3 +1,4 @@
+import { ReminderTaskContext } from "./ReminderTaskContext";
 import { AssetCardContent } from "./components/AssetSummaryCard";
 import { WalletCardFace } from './components/WalletCardFace';
 import { readCatalogRecordReturn } from './workspace-return';
@@ -177,6 +178,7 @@ export function CatalogRecordPage({ recordId }: { recordId?: string } = {}) {
 	}
 	return (
 		<main className="page catalog-record-detail">
+            <ReminderTaskContext assetId={current.owner.id} />
 			<div className="page-header">
 				<div>
 					<Link

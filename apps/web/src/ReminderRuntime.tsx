@@ -1,3 +1,4 @@
+import { openReminderCenter } from "./reminder-navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -42,7 +43,7 @@ export function ReminderRuntime({ hideBanner = false }: { hideBanner?: boolean }
 						const body = t("reminderDueBody", { time: new Date(reminder.dueAt).toLocaleString(i18n.language, { timeZone: reminder.sourceType === "task" && "reminder" in reminder.source && reminder.source.reminder ? reminder.source.reminder.timeZone : settings.subscriptionOverrides[reminder.source.id]?.timeZone ?? settings.timeZone }) });
 						const outcome = showBrowserReminder(reminder.source.name, body, id, () => {
 							window.focus();
-							if (reminder.sourceType === "task") void navigate({ to: "/tasks", hash: `task-${reminder.source.id}` });
+							if (reminder.sourceType === "task") openReminderCenter({ taskId: reminder.source.id });
 							else void navigate({ to: "/assets/$kind/$id", params: { kind: "subscription", id: reminder.source.id } });
 						});
 						if (outcome !== "shown") setBrowserFailed(true);
@@ -56,7 +57,7 @@ export function ReminderRuntime({ hideBanner = false }: { hideBanner?: boolean }
 	if (hideBanner || !due.length) return null;
 	return <aside className="card reminder-runtime-banner" aria-label={t("reminderDueTitle")}>
 		<strong>{t("reminderDueCount", { count: due.length })}</strong>
-		<div className="toolbar">{due.slice(0, 3).map((reminder) => <TextLink key={`${reminder.sourceType}:${reminder.source.id}`} asChild>{reminder.sourceType === "task" ? <Link to="/tasks" hash={`task-${reminder.source.id}`}>{reminder.source.name}</Link> : <Link to="/assets/$kind/$id" params={{ kind: "subscription", id: reminder.source.id }}>{reminder.source.name} · {t("reminderDueSubscription")}</Link>}</TextLink>)}{due.length > 3 && <TextLink asChild><Link to="/tasks">{t("reminderMore")}</Link></TextLink>}</div>
+		<div className="toolbar">{due.slice(0, 3).map((reminder) => <TextLink key={`${reminder.sourceType}:${reminder.source.id}`} asChild>{reminder.sourceType === "task" ? <button type="button" className="text-link reminder-entry-button" onClick={() => openReminderCenter({ taskId: reminder.source.id })}>{reminder.source.name}</button> : <Link to="/assets/$kind/$id" params={{ kind: "subscription", id: reminder.source.id }}>{reminder.source.name} · {t("reminderDueSubscription")}</Link>}</TextLink>)}{due.length > 3 && <TextLink asChild><button type="button" className="text-link reminder-entry-button" onClick={() => openReminderCenter()}>{t("reminderEntryOpen")}</button></TextLink>}</div>
 		{browserFailed && <p role="status">{t("reminderBrowserFailed")}</p>}
 	</aside>;
 }
