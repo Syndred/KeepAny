@@ -242,6 +242,10 @@ async function geometry(page: Page, rows: Locator) {
 			() => document.documentElement.scrollWidth <= innerWidth + 1,
 		),
 	).toBe(true);
+	for (const icon of await rows.locator(".compact-task-actions svg").all()) {
+		await expect(icon).toHaveCSS("width", "18px");
+		await expect(icon).toHaveCSS("height", "18px");
+	}
 }
 for (const locale of ["zh-CN", "en"] as const) {
 	const t = text(locale);

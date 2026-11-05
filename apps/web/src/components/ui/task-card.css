@@ -15,6 +15,7 @@
 .asset-tasks-card .account-compact-task .impact-task-info > strong { overflow-wrap: anywhere; }
 .account-compact-task > .task-complete-toggle, .compact-task-actions .button.icon { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
 .compact-task-actions { display: flex; align-items: center; gap: 4px; }
+.compact-task-actions .button svg { width: 18px; height: 18px; }
 .account-compact-task .task-status-check { display: grid; place-items: center; width: 20px; height: 20px; border: 2px solid var(--line); border-radius: 5px; color: var(--ink); background: var(--paper); }
 .account-compact-task .task-complete-toggle[aria-pressed="true"] .task-status-check { background: var(--accent); }
 .account-compact-task .task-complete-toggle:hover:not(:disabled) .task-status-check { background: var(--accent-soft); }
