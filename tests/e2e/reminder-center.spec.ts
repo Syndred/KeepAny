@@ -130,6 +130,14 @@ for(const locale of ["zh-CN","en"] as const){
   await expect(center(page).getByRole("button",{name:t("reminderCenterMarkAllRead"),exact:true})).toBeDisabled();
   await receipt(info,["NR11"],{screenshots:[await shot(page,info,"storage-load-error")],injected:"IndexedDB.open throws in isolated browser; no source records"});
  });
+ test(`${locale} NR13 immediate shell feedback stays inside mobile panel`,async({page},info)=>{
+  await page.setViewportSize({width:390,height:1000});await start(page,locale,false);
+  await restoreCompletionArchive(page,password,resolve(fixture,"fixture.ka1"));await open(page);
+  await expect(center(page).locator(".reminder-center-notice")).toBeVisible();await expect(page.locator(".toast")).toHaveCount(0);
+  const notice=await center(page).locator(".reminder-center-notice").boundingBox(),list=await page.getByTestId("reminder-list").boundingBox();
+  expect(notice!.y+notice!.height).toBeLessThanOrEqual(list!.y+1);
+  await receipt(info,["NR11","NR13","NR14"],{screenshots:[await shot(page,info,"mobile-shell-feedback")]});
+ });
  test(`${locale} NR12 recurrence and midnight update`,async({page},info)=>{
   await start(page,locale);await page.goto("/tasks#task-nr-plan");const source=page.locator(".reminder-task-context");await expect(source).toContainText("Recurring maintenance");
   await source.getByRole("button",{name:t("maintenanceComplete"),exact:true}).click();

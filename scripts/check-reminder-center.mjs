@@ -22,7 +22,7 @@ const run=spawnSync(process.execPath,['node_modules/@playwright/test/cli.js','te
 if(run.error||run.status!==0){writeFileSync(join(output,'result.json'),JSON.stringify({status:'incomplete',exitCode:run.status,error:run.error?.message}));process.exitCode=1;}else{
  const data=JSON.parse(readFileSync(report,'utf8')),tests=[];
  const walk=suites=>suites.forEach(s=>{for(const spec of s.specs??[])tests.push(...spec.tests);walk(s.suites??[]);});walk(data.suites);
- if(data.errors?.length||tests.length<24||tests.some(t=>t.status!=='expected'||t.results.length!==1||t.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
+ if(data.errors?.length||tests.length<26||tests.some(t=>t.status!=='expected'||t.results.length!==1||t.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
  const receipts=tests.flatMap(t=>t.results[0].attachments??[]).filter(a=>a.name==='contract-results.json').map(a=>JSON.parse(a.path?readFileSync(a.path,'utf8'):Buffer.from(a.body,'base64').toString()));
  for(const id of ['NR01','NR02','NR03','NR04','NR05','NR06','NR07','NR08','NR09','NR10','NR11','NR12','NR13','NR14'])if(!receipts.some(r=>r.ids.includes(id)))throw Error(`Missing ${id}`);
  for(const receipt of receipts){if(receipt.candidate!==identity||receipt.result!=='passed')throw Error('Candidate mismatch.');for(const path of receipt.screenshots??[])if(!existsSync(path))throw Error(`Missing screenshot ${path}`);}

@@ -59,6 +59,7 @@ export function AppShell() {
 	const topSearchPanelRef = useRef<HTMLDivElement>(null);
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
 	const [toast, setToast] = useState("");
+	const [remindersOpen, setRemindersOpen] = useState(false);
 	const [feedbackTarget, setFeedbackTarget] = useState<HTMLElement | null>(null);
 	const [ai, setAi] = useState(false);
 	const [mobile, setMobile] = useState(false);
@@ -309,7 +310,7 @@ export function AppShell() {
 							<kbd>⌘ K</kbd>
 						</button>
 						<div className="top-actions">
-							<ReminderCenter />
+							<ReminderCenter feedback={toast} onOpenChange={setRemindersOpen} />
 							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/change-impact" />}>{t("checkChangeImpact")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
                            <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
                             <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
@@ -353,7 +354,7 @@ export function AppShell() {
 					{t("error")}
 				</div>
 			)}
-			{toast && (feedbackTarget ? createPortal(<div className="compact-account-feedback-message" role="status">{toast}</div>, feedbackTarget) : (
+			{toast && !remindersOpen && (feedbackTarget ? createPortal(<div className="compact-account-feedback-message" role="status">{toast}</div>, feedbackTarget) : (
 				<div className="toast" role="status">
 					{toast}
 				</div>

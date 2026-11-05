@@ -77,3 +77,5 @@
 	.reminder-center-empty { min-height: 300px; }
 }
 @media (prefers-reduced-motion: reduce) { .reminder-center-popup { transition: none; } }
+
+.reminder-center-notice { flex: none; margin: 0; padding: 9px 18px; border-bottom: 1px solid var(--line-soft); background: var(--paper-soft); color: var(--ink); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }

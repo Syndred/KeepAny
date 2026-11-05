@@ -38,7 +38,7 @@ const groupKeys = { overdue: "reminderCenterGroupOverdue", today: "reminderCente
 const typeKeys = { task: "reminderCenterTask", renewal: "reminderCenterRenewal", warranty: "reminderCenterWarranty", date: "reminderCenterDate" };
 
 /** One shell entry, shared by the bell and all retained historical reminder links. */
-export function ReminderCenter() {
+export function ReminderCenter({ feedback = "", onOpenChange }: { feedback?: string; onOpenChange?: (open: boolean) => void }) {
 	const context = useAppContext();
 	const { data } = context;
 	const { t, i18n } = useTranslation();
@@ -48,6 +48,7 @@ export function ReminderCenter() {
 	const today = useLocalDay();
 	const small = useSmallReminderScreen();
 	const [open, setOpen] = useState(false);
+	function changeOpen(next: boolean) { setOpen(next); onOpenChange?.(next); }
 	const [tab, setTab] = useState<"all" | "unread">("all");
 	const [scope, setScope] = useState<{ assetId?: string; overdue?: boolean }>({});
 	const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -83,7 +84,7 @@ export function ReminderCenter() {
 		setSelectedTaskId(options.taskId ?? null);
 		setRequest(options.taskId ? options : null);
 		setError("");
-		setOpen(true);
+		changeOpen(true);
 	}
 	useEffect(() => {
 		const receive = (event: Event) => {
@@ -103,7 +104,7 @@ export function ReminderCenter() {
 			show({ taskId: id });
 		} else {
 			interaction.current++;
-			setOpen(false);
+			changeOpen(false);
 			setSelectedTaskId(null);
 			setRequest(null);
 		}
@@ -142,7 +143,7 @@ export function ReminderCenter() {
 			try {
 				await navigate(target);
 				setSelectedTaskId(null);
-				setOpen(false);
+				changeOpen(false);
 			} catch { setError(t("reminderCenterLoadFailed")); }
 		});
 	}, [request, data.loading]);
@@ -153,7 +154,7 @@ export function ReminderCenter() {
 		if (activation !== interaction.current) return;
 		const target = resolveReminderTarget(item);
 		if (target) {
-			try { await navigate(target); setOpen(false); }
+			try { await navigate(target); changeOpen(false); }
 			catch { setError(t("reminderCenterLoadFailed")); }
 		} else if (item.task) { setTaskFeedback(""); setSelectedTaskId(item.task.id); }
 	}
@@ -168,7 +169,7 @@ export function ReminderCenter() {
 		if (!next && busy) { details.cancel(); return; }
 		interaction.current++;
 		if (next) { setTab("all"); setScope({}); setSelectedTaskId(null); setRequest(null); setError(""); }
-		setOpen(next);
+		changeOpen(next);
 	}}>
 		<Popover.Trigger id="reminder-bell" data-testid="reminder-bell" ref={triggerRef} className="top-icon-button reminder-center-trigger" aria-label={unread ? t("reminderCenterOpenUnread", { count: unread }) : t("reminderCenterOpen")} title={t("reminderCenterOpen")}>
 			<Bell size={17} aria-hidden="true" />{unread > 0 && <i aria-hidden="true" />}
@@ -178,7 +179,7 @@ export function ReminderCenter() {
 			<Popover.Positioner className="reminder-center-positioner" side="bottom" align="end" sideOffset={10} collisionPadding={12}>
 				<Popover.Popup className="reminder-center-popup" data-testid="reminder-center" initialFocus={headingRef} finalFocus={triggerRef} aria-describedby={undefined}>
 					<div className="reminder-center-handle" aria-hidden="true" onTouchStart={event => { touchStart.current = event.touches[0]?.clientY ?? null; }} onTouchEnd={event => {
-						if (!busy && touchStart.current !== null && (event.changedTouches[0]?.clientY ?? 0) - touchStart.current > 60) { interaction.current++; setOpen(false); }
+						if (!busy && touchStart.current !== null && (event.changedTouches[0]?.clientY ?? 0) - touchStart.current > 60) { interaction.current++; changeOpen(false); }
 						touchStart.current = null;
 					}}><span /></div>
 					<header className="reminder-center-header">
@@ -192,6 +193,7 @@ export function ReminderCenter() {
 					</div>}
 					{(scope.assetId || scope.overdue) && selectedTaskId === null && <div className="reminder-center-scope"><span>{scope.overdue ? t("reminderCenterOverdueScope") : scopedAsset?.name ?? t("reminderCenterStandalone")}</span><button type="button" onClick={() => setScope({})}>{t("reminderCenterShowAll")}</button></div>}
 					{error && <p className="reminder-center-error" role="alert">{error}</p>}
+					{feedback && <p className="reminder-center-notice" role="status">{feedback}</p>}
 					<div ref={bodyRef} id={bodyId} data-testid="reminder-list" className="reminder-center-body" role={selectedTaskId === null ? "tabpanel" : undefined} aria-labelledby={selectedTaskId === null ? tab === "all" ? allTabId : unreadTabId : undefined} aria-busy={busy || data.loading}>
 						{data.loading ? <div className="reminder-center-empty" role="status"><Bell size={28} aria-hidden="true" /><strong>{t("loading")}</strong></div> : data.error ? <div className="reminder-center-empty" role="alert"><strong>{t("reminderCenterLoadFailed")}</strong><button type="button" className="button" onClick={() => window.location.reload()}>{t("reminderCenterReload")}</button></div> : selectedTaskId !== null ? <section className="reminder-center-task-detail" aria-label={t("reminderCenterTaskDetail")}>
 							<button type="button" className="reminder-center-back" onClick={() => { setSelectedTaskId(null); setError(""); }}><ArrowLeft size={16} aria-hidden="true" />{t("reminderCenterBackToList")}</button>
