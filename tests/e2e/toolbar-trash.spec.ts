@@ -82,7 +82,7 @@ for (const language of ["zh-CN", "en"] as const) {
  test(`${language} TT02 TT06 TT08 layouts and confirmation states`,async({page})=>{
   test.setTimeout(180000);await setup(page,t);await create(page,t);await create(page,t,"Long account name · 很长的账号名称 "+"Example ".repeat(15),"long-identifier-".repeat(6)+"@example.test");await trashLogin(page,t,1);
   const matrix=[];
-  for(const width of [390,768,1280,1920,2262]){
+  for(const width of [390,768,1280,1810,1920,2262]){
    await page.setViewportSize({width,height:1000});await page.locator(".asset-category-manage").hover();await page.locator("#password-vault-search-input").focus();await shot(page,`toolbar-${language}-${width}`);
    const geometry=await page.locator(".asset-category-toolbar").evaluate(node=>[node.querySelector(".asset-category-scroll button"),node.querySelector(".asset-account-search"),node.querySelector(".themed-select-trigger"),node.querySelector(".asset-category-manage"),...node.querySelectorAll(".account-toolbar-actions button")].map(n=>{const r=n!.getBoundingClientRect();return {y:r.y,h:r.height,center:r.y+r.height/2};}));
    for(const control of geometry)expect(control.h).toBe(44); if(width>=1280)expect(Math.max(...geometry.map(v=>v.center))-Math.min(...geometry.map(v=>v.center))).toBeLessThanOrEqual(1);
@@ -91,7 +91,7 @@ for (const language of ["zh-CN", "en"] as const) {
    await page.locator(".asset-category-add").click();await shot(page,`category-${language}-${width}`);await page.getByRole("button",{name:t("categoryCollapse"),exact:true}).click();
   }
   await page.setViewportSize({width:1280,height:1000});await page.locator(".sidebar-trash").click();
-  for(const width of [390,768,1280,1920,2262]){await page.setViewportSize({width,height:1000});await page.locator(".password-vault-entry-trash").getByRole("button",{name:t("deletePermanently"),exact:true}).click();await shot(page,`purge-${language}-${width}`);expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();}
+  for(const width of [390,768,1280,1810,1920,2262]){await page.setViewportSize({width,height:1000});await page.locator(".password-vault-entry-trash").getByRole("button",{name:t("deletePermanently"),exact:true}).click();await shot(page,`purge-${language}-${width}`);expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();}
   writeFileSync(join(output,`matrix-${language}.json`),JSON.stringify({ids:["TT02","TT06","TT08"],candidate:portableCandidate(),matrix},null,2));
  });
  });

@@ -56,8 +56,10 @@
     .compact-account-title-block { min-height: 44px; }
 	.unified-accounts-page .asset-category-toolbar--search .asset-category-scroll { flex: 1 1 100%; }
 	.unified-accounts-page .asset-account-search { flex-basis: 100%; }
-	.unified-accounts-page .asset-category-toolbar { gap: 6px; }
-	.unified-accounts-page .asset-category-toolbar .list-filters { flex: 1; min-width: 110px; }
+	.unified-accounts-page .asset-category-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px; }
+	.unified-accounts-page .asset-category-scroll,
+	.unified-accounts-page .asset-account-search { grid-column: 1 / -1; width: 100%; }
+	.unified-accounts-page .asset-category-toolbar .list-filters { min-width: 0; }
 	.unified-accounts-page .asset-category-manage { padding-inline: 8px; }
 	.unified-accounts-page .account-toolbar-actions { gap: 6px; }
 	.unified-accounts-page .compact-account-card { padding: 10px 12px 0; }
