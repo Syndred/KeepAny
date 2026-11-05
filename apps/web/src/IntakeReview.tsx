@@ -577,7 +577,7 @@ export function IntakeReview() {
 					<strong>{row.expenseDraft.title}</strong>
 					<span>{formatMinorUnits(parseMinorUnits(row.expenseDraft.amount, row.expenseDraft.currency), row.expenseDraft.currency, i18n.language)} · {date(row.expenseDraft.eventDate, i18n.language)}</span>
 					<small>{assetsById.get(row.expenseDraft.assetId)?.name ?? t("financeMissingAsset")} · {row.expenseDraft.source}</small>
-					<Link to="/finance">{t("reviewViewFinance")}</Link>
+					<Link to="/assets">{t("assetsWorkspace")}</Link>
 				</div>}
 				{row.status !== "pending" && row.reviewMode !== "expense" && <div className="intake-expense-receipt">
 					<strong>{row.asset.name}</strong>

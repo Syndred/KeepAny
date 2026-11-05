@@ -283,7 +283,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				.locator(".catalog-record-card")
 				.filter({ hasText: "Minimal keepsake" }),
 		).toContainText(t("catalogUnclassified"));
-		for (const key of ["item", "subscription", "workspaceLedger"]) {
+		for (const key of ["item", "subscription", "wallet"]) {
 			await page
 				.locator(".workspace-navigation")
 				.getByRole("link", { name: t(key), exact: true })

@@ -4,7 +4,7 @@
 .asset-list-toolbar > .list-filters .themed-select-root { width: 100%; }
 .asset-list-toolbar > .asset-view-toggle { margin-inline-start: auto; }
 .asset-card-summary, .asset-card-facts { display: grid; gap: 7px; min-width: 0; }
-.asset-list-content:not(.asset-dense-list, .asset-account-grid) { align-items: stretch; }
+.asset-list-content:not(.asset-dense-list, .asset-account-grid, .workspace-asset-grid) { align-items: stretch; }
 .asset-list-content:not(.asset-dense-list) > :is(.asset-project-card, .asset-library-card) { display: flex; flex-direction: column; }
 .asset-list-content:not(.asset-dense-list) :is(.asset-project-info, .asset-library-body) { display: flex; flex: 1; flex-direction: column; }
 .asset-list-content:not(.asset-dense-list) :is(.asset-project-foot, .asset-library-foot, .workspace-domain-action) { margin-top: auto; }

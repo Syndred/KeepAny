@@ -15,6 +15,7 @@ import { financeCopy } from "./finance-copy";
 import { candidateMergeCopy } from "./candidate-merge-copy";
 import { cleanupUxCopy } from "./cleanup-ux-copy";
 import { catalogCopy } from "./catalog-copy";
+import { walletCopy } from "./wallet-copy";
 
 const copy: Record<string, [string, string]> = {
  overviewAllRecorded: ["已记录资料", "Recorded information"],
@@ -28,6 +29,7 @@ const copy: Record<string, [string, string]> = {
  overviewAllAccounts: ["全部账号 {{count}}", "All accounts {{count}}"],
  overviewAllConnections: ["全部关联", "All connections"],
  overviewLocalStorage: ["资料保存在本机，可随时备份和恢复。", "Information stays on this device. Back up and restore anytime."],
+ ...walletCopy,
  ...catalogCopy,
  ...cleanupUxCopy,
  accountLoginInfo: ["登录信息", "Login information"],

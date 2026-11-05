@@ -12,6 +12,7 @@ export default defineConfig({
 		"catalog-categories.spec.ts",
         "assets-approved.spec.ts",
         "overview-approved.spec.ts",
+        "masonry-wallet.spec.ts",
 		"asset-toolbar.spec.ts",
 		"cleanup-ux.spec.ts",
 		"project-simplification.spec.ts",

@@ -21,6 +21,7 @@ export function matchesAssetSearch(asset: Asset, query: string): boolean {
 		asset.tags.join(" "),
 		asset.url,
 		asset.username,
+        asset.walletCard?.issuer, asset.walletCard?.lastFour,
 		...additionalPublicTextFields.map((field) => field === "longDescription" && asset.kind === "project" ? "" : asset[field]),
 		...(asset.projectDomains ?? []).flatMap((domain) => [
 			domain.name,
