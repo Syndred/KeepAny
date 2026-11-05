@@ -126,6 +126,7 @@ function LegacyAssetDetail() {
 	const kind = validKind(params.kind ?? "project");
  const unified = kind === "item" || kind === "subscription";
  const [activityOpen, setActivityOpen] = useState(false);
+ const activityExpectedAsset = useRef<Asset | null>(null);
 	const detailHash = useRouterState({ select: (state) => state.location.hash });
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -408,6 +409,11 @@ function LegacyAssetDetail() {
 		asset.kind === "subscription" && asset.dueDate && cnySubscription
 			? actualCharge(cnySubscription, asset.dueDate)
 			: null;
+ function openActivity() {
+  if (!asset) return;
+  activityExpectedAsset.current = structuredClone(asset);
+  setActivityOpen(true);
+ }
 	const projectDomains = asset.kind === "project" ? (asset.projectDomains ?? []) : [];
 	const itemMedia = asset.itemMedia ?? emptyItemMedia;
 	const assignedItemImages = new Set([itemMedia.coverId, ...itemMedia.detailIds, ...itemMedia.receiptIds].filter(Boolean));
@@ -645,13 +651,15 @@ function LegacyAssetDetail() {
 		action: "renew",
 	) {
 		if (!asset) return;
+        const expected = unified && activityOpen ? activityExpectedAsset.current ?? asset : asset;
 		const now = new Date().toISOString();
-		let update = { ...asset, updatedAt: now };
+		let update = { ...expected, updatedAt: now };
 		const note = historyNote.trim();
-		if (action === "renew" && asset.dueDate) {
-			const anchor = asset.billingAnchor || asset.dueDate;
-			const count = (asset.renewalCount || 0) + 1;
-			const charge = cnySubscription ? actualCharge(cnySubscription, asset.dueDate) : null;
+		if (action === "renew" && expected.dueDate) {
+			const anchor = expected.billingAnchor || expected.dueDate;
+			const count = (expected.renewalCount || 0) + 1;
+			const expectedCny = subscriptionCny(expected, subscriptionRates);
+            const charge = expectedCny ? actualCharge(expectedCny, expected.dueDate) : null;
 			if (charge === null) throw Error("renewal-inactive");
 			const entered = renewalAmount.trim();
 			const recordedAmount = entered ? parseMinorUnits(entered, "CNY") : charge;
@@ -662,13 +670,13 @@ function LegacyAssetDetail() {
 				billingAnchor: anchor,
 				renewalCount: count,
 				lastRenewalId: historyId,
-				dueDate: dueOnCycle(anchor, asset.cycle, asset.interval, count),
+				dueDate: dueOnCycle(anchor, expected.cycle, expected.interval, count),
 			};
-			await recordRenewal(asset, update, {
+			await recordRenewal(expected, update, {
 				id: historyId,
-				assetId: asset.id,
+				assetId: expected.id,
 				action: "renew",
-				billDate: asset.dueDate,
+				billDate: expected.dueDate,
                 renewalDueDate: update.dueDate,
 				amount: recordedAmount,
 				currency: "CNY",
@@ -687,7 +695,7 @@ function LegacyAssetDetail() {
 		setItemBusy(true);
 		setItemError("");
 		try {
-			const current = assetSchema.parse(asset);
+			const current = assetSchema.parse(unified && activityOpen ? activityExpectedAsset.current ?? asset : asset);
 			const borrower = action === "return" ? current.borrower : itemBorrower.trim();
 			const note = action === "maintenance" ? itemMaintenanceNote.trim() : itemLoanNote.trim();
 			if (action === "loan" && !borrower) throw Error("item-borrower-required");
@@ -1091,13 +1099,14 @@ function LegacyAssetDetail() {
    return <UnifiedDetailImage key={id} id={id} label={label} actions={<><DropdownMenuItem disabled={uploading} onClick={()=>chooseImage(role,id)}>{t("replaceImage")}</DropdownMenuItem><DropdownMenuItem disabled={uploading} onClick={()=>void removeImage(id)}>{t("removeImage")}</DropdownMenuItem></>}/>;
   })}</div> : <p className="unified-detail-empty">{t("detailNoImages")}</p>}
  </UnifiedDetailDescription>;
+ const activityAsset = activityOpen ? activityExpectedAsset.current ?? asset : asset;
  const unifiedActivity = <>{asset.kind === "subscription" && renewalRecoveryPending && <p className="notice" role="alert">{t("renewalRecoveryPending")}</p>}
 			{asset.kind === "item" && itemRecoveryPending && <p className="notice" role="alert">{t("itemRecoveryPending")}</p>}
 					{asset.kind === "item" && itemError && <p className="notice" role="alert">{itemError}</p>}
 					{asset.kind === "subscription" ? (
 						<div className="toolbar">
 							<Button
-								disabled={asset.status !== "active" || !asset.dueDate || !cnySubscription || renewalBusy}
+								disabled={activityAsset.status !== "active" || !asset.dueDate || !cnySubscription || renewalBusy}
 								onClick={() => void recordRenewalAction()}
 							>
 								{t("renew")}
@@ -1124,9 +1133,9 @@ function LegacyAssetDetail() {
 						</div>
 					) : (
 						<div className="item-history-forms">
-							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); void recordItem(asset.status === "loaned" ? "return" : "loan"); }}><fieldset className="item-history-form"><legend>{t("itemLoanHistory")}</legend>
+							<form className="item-history-group" onSubmit={(event) => { event.preventDefault(); void recordItem(activityAsset.status === "loaned" ? "return" : "loan"); }}><fieldset className="item-history-form"><legend>{t("itemLoanHistory")}</legend>
 							<div className="item-history-fields">
-								{asset.status === "active" && (
+								{activityAsset.status === "active" && (
 									<><label className="field">
 										<span>{t("borrower")}</span>
 										<Input value={itemBorrower} maxLength={200} onChange={(event) => { setItemBorrower(event.target.value); setItemError(""); }} />
@@ -1140,13 +1149,13 @@ function LegacyAssetDetail() {
 									<Input value={itemLoanNote} onChange={(event) => { setItemLoanNote(event.target.value); setItemError(""); }} />
 								</label>
 								<div className="actions item-history-actions"><Button type="submit"
-									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || (asset.status === "active" && ["repairing", "resold", "retired"].includes(asset.itemLifecycleStatus ?? ""))}
+									disabled={itemBusy || !["active", "loaned"].includes(activityAsset.status) || (activityAsset.status === "active" && ["repairing", "resold", "retired"].includes(activityAsset.itemLifecycleStatus ?? ""))}
 								>
-									{t(asset.status === "loaned" ? "return" : "loan")}
+									{t(activityAsset.status === "loaned" ? "return" : "loan")}
 								</Button>
-								{["active", "archived"].includes(asset.status) && (
+								{["active", "archived"].includes(activityAsset.status) && (
 									<Button type="button" disabled={itemBusy} onClick={() => void changeItemArchive()}>
-										{t(asset.status === "archived" ? "reactivateItem" : "archiveItem")}
+										{t(activityAsset.status === "archived" ? "reactivateItem" : "archiveItem")}
 									</Button>
 								)}
 								</div>
@@ -1163,7 +1172,7 @@ function LegacyAssetDetail() {
 								</label>
 								
 								<div className="actions item-history-actions"><Button type="submit"
-									disabled={itemBusy || !["active", "loaned"].includes(asset.status) || ["resold", "retired"].includes(asset.itemLifecycleStatus ?? "")}
+									disabled={itemBusy || !["active", "loaned"].includes(activityAsset.status) || ["resold", "retired"].includes(activityAsset.itemLifecycleStatus ?? "")}
 								>
 									{t("maintenance")}
 								</Button>
@@ -1235,7 +1244,7 @@ function LegacyAssetDetail() {
 					</div>
 				</Dialog>
 			)}
-{unified ? <UnifiedDetailColumns asset={asset} header={<UnifiedDetailHeader asset={asset} category={niceCategory(asset.category,t)||t(asset.kind)} state={asset.kind === "item" && asset.status === "active" && asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t(asset.status)} actions={<><Button disabled={asset.kind === "subscription" && (asset.status !== "active" || !asset.dueDate || !cnySubscription)} onClick={()=>setActivityOpen(true)}>{t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")}</Button><Button variant="default" onClick={()=>setEdit(true)}>{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")}/>}><MoreHorizontal size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">{asset.kind === "item" && <DropdownMenuItem onClick={openItemStatus}>{t("itemStatusChange")}</DropdownMenuItem>}<DropdownMenuItem onClick={()=>{setDeleteError("");setDeleteOpen(true);}}>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></>}/>} info={unifiedInfo} description={unifiedDescription} history={<UnifiedDetailHistory asset={asset}/>} tasks={<UnifiedDetailTasks assetId={asset.id}/>}/> : (			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
+{unified ? <UnifiedDetailColumns asset={asset} header={<UnifiedDetailHeader asset={asset} category={niceCategory(asset.category,t)||t(asset.kind)} state={asset.kind === "item" && asset.status === "active" && asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t(asset.status)} actions={<><Button disabled={asset.kind === "subscription" && (asset.status !== "active" || !asset.dueDate || !cnySubscription)} onClick={openActivity}>{t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")}</Button><Button variant="default" onClick={()=>setEdit(true)}>{t("edit")}</Button><DropdownMenu><DropdownMenuTrigger render={<Button aria-label={t("moreActions")}/>}><MoreHorizontal size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">{asset.kind === "item" && <DropdownMenuItem onClick={openItemStatus}>{t("itemStatusChange")}</DropdownMenuItem>}<DropdownMenuItem onClick={()=>{setDeleteError("");setDeleteOpen(true);}}>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></>}/>} info={unifiedInfo} description={unifiedDescription} history={<UnifiedDetailHistory asset={asset}/>} tasks={<UnifiedDetailTasks assetId={asset.id}/>}/> : (			<div className={`detail-grid asset-detail-primary${asset.kind === "account" ? " account-empty-primary" : ""}`}>
 				{asset.kind === "item" && <section className="card asset-item-photo-main" aria-label={t("itemCoverPhoto")}>
 					<div className="asset-item-photo-stage">{itemMedia.coverId ? <ImageTile id={itemMedia.coverId} /> : <p>{t("itemStatusUnrecorded")}</p>}
 						<span className="chip">{asset.status === "loaned" ? t("loaned") : asset.itemLifecycleStatus ? t(`itemStatus_${asset.itemLifecycleStatus}`) : t("itemStatusUnrecorded")}</span>

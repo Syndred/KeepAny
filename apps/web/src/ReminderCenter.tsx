@@ -132,7 +132,8 @@ export function ReminderCenter({
 		if (!target) return false;
 		target.setAttribute("tabindex", "-1");
 		target.scrollIntoView({ block: "center", behavior: "instant" });
-		return target;
+		target.focus({ preventScroll: true });
+		return false;
 	}
 	const headingRef = useRef<HTMLHeadingElement>(null);
 	const bodyRef = useRef<HTMLDivElement>(null);

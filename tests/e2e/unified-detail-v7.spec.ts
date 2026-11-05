@@ -2113,3 +2113,78 @@ for (const locale of ["zh-CN", "en"] as const)
 		});
 	});
 
+test("V708 activity forms reject a changed billing period and concurrent maintenance", async ({
+	page,
+	context,
+}, info) => {
+	const t = tFor("en");
+	await start(page, "en");
+	await enter(page, "subscription");
+	await page
+		.locator(".unified-detail-header")
+		.getByRole("button", { name: t("renew"), exact: true })
+		.click();
+	const a = page.getByRole("dialog");
+	await a
+		.getByRole("textbox", { name: t("notes"), exact: true })
+		.fill("V7 stale renewal must not save");
+	const other = await context.newPage();
+	await other.goto("/assets/subscription/ud-subscription");
+	await other
+		.locator(".unified-detail-header")
+		.getByRole("button", { name: t("renew"), exact: true })
+		.click();
+	const b = other.getByRole("dialog");
+	await b
+		.getByRole("textbox", { name: t("notes"), exact: true })
+		.fill("V7 other page renewal");
+	await b.getByRole("button", { name: t("renew"), exact: true }).click();
+	await expect(b).toBeHidden();
+	await expect(page.locator("[data-metric=remaining]")).toContainText(
+		"Dec 28, 2026",
+	);
+	await a.getByRole("button", { name: t("renew"), exact: true }).click();
+	await expect(a).toBeVisible();
+	await expect(
+		page.getByText(t("renewalStale"), { exact: true }),
+	).toBeVisible();
+	await screenshot(page, info, "stale-renewal-preserved");
+	await a.getByRole("button", { name: t("close"), exact: true }).click();
+	await page.reload();
+	await expect(page.locator(".unified-detail-events > li")).toHaveCount(9);
+	await expect(page.locator(".unified-detail-history")).not.toContainText(
+		"V7 stale renewal must not save",
+	);
+	await enter(page, "item");
+	await page
+		.locator(".unified-detail-header")
+		.getByRole("button", { name: t("detailRecordActivity"), exact: true })
+		.click();
+	await a
+		.getByLabel(t("maintenanceNotes"), { exact: true })
+		.fill("V7 stale maintenance must not save");
+	await other.goto("/assets/item/ud-item");
+	await other
+		.locator(".unified-detail-header")
+		.getByRole("button", { name: t("detailRecordActivity"), exact: true })
+		.click();
+	await b
+		.getByLabel(t("maintenanceNotes"), { exact: true })
+		.fill("V7 other page maintenance");
+	await b.getByRole("button", { name: t("maintenance"), exact: true }).click();
+	await expect(b).toBeHidden();
+	await expect(page.locator(".unified-detail-history")).toContainText(
+		"V7 other page maintenance",
+	);
+	await a.getByRole("button", { name: t("maintenance"), exact: true }).click();
+	await expect(a.getByRole("alert")).toContainText(t("itemStale"));
+	await screenshot(page, info, "stale-maintenance-preserved");
+	await a.getByRole("button", { name: t("close"), exact: true }).click();
+	await page.reload();
+	await expect(page.locator(".unified-detail-events > li")).toHaveCount(9);
+	await expect(page.locator(".unified-detail-history")).not.toContainText(
+		"V7 stale maintenance must not save",
+	);
+	await other.close();
+	await receipt(info, ["V708", "V711"]);
+});

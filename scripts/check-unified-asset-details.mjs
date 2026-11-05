@@ -21,7 +21,7 @@ if(run.error||run.status!==0){writeFileSync(join(output,'result.json'),JSON.stri
 else{
  const data=JSON.parse(readFileSync(report,'utf8')),tests=[];
  const walk=suites=>suites.forEach(suite=>{for(const spec of suite.specs??[])tests.push(...spec.tests);walk(suite.suites??[]);});walk(data.suites);
- if(data.errors?.length||tests.length!==42||tests.some(test=>test.status!=='expected'||test.results.length!==1||test.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
+ if(data.errors?.length||tests.length!==43||tests.some(test=>test.status!=='expected'||test.results.length!==1||test.results[0].status!=='passed'))throw Error('Missing, failed, skipped or retried checks.');
  const receipts=tests.flatMap(test=>test.results[0].attachments??[]).filter(attachment=>attachment.name==='contract-results.json').map(attachment=>JSON.parse(attachment.path?readFileSync(attachment.path,'utf8'):Buffer.from(attachment.body,'base64').toString()));
  for(const id of ['V701','V702','V703','V704','V705','V706','V707','V708','V709','V710','V711'])if(!receipts.some(receipt=>receipt.ids.includes(id)))throw Error(`Missing ${id}`);
  if(receipts.some(receipt=>receipt.candidate!==identity||receipt.result!=='passed'))throw Error('Candidate mismatch.');
