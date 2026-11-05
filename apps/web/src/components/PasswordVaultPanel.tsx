@@ -278,6 +278,7 @@ export function PasswordVaultPanel({
 		setDeleteTarget(null);
 		setPurgeTarget(null);
 		setEntryActionError("");
+		setImportFile(null);
 		setImportPassword("");
 		setImportError("");
 		setImportOpen(false);
