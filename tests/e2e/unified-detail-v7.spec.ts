@@ -1143,7 +1143,8 @@ for (const locale of ["zh-CN", "en"] as const) {
 		await dialog.locator(".renewal-amount-field input").fill("-1");
 		await dialog.getByRole("button", { name: t("renew"), exact: true }).click();
 		await expect(dialog.getByRole("alert")).toBeVisible();
-		await screenshot(page, info, "renewal-invalid");
+		expect(await dialog.getByRole('alert').evaluate(el=>parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(14);
+        await screenshot(page, info, "renewal-invalid");
 		await dialog.locator(".renewal-amount-field input").fill("29.25");
 		await dialog
 			.getByRole("textbox", { name: t("notes"), exact: true })

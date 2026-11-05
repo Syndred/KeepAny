@@ -659,3 +659,5 @@
 .unified-detail-tasks .maintenance-task-row {
 	display: block;
 }
+
+.unified-detail-activity-dialog .renewal-amount-field > small[role='alert'] { font-size: 14px; line-height: 1.5; color: var(--danger); font-weight: 500; }
