@@ -170,7 +170,7 @@
 }
 .unified-detail-gallery {
 	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
 	gap: 15px 12px;
 	margin: 18px 20px 20px;
 }
@@ -315,6 +315,12 @@
 .unified-detail-info > .actions {
 	padding: 0 20px 17px;
 }
+.unified-detail-activity-dialog .item-history-forms { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.unified-detail-activity-dialog .item-history-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.unified-detail-activity-dialog .item-history-actions { grid-column: 1 / -1; }
+.unified-detail-activity-dialog .toolbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.unified-detail-activity-dialog .toolbar > .button { order: 3; justify-self: end; }
+.unified-detail-dialog form > [role="alert"], .unified-detail-dialog form > .actions { grid-column: 1 / -1; }
 .unified-detail-location {
 	display: flex;
 	flex-wrap: wrap;
@@ -351,6 +357,7 @@
 	}
 }
 @media (max-width: 760px) {
+.unified-detail-activity-dialog .item-history-fields { grid-template-columns: minmax(0, 1fr); }
 	.unified-asset-detail .unified-detail-header {
 		align-items: flex-start;
 		flex-wrap: wrap;

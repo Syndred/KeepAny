@@ -333,7 +333,7 @@ export function UnifiedDetailRelations({
 			</Suspense>
 			{adding ? (
 				<Dialog
-					title={t("addRelation")}
+					className="unified-detail-dialog" title={t("addRelation")}
 					closeDisabled={busy}
 					onClose={() => {
 						if (!inFlight.current) setAdding(false);
@@ -442,7 +442,7 @@ export function UnifiedDetailRelations({
 			) : null}
 			{remove ? (
 				<Dialog
-					title={t("deleteRelation")}
+					className="unified-detail-dialog" title={t("deleteRelation")}
 					closeDisabled={busy}
 					onClose={() => {
 						if (!inFlight.current) setRemove(null);
@@ -557,3 +557,4 @@ export function UnifiedDetailHistory({
 		</section>
 	);
 }
+

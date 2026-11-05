@@ -1274,7 +1274,7 @@ function LegacyAssetDetail() {
 				</section>}
 				{asset.kind !== "project" && asset.kind !== "account" && attachmentSection}
 			</div>)}
- {unified && activityOpen && <Dialog title={t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")} closeDisabled={itemBusy || renewalBusy} onClose={()=>{if(!itemInFlight.current&&!renewalInFlight.current)setActivityOpen(false);}}>{unifiedActivity}</Dialog>}
+ {unified && activityOpen && <Dialog className="unified-detail-activity-dialog" title={t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")} closeDisabled={itemBusy || renewalBusy} onClose={()=>{if(!itemInFlight.current&&!renewalInFlight.current)setActivityOpen(false);}}>{unifiedActivity}</Dialog>}
 
 			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
 				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
@@ -1608,4 +1608,5 @@ function LegacyAssetDetail() {
 		</main>
 	);
 }
+
 
