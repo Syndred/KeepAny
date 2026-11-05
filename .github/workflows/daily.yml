@@ -79,6 +79,9 @@ jobs:
         run: node scripts/check-unified-asset-details.mjs
         timeout-minutes: 15
       - name: Verify sidebar bottom links and responsive candidate evidence
+        run: node scripts/check-detail-followup.mjs
+        timeout-minutes: 15
+      - name: Verify sidebar bottom links and responsive candidate evidence
         run: node scripts/check-sidebar-bottom.mjs
         timeout-minutes: 5
       - name: Matching-dialog pilot in two existing matrix cases

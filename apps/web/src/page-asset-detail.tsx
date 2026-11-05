@@ -115,12 +115,19 @@ function itemLocationParts(location: string): [string, string, string] {
 
 export function AssetDetail() {
  const route=useRouterState({select:state=>({params:state.matches.at(-1)?.params as {kind?:string;id?:string},hash:state.location.hash})});
- if(route.params?.kind==='project'&&!route.hash.startsWith('project-'))return <CatalogRecordPage recordId={`asset:${route.params.id}`}/>;
+ if(route.params?.kind==='project') {
+  const domainId = route.hash.startsWith('project-domain-') ? route.hash.slice('project-domain-'.length) : '';
+  return <CatalogRecordPage recordId={domainId ? `domain:${route.params.id}:${domainId}` : `asset:${route.params.id}`}/>;
+ }
  return <LegacyAssetDetail key={`${route.params?.kind}:${route.params?.id}:${route.hash.startsWith('project-')}`}/>;
 }
-function LegacyAssetDetail() {
-	const params = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
+export function ProjectDetailExtras({ projectId }: { projectId: string }) {
+ return <LegacyAssetDetail projectId={projectId} />;
+}
+function LegacyAssetDetail({ projectId }: { projectId?: string } = {}) {
+	const routeParams = (useRouterState({ select: (s) => s.matches.at(-1)?.params }) ??
 		{}) as { kind?: string; id?: string };
+ const params = projectId ? { kind: "project", id: projectId } : routeParams;
 	const kind = validKind(params.kind ?? "project");
  const unified = kind === "item" || kind === "subscription";
  const [activityOpen, setActivityOpen] = useState(false);
@@ -1122,6 +1129,36 @@ function LegacyAssetDetail() {
 					)}
 					{asset.kind === "subscription" && <p className="subtitle">{t("renewalLocalHint")}</p>}
 					</>;
+ const projectControls = <>			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
+				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
+				<div className="asset-project-cost-grid">
+					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small>{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</div>
+					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
+					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
+				</div>
+				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
+				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{subscriptionCny(linked,subscriptionRates) ? money(subscriptionCny(linked,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
+			</section>}
+			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
+				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
+					<label className="field">{t("projectDomain")}<Input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
+					<label className="field">{t("projectRegistrar")}<Input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
+					<label htmlFor="project-domain-account" className="field">{t("projectDomainAccount")}<Select id="project-domain-account" disabled={domainBusy} value={domainDraft.accountId} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, accountId: selectValue })}><SelectOption value="">—</SelectOption>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <SelectOption value={entry.id} key={entry.id}>{entry.name}</SelectOption>)}</Select></label>
+					<label className="field">{t("projectExpiry")}<DatePicker aria-label={t("projectExpiry")} disabled={domainBusy}  value={domainDraft.expiryDate} onValueChange={(dateValue) => setDomainDraft({ ...domainDraft, expiryDate: dateValue })} /></label>
+					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><Input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
+					<label htmlFor="project-domain-auto-renew" className="field">{t("projectAutoRenew")}<Select id="project-domain-auto-renew" disabled={domainBusy} value={domainDraft.autoRenew} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, autoRenew: selectValue as ProjectDomain["autoRenew"] })}><SelectOption value="unknown">{t("projectAutoRenewUnknown")}</SelectOption><SelectOption value="on">{t("projectAutoRenewOn")}</SelectOption><SelectOption value="off">{t("projectAutoRenewOff")}</SelectOption></Select></label>
+					{domainError && <p role="alert" className="field-error">{domainError}</p>}
+					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
+				</form>
+			</Dialog>}
+</>;
+ if (projectId) return <div className="unified-detail-project-extras">
+  <ProjectProfile asset={asset} accounts={relatedAccounts} onVisit={visitRelation} onEdit={() => setEdit(true)} />
+  {asset.projectInspectionDate && <section className="card"><div className="card-header"><h2>{t("projectNextInspection")}</h2></div><p>{date(asset.projectInspectionDate, i18n.language)}</p></section>}
+  {projectControls}
+  {edit && <Suspense fallback={<p role="status">{t("loading")}</p>}><AssetEditor kind="project" asset={asset} categories={data.categories} onClose={() => setEdit(false)} /></Suspense>}
+ </div>;
+
 	return (
 		<main ref={accountViewport} className={unified ? "page unified-asset-detail" : `page asset-detail asset-detail-${kind}${relations.length ? " has-relations" : ""}${kind === "account" ? " account-relation-layout" : ""}`}>
             {!unified && <ReminderTaskContext assetId={asset.id}/>}{kind === "project" && <div className="asset-project-action-bar">
@@ -1220,28 +1257,7 @@ function LegacyAssetDetail() {
 			</div>)}
  {unified && activityOpen && <Dialog className="unified-detail-activity-dialog" title={t(asset.kind === "subscription" ? "renew" : "detailRecordActivity")} closeDisabled={itemBusy || renewalBusy} onClose={()=>{if(!itemInFlight.current&&!renewalInFlight.current)setActivityOpen(false);}}>{unifiedActivity}</Dialog>}
 
-			{asset.kind === "project" && <section className="card asset-project-costs" id="project-domains">
-				<div className="card-header"><h2>{t("projectDomainCosts")}</h2><Button size="small" onClick={() => openDomain()}><Plus size={14} />{t("projectAddDomain")}</Button></div>
-				<div className="asset-project-cost-grid">
-					<div><small>{t("projectMonthlyCost")}</small><strong>{formatTotals(monthlyByCurrency)}</strong><small>{relatedSubscriptions.length} {t("projectLinkedSubscriptions")}</small>{missingSubscriptionCny > 0 && <small>{t("subscriptionCnyPartial",{count:missingSubscriptionCny})}</small>}</div>
-					<div><small>{t("projectAnnualEstimate")}</small><strong>{formatTotals(annualByCurrency)}</strong>{incompleteCost && <small>{t("projectCostPartial")}</small>}</div>
-					<div><small>{t("projectNextRenewal")}</small><strong>{nextRenewal ? date(nextRenewal, i18n.language) : "—"}</strong><small>{projectDomains.length} {t("projectDomain")}</small></div>
-				</div>
-				{projectDomains.length ? <div className="asset-project-domain-list">{projectDomains.map((domain) => <div className="asset-project-domain-row" key={domain.id} id={`project-domain-${domain.id}`}><div><strong>{domain.name}</strong><small>{[domain.registrar, domain.accountId ? liveById.get(domain.accountId)?.name : "", domain.annualAmount === null ? "" : `${money(domain.annualAmount, domain.currency, i18n.language)} / ${t("year")}`].filter(Boolean).join(" · ") || "—"}</small><span>{t("projectExpiry")}: {date(domain.expiryDate, i18n.language)} · {t("projectAutoRenew")}: {t(domain.autoRenew === "on" ? "projectAutoRenewOn" : domain.autoRenew === "off" ? "projectAutoRenewOff" : "projectAutoRenewUnknown")}</span></div><Button size="small" onClick={() => openDomain(domain)}>{t("edit")}</Button></div>)}</div> : <p className="asset-quiet-empty">{t("projectNoDomains")}</p>}
-				<details className="asset-project-linked-subscriptions"><summary>{t("projectLinkedSubscriptions")} · {relatedSubscriptions.length}</summary>{relatedSubscriptions.length ? relatedSubscriptions.map((linked) => <Link key={linked.id} to="/assets/$kind/$id" params={{ kind: linked.kind, id: linked.id }} onClick={(event) => { event.preventDefault(); visitRelation(linked); }}><strong>{linked.name}</strong><span>{subscriptionCny(linked,subscriptionRates) ? money(subscriptionCny(linked,subscriptionRates)!.amount,"CNY",i18n.language) : t("subscriptionCnyMissing")} / {t(linked.cycle)} · {date(linked.dueDate, i18n.language)}</span></Link>) : <p className="asset-quiet-empty">{t("none")}</p>}</details>
-			</section>}
-			{asset.kind === "project" && domainEditing && domainDraft && <Dialog title={domainEditing === "new" ? t("projectAddDomain") : t("projectEditDomain")} onClose={() => { if (!domainBusy) setDomainEditing(null); }}>
-				<form className="asset-project-domain-form" onSubmit={(event) => { event.preventDefault(); void saveDomain(); }}>
-					<label className="field">{t("projectDomain")}<Input disabled={domainBusy} required value={domainDraft.name} onChange={(event) => setDomainDraft({ ...domainDraft, name: event.target.value })} placeholder="example.com" /></label>
-					<label className="field">{t("projectRegistrar")}<Input disabled={domainBusy} value={domainDraft.registrar} onChange={(event) => setDomainDraft({ ...domainDraft, registrar: event.target.value })} /></label>
-					<label htmlFor="project-domain-account" className="field">{t("projectDomainAccount")}<Select id="project-domain-account" disabled={domainBusy} value={domainDraft.accountId} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, accountId: selectValue })}><SelectOption value="">—</SelectOption>{liveAssets(data).filter((entry) => entry.kind === "account").map((entry) => <SelectOption value={entry.id} key={entry.id}>{entry.name}</SelectOption>)}</Select></label>
-					<label className="field">{t("projectExpiry")}<DatePicker aria-label={t("projectExpiry")} disabled={domainBusy}  value={domainDraft.expiryDate} onValueChange={(dateValue) => setDomainDraft({ ...domainDraft, expiryDate: dateValue })} /></label>
-					<label className="field">{t("projectAnnualFee")}<span className="asset-project-fee-row"><Input disabled={domainBusy} inputMode="decimal" value={domainFee} onChange={(event) => setDomainFee(event.target.value)} /><Select disabled={domainBusy} aria-label={t("currency")} value={domainDraft.currency} onValueChange={(selectValue) => { const currency = selectValue as ProjectDomain["currency"]; setDomainDraft({ ...domainDraft, currency }); setDomainFee(""); }}><SelectOption>CNY</SelectOption><SelectOption>USD</SelectOption><SelectOption>EUR</SelectOption><SelectOption>GBP</SelectOption><SelectOption>JPY</SelectOption></Select></span></label>
-					<label htmlFor="project-domain-auto-renew" className="field">{t("projectAutoRenew")}<Select id="project-domain-auto-renew" disabled={domainBusy} value={domainDraft.autoRenew} onValueChange={(selectValue) => setDomainDraft({ ...domainDraft, autoRenew: selectValue as ProjectDomain["autoRenew"] })}><SelectOption value="unknown">{t("projectAutoRenewUnknown")}</SelectOption><SelectOption value="on">{t("projectAutoRenewOn")}</SelectOption><SelectOption value="off">{t("projectAutoRenewOff")}</SelectOption></Select></label>
-					{domainError && <p role="alert" className="field-error">{domainError}</p>}
-					<div className="actions"><Button type="submit" variant="primary" disabled={domainBusy}>{t("save")}</Button>{domainEditing !== "new" && <Button type="button" variant="danger" disabled={domainBusy} onClick={() => void removeDomain()}>{t("projectDomainDelete")}</Button>}<Button type="button" disabled={domainBusy} onClick={() => setDomainEditing(null)}>{t("cancel")}</Button></div>
-				</form>
-			</Dialog>}
+{projectControls}
 {!unified && (			<div className="detail-grid asset-detail-secondary">
 				<DetailDisclosure id="account-relations" tabIndex={kind === "account" ? -1 : undefined} className="card asset-relations-card" collapsible={kind === "project"} label={t(kind === "account" ? "projectRelatedDetails" : "catalogRelated")}>
 					<div className="card-header">

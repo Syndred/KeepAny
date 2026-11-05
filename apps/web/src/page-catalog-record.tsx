@@ -1,5 +1,5 @@
 import { ReminderTaskContext } from "./ReminderTaskContext";
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ExternalLink, MoreHorizontal, Plus } from "lucide-react";
@@ -38,6 +38,8 @@ import { money, date, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { withDetailImages } from "./unified-detail-data";
 
+const ProjectDetailExtras = lazy(() => import("./page-asset-detail").then(module => ({ default: module.ProjectDetailExtras })));
+
 export function CatalogRecordCard({
 	record,
 	categoryName,
@@ -71,6 +73,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 	const current = catalogRecords(data.assets, data.categories).find(
 		(record) => record.id === recordId,
 	);
+	const [extrasOpen, setExtrasOpen] = useState(false);
 	const [edit, setEdit] = useState(false),
 		[remove, setRemove] = useState<CatalogRecord | null>(null);
 	const [busy, setBusy] = useState(false),
@@ -217,19 +220,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 				)}
 			</dl>
 			{hasLegacy && (
-				<Button size="small" variant="ghost" asChild>
-					<Link
-						to="/assets/$kind/$id"
-						params={{ kind: "project", id: current.owner.id }}
-						hash={
-							current.domain
-								? `project-domain-${current.domain.id}`
-								: "project-details"
-						}
-					>
-						{t("catalogLegacy")}
-					</Link>
-				</Button>
+                <Button size="small" variant="ghost" aria-expanded={extrasOpen} aria-controls="project-detail-extras" onClick={() => setExtrasOpen(value => !value)}>{t("detailMoreInfo")}</Button>
 			)}
 		</section>
 	);
@@ -346,6 +337,10 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 										<MoreHorizontal size={18} />
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="end">
+                                        {!current.domain && !current.asset.walletCard && <>
+                                            <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: current.owner.id, flow: "brand" }} />}>{t("workflowBrandEntry")}</DropdownMenuItem>
+                                            <DropdownMenuItem render={<Link to="/assets/project/$id/workflow/$flow" params={{ id: current.owner.id, flow: "close" }} />}>{t("workflowCloseEntry")}</DropdownMenuItem>
+                                        </>}
 										<DropdownMenuItem
 											disabled={!!current.domain || busy}
 											onClick={() => {
@@ -366,6 +361,7 @@ function CatalogDetail({ recordId }: { recordId: string }) {
 				history={<UnifiedDetailHistory asset={current.asset} />}
 				tasks={<UnifiedDetailTasks assetId={current.owner.id} />}
 			/>
+            {hasLegacy && extrasOpen && <section id="project-detail-extras" className="unified-detail-extras-region" aria-label={t("detailMoreInfo")}><Suspense fallback={<p role="status">{t("loading")}</p>}><ProjectDetailExtras projectId={current.owner.id} /></Suspense></section>}
 
 			{edit ? (
 				<CatalogRecordEditor record={current} onClose={() => setEdit(false)} />

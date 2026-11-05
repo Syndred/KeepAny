@@ -53,6 +53,7 @@ export const catalogCopy: Record<string, [string, string]> = {
 	],
 	catalogRelated: ["关联资料", "Connections"],
 	catalogLegacy: ["原有详细资料", "Original details"],
+	detailMoreInfo: ["更多资料", "More details"],
 	catalogHidden: ["已隐藏", "Hidden"],
 	catalogRemoveTitle: ["移除分类", "Remove category"],
 	catalogUnknown: [

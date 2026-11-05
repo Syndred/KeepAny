@@ -190,6 +190,9 @@
 	align-content: start;
 	gap: 0;
 	margin: 0;
+	padding: 16px;
+	border-radius: 12px;
+	background: var(--yellow-soft);
 }
 .unified-detail-record-fields > div {
 	display: grid;
@@ -336,7 +339,7 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
 	gap: 20px;
-	align-items: stretch;
+	align-items: start;
 }
 .unified-detail-secondary .card-header {
 	display: flex;
@@ -661,3 +664,7 @@
 }
 
 .unified-detail-activity-dialog .renewal-amount-field > small[role='alert'] { font-size: 14px; line-height: 1.5; color: var(--danger); font-weight: 500; }
+
+.unified-detail-project-extras { display: grid; gap: 20px; min-width: 0; }
+.unified-detail-project-extras > .card { min-width: 0; margin: 0; }
+.unified-detail-project-extras .asset-project-costs { grid-column: auto; }
