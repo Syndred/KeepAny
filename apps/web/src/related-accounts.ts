@@ -1,8 +1,9 @@
 import type { Asset, Relation } from "../../../packages/domain/src";
 import { emailIdentifier, phoneIdentifier } from "../../../packages/domain/src/account-identity";
+import type { AccountCardMember } from "./account-card-groups";
 import type { VaultEntrySummary } from "../../../packages/password-vault/src";
 
-export type RelatedAccountReason = "template" | "phone" | "email" | "name";
+export type RelatedAccountReason = "platform" | "template" | "phone" | "email" | "name";
 export type RelatedAccount = {
 	key: string;
 	assetId?: string;
@@ -70,7 +71,7 @@ export function rankRelatedAccounts({ asset, entry, assets, entries }: RelatedAc
 		if (overlaps(currentIds.emails, ids.emails)) reasons.push("email");
 		if (names.some(name => currentNames.has(name))) reasons.push("name");
 		if (!reasons.length) return;
-		const score = reasons.reduce((sum, reason) => sum + ({ template: 120, phone: 80, email: 80, name: 30 })[reason], 0);
+		const score = reasons.reduce((sum, reason) => sum + ({ platform: 200, template: 120, phone: 80, email: 80, name: 30 })[reason], 0);
 		const key = candidate ? `asset:${candidate.id}` : `entry:${login!.id}`;
 		const next: RelatedAccount = { key, ...(candidate ? { assetId: candidate.id } : {}), ...(login ? { entryId: login.id } : {}), name: login?.title || candidate!.name, username: login?.username || candidate?.username || "", reasons, score };
 		const existing = results.get(key);
@@ -83,5 +84,36 @@ export function rankRelatedAccounts({ asset, entry, assets, entries }: RelatedAc
 		for (const target of targets) { linked.add(target.id); consider(target, login); }
 	}
 	for (const candidate of liveAssets.values()) if (!linked.has(candidate.id)) consider(candidate);
-	return [...results.values()].sort((a, b) => b.score - a.score || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).slice(0, Math.min(limit, 20));
+	return [...results.values()].sort((a, b) => b.score - a.score || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)).slice(0, limit);
+}
+
+
+/** Explicit platform membership takes precedence over heuristic evidence, without changing either. */
+export function otherAccountRows(input: RelatedAccountsInput, samePlatform: readonly AccountCardMember[]): RelatedAccount[] {
+ if (input.asset.deleted || input.asset.purged || input.entry?.isAiKey || input.entry && !input.entries.some(login => login.id === input.entry!.id)) return [];
+ const platformRows: RelatedAccount[] = [];
+ const seenAssets = new Set([input.asset.id]);
+ const seenPrivateEntries = new Set(input.entry ? [input.entry.id] : []);
+ for (const member of samePlatform) {
+  if (member.asset.deleted || member.asset.purged || member.asset.kind !== "account" || seenAssets.has(member.asset.id) || member.entries.some(login => login.isAiKey)) continue;
+  const login = member.entries[0];
+  if (member.virtual && (!login || seenPrivateEntries.has(login.id))) continue;
+  platformRows.push({
+   key: member.virtual ? `entry:${login.id}` : `asset:${member.asset.id}`,
+   ...(member.virtual ? {} : { assetId: member.asset.id }),
+   ...(login ? { entryId: login.id } : {}),
+   name: member.asset.name,
+   username: login?.username || member.asset.username,
+   reasons: ["platform"], score: 200,
+  });
+  seenAssets.add(member.asset.id);
+  if (member.virtual) seenPrivateEntries.add(login.id);
+ }
+ const relatedRows = rankRelatedAccounts(input, Number.MAX_SAFE_INTEGER).filter(row => {
+  if (row.assetId ? seenAssets.has(row.assetId) : !!row.entryId && seenPrivateEntries.has(row.entryId)) return false;
+  if (row.assetId) seenAssets.add(row.assetId);
+  else if (row.entryId) seenPrivateEntries.add(row.entryId);
+  return true;
+ });
+ return [...platformRows, ...relatedRows.map(row => ({ ...row, reasons: row.reasons.filter(reason => reason !== "template") }))];
 }

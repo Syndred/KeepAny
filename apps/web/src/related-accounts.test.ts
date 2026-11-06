@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { newAsset, type Asset } from "../../../packages/domain/src";
 import type { VaultEntrySummary } from "../../../packages/password-vault/src";
-import { rankRelatedAccounts } from "./related-accounts";
+import { otherAccountRows, rankRelatedAccounts } from "./related-accounts";
 
 const account = (id: string, name = "Service", username = ""): Asset => ({ ...newAsset("account"), id, name, username });
 const login = (id: string, overrides: Partial<VaultEntrySummary> = {}): VaultEntrySummary => ({ id, title: "Service", username: "", url: "", linkedAssetIds: [], modifiedAt: "2026-11-05T01:00:00Z", historyCount: 0, ...overrides });
@@ -66,4 +66,57 @@ describe("related account ranking", () => {
 		Object.defineProperties(other, { password: { get() { throw Error("secret-read"); } }, notes: { get() { throw Error("secret-read"); } } });
 		expect(rankRelatedAccounts({ asset, assets: [asset], entries: [other] })[0].entryId).toBe("other");
 	});
+});
+
+
+describe("other account platform priority", () => {
+ const member = (asset: Asset, entries: VaultEntrySummary[] = [], virtual = false) => ({ asset, entries, virtual });
+ it("places every platform account before stronger identifier matches and keeps explicit order", () => {
+  const current = account("current", "X", "same@example.test");
+  const platform = Array.from({ length: 25 }, (_, i) => member(account(`x-${i}`, `X${i}`, `x-${i}`)));
+  const related = account("related", "Other", current.username);
+  const rows = otherAccountRows({ asset: current, assets: [current, related, ...platform.map(row => row.asset)], entries: [] }, [member(current), ...platform]);
+  expect(rows.map(row => row.assetId)).toEqual([...platform.map(row => row.asset.id), related.id]);
+  expect(rows.slice(0, 25).every(row => row.reasons.join() === "platform")).toBe(true);
+  expect(rows[25].reasons).toEqual(["email"]);
+ });
+ it("deduplicates ordinary and private members and preserves their navigation", () => {
+  const current = account("current", "Service"), ordinary = account("ordinary", "Service");
+  const privateLogin = login("private", { username: "private@example.test" });
+  const privateAsset = account(`login-${privateLogin.id}`, privateLogin.title);
+  const ordinaryLogin = login("ordinary-login", { linkedAssetIds: [ordinary.id] });
+  const rows = otherAccountRows({ asset: current, assets: [current, ordinary], entries: [privateLogin, ordinaryLogin] }, [member(current), member(ordinary, [ordinaryLogin]), member(privateAsset, [privateLogin], true), member(ordinary, [ordinaryLogin]), member(privateAsset, [privateLogin], true)]);
+  expect(rows.map(row => row.key)).toEqual(["asset:ordinary", "entry:private"]);
+  expect(rows[0]).toMatchObject({ assetId: ordinary.id, entryId: ordinaryLogin.id });
+  expect(rows[1]).not.toHaveProperty("assetId");
+ });
+ it("does not label matching metadata or cross-platform legacy provenance as platform membership", () => {
+  const current = account("current", "Same", "same@example.test"), root = login("source", { title: "Same", linkedAssetIds: [current.id], username: current.username });
+  const other = login("other", { title: "Same", username: current.username, templateSourceId: root.id });
+  const rows = otherAccountRows({ asset: current, entry: root, assets: [current], entries: [root, other] }, [member(current, [root])]);
+  expect(rows[0].reasons).toEqual(["email", "name"]);
+  expect(rows[0].reasons).not.toContain("platform");
+  expect(rows[0].reasons).not.toContain("template");
+ });
+ it("excludes deleted, purged and AI-key platform members and stale private selections", () => {
+  const current = account("current", "Unique");
+  const dead = member({ ...account("dead", "No match"), deleted: true });
+  const purged = member({ ...account("purged", "No match"), purged: true });
+  const key = member(account("key", "No match"), [login("api", { isAiKey: true })]);
+  const input = { asset: current, assets: [current], entries: [] };
+  expect(otherAccountRows(input, [member(current), dead, purged, key])).toEqual([]);
+  expect(otherAccountRows({ ...input, entry: login("stale") }, [member(account("other"))])).toEqual([]);
+ });
+ it("supports private current accounts and never reads notes or passwords", () => {
+  const root = login("private-root", { title: "Root" }), privateAsset = account(`login-${root.id}`, "Root");
+  const other = login("other", { title: "Other" }), otherAsset = account(`login-${other.id}`, "Other");
+  Object.defineProperties(other, { password: { get() { throw Error("secret-read"); } }, notes: { get() { throw Error("secret-read"); } } });
+  const rows = otherAccountRows({ asset: privateAsset, entry: root, assets: [], entries: [root, other] }, [member(privateAsset, [root], true), member(otherAsset, [other], true)]);
+  expect(rows).toHaveLength(1); expect(rows[0]).toMatchObject({ key: "entry:other", entryId: "other", reasons: ["platform"] });
+ });
+ it("shows all matching related accounts after the complete platform set", () => {
+  const current = account("current", "Same");
+  const entries = Array.from({ length: 24 }, (_, i) => login(`other-${i}`, { title: "Same" }));
+  expect(otherAccountRows({ asset: current, assets: [current], entries }, [member(current)])).toHaveLength(24);
+ });
 });
