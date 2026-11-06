@@ -130,6 +130,17 @@ export function UnifiedDetailColumns({
 export function UnifiedDetailMetrics({ asset }: { asset: Asset }) {
 	const { t, i18n } = useTranslation();
 	const dates = detailDates(asset, useLocalDay());
+	const wallet = asset.walletCard;
+	const walletUses = wallet?.type === "countPass";
+	const showWalletValue =
+		!!wallet &&
+		(walletUses || wallet.type === "storedValue" || wallet.type === "gift");
+	const walletValue = walletUses ? wallet?.remainingUses : wallet?.balanceMinor;
+	const showRemaining = asset.kind !== "project" || !!asset.dueDate;
+	const showElapsed =
+		asset.kind === "item" ||
+		asset.kind === "subscription" ||
+		(asset.kind === "project" && (!wallet || !!dates.startedDate));
 	const remainingLabel = dates.warrantyBlocked
 		? `itemWarranty_${asset.itemWarrantyStatus}`
 		: dates.inactive
@@ -151,26 +162,46 @@ export function UnifiedDetailMetrics({ asset }: { asset: Asset }) {
 							: "detailDueRemaining";
 	return (
 		<div className="unified-detail-metrics">
-			<div className="unified-detail-metric" data-metric="remaining">
-				<div>
-					<span>{t(remainingLabel)}</span>
-					{!dates.inactive &&
-					!dates.warrantyBlocked &&
-					dates.remaining !== null &&
-					dates.remaining !== 0 ? (
-						<>
-							<strong>{Math.abs(dates.remaining)}</strong>
-							<span>{t("detailDaysUnit")}</span>
-						</>
-					) : null}
+			{showWalletValue && (
+				<div className="unified-detail-metric" data-metric="wallet-primary">
+					<div>
+						<span>{t(walletUses ? "walletRemaining" : "walletBalance")}</span>
+						{walletValue != null && (
+							<strong>
+								{walletUses
+									? walletValue
+									: money(walletValue, "CNY", i18n.language)}
+							</strong>
+						)}
+						{walletUses && walletValue != null && (
+							<span>{t("detailWalletUsesUnit")}</span>
+						)}
+					</div>
+					{walletValue == null && <small>{t("itemStatusUnrecorded")}</small>}
 				</div>
-				<small>
-					{dates.remainingDate
-						? `${t(asset.kind === "item" ? "warrantyDate" : asset.walletCard ? "walletExpiry" : "dueDate")} ${date(dates.remainingDate, i18n.language)}`
-						: t("itemStatusUnrecorded")}
-				</small>
-			</div>
-			{asset.kind === "item" || asset.kind === "subscription" ? (
+			)}
+			{showRemaining && (
+				<div className="unified-detail-metric" data-metric="remaining">
+					<div>
+						<span>{t(remainingLabel)}</span>
+						{!dates.inactive &&
+						!dates.warrantyBlocked &&
+						dates.remaining !== null &&
+						dates.remaining !== 0 ? (
+							<>
+								<strong>{Math.abs(dates.remaining)}</strong>
+								<span>{t("detailDaysUnit")}</span>
+							</>
+						) : null}
+					</div>
+					<small>
+						{dates.remainingDate
+							? `${t(asset.kind === "item" ? "warrantyDate" : asset.walletCard ? "walletExpiry" : "dueDate")} ${date(dates.remainingDate, i18n.language)}`
+							: t("itemStatusUnrecorded")}
+					</small>
+				</div>
+			)}
+			{showElapsed ? (
 				<div className="unified-detail-metric" data-metric="elapsed">
 					<div>
 						<span>
@@ -195,7 +226,7 @@ export function UnifiedDetailMetrics({ asset }: { asset: Asset }) {
 					</div>
 					<small>
 						{dates.startedDate
-							? `${t(asset.kind === "item" ? "itemStartDate" : "detailSubscriptionStart")} ${date(dates.startedDate, i18n.language)}`
+							? `${t(asset.kind === "item" ? "itemStartDate" : asset.kind === "subscription" ? "detailSubscriptionStart" : "detailUsageStart")} ${date(dates.startedDate, i18n.language)}`
 							: t("itemStatusUnrecorded")}
 					</small>
 				</div>
@@ -391,7 +422,6 @@ export function UnifiedDetailImage({
 						alt={label}
 						onError={() => setState((current) => ({ ...current, error: true }))}
 					/>
-					<ExternalLink size={15} aria-hidden="true" />
 				</a>
 			) : null}
 			{state.error ? (
@@ -399,7 +429,7 @@ export function UnifiedDetailImage({
 			) : !state.url ? (
 				<p role="status">{t("loading")}</p>
 			) : null}
-			<figcaption>{label}</figcaption>
+			<figcaption className="sr-only">{label}</figcaption>
 			{actions ? (
 				<DropdownMenu>
 					<DropdownMenuTrigger

@@ -250,6 +250,8 @@ export function AssetEditor({
 					)}
 					{kind === "project" && (
 						<>
+							<Field name="usageStartDate" label={t("detailUsageStart")} type="date" value={draft.usageStartDate ?? ""} onChange={(value) => set("usageStartDate",value)} error={errors.usageStartDate} />
+							<Field name="dueDate" label={t("dueDate")} type="date" value={draft.dueDate} onChange={(value) => set("dueDate",value)} error={errors.dueDate} />
 							<Field
 								name="projectLaunchMonth"
 								label={t("projectLaunchMonth")}

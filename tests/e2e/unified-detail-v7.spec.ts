@@ -2085,7 +2085,7 @@ for (const locale of ["zh-CN", "en"] as const)
 				.filter({ hasText: "V7 complex maintenance camera" })
 				.click();
 			const maintenance = page.locator("#task-v7-complex-maintenance");
-			await expect(maintenance).toHaveCSS("display", "block");
+			await expect(maintenance).toHaveCSS("display", "grid");
 			for (let count = 0; count < 2; count++) {
 				await page.locator("#reminder-bell").click();
 				await page
@@ -2104,20 +2104,15 @@ for (const locale of ["zh-CN", "en"] as const)
 					)
 					.toEqual({ active: "task-v7-complex-maintenance", popup: false });
 			}
-			await maintenance
-				.locator(".maintenance-task-actions")
-				.first()
-				.getByRole("button")
-				.first()
-				.click();
+			await maintenance.locator(".task-complete-toggle").click();
 			await expect(
-				maintenance.locator(".maintenance-action-form"),
+				page.getByRole("dialog").locator(".maintenance-action-form"),
 			).toBeVisible();
 			await screenshot(page, info, `maintenance-expanded-${width}`);
 			expect(
 				await page.evaluate(() => document.documentElement.scrollWidth),
 			).toBeLessThanOrEqual(width + 1);
-			await maintenance
+			await page.getByRole("dialog")
 				.locator(".maintenance-action-form")
 				.getByRole("button", { name: t("cancel"), exact: true })
 				.click();
@@ -2133,13 +2128,13 @@ for (const locale of ["zh-CN", "en"] as const)
 			await expect(page.getByTestId("reminder-center")).toBeHidden();
 			await expect(workflow).toBeFocused();
 			await expect(workflow).toHaveCSS("display", "grid");
-			await workflow.locator(".project-workflow-task-footer button").click();
-			await expect(workflow.locator("textarea")).toBeVisible();
+			await workflow.locator(".task-complete-toggle").click();
+			await expect(page.getByRole("dialog").locator("textarea")).toBeVisible();
 			await screenshot(page, info, `workflow-expanded-${width}`);
 			expect(
 				await page.evaluate(() => document.documentElement.scrollWidth),
 			).toBeLessThanOrEqual(width + 1);
-			await workflow
+			await page.getByRole("dialog")
 				.getByRole("button", { name: t("cancel"), exact: true })
 				.click();
 		}
@@ -2149,20 +2144,17 @@ for (const locale of ["zh-CN", "en"] as const)
 			.filter({ hasText: "V7 complex maintenance camera" })
 			.click();
 		const maintenance = page.locator("#task-v7-complex-maintenance");
-		await maintenance
-			.locator(".maintenance-task-actions")
-			.first()
-			.getByRole("button")
-			.first()
-			.click();
-		await maintenance.locator("textarea").fill("V7 verified lens service");
-		await maintenance
+		await maintenance.locator(".task-complete-toggle").click();
+		await page.getByRole("dialog").locator("textarea").fill("V7 verified lens service");
+		await page.getByRole("dialog")
 			.locator(".maintenance-action-form button[type=submit]")
 			.click();
 		await expect(maintenance.locator("textarea")).toHaveCount(0);
 		await page.reload();
-		await maintenance.locator(".maintenance-history > summary").click();
-		await expect(maintenance.locator(".maintenance-history")).toContainText(
+		await maintenance.getByRole("button",{name:t("moreActions"),exact:true}).click();
+		await page.getByRole("menuitem",{name:t("taskViewDetails"),exact:true}).click();
+		await page.getByRole("dialog").locator(".maintenance-history > summary").click();
+		await expect(page.getByRole("dialog").locator(".maintenance-history")).toContainText(
 			"V7 verified lens service",
 		);
 		await screenshot(page, info, "maintenance-saved-history");

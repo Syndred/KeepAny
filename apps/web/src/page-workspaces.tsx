@@ -1,7 +1,7 @@
 import { Input } from "./components/ui/input";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus, Search } from "lucide-react";
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { newAsset, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
 import { CatalogRecordEditor } from './catalog-record-editor';
@@ -129,7 +129,7 @@ export function AccountsWorkspace() {
 	</main>;
 }
 
-function AssetCatalog({ categoryId, kind, navigation }: { categoryId?: string; kind?: "item" | "subscription" | "wallet"; navigation: ReactNode }) {
+function AssetCatalog({ categoryId, kind, navigation, entryPath }: { categoryId?: string; kind?: "item" | "subscription" | "wallet"; navigation: ReactNode; entryPath: string }) {
 	const { data, search, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -172,7 +172,9 @@ function AssetCatalog({ categoryId, kind, navigation }: { categoryId?: string; k
 	const records = catalogRecords(data.assets,data.categories).filter(record => (kind === 'wallet' ? !!record.asset.walletCard : !kind) && (categoryId === undefined || record.categoryId === categoryId) && (scope === 'all' || isManagedAsset(record.asset) === (scope === 'managed')) && [search,query].every(value=>matchesAssetSearch(record.asset,value)));
 	const rows = [...records.map(record=>({record,asset:record.asset})),...(categoryId===undefined?visible.map(asset=>({record:undefined,asset})):[])].sort((a,b) => (sort === 'due' ? (a.asset.dueDate || a.asset.warrantyDate || '9999').localeCompare(b.asset.dueDate || b.asset.warrantyDate || '9999') : b.asset.updatedAt.localeCompare(a.asset.updatedAt)) || a.asset.name.localeCompare(b.asset.name));
 	const hash = useRouterState({select:state=>state.location.hash});
-	useEffect(()=>{if(hash === 'new' && !data.loading){setNewCategory(categoryId ?? '');setCreateKind(kind ?? 'record');if(kind && kind !== 'wallet')setEditor(kind);else setRecordEdit(true);void navigate({hash:'',replace:true});}},[hash,data.loading,categoryId,kind,navigate]);
+	const entryLocation = useRouterState({select:state=>state.location.pathname});
+	const beginCreate = useCallback(() => { setCreateKind(kind ?? 'record'); setNewCategory(categoryId ?? ''); if (categoryId !== undefined || kind === 'wallet') setRecordEdit(true); else if (kind) setEditor(kind); else setCreateOpen(true); },[categoryId,kind]);
+	useEffect(()=>{if(hash === 'new' && entryLocation === entryPath && !data.loading){beginCreate();void navigate({hash:'',replace:true});}},[hash,entryLocation,entryPath,data.loading,beginCreate,navigate]);
 
 	function create(event: FormEvent) {
 		event.preventDefault();
@@ -187,7 +189,7 @@ function AssetCatalog({ categoryId, kind, navigation }: { categoryId?: string; k
             <div className="catalog-summary-stat"><span>{t("workspaceMonthlyPlan")}</span><strong><MoneyTotal totals={summary.monthlyCny} empty={summary.unconvertedSubscriptions ? "—" : t("financeNoPlan")} /></strong>{summary.unconvertedSubscriptions > 0 && <small role="status">{t('subscriptionCnyPartial',{count:summary.unconvertedSubscriptions})}</small>}<button type="button" className="catalog-rate-button" onClick={()=>setRatesOpen(true)}>{t('subscriptionRates')}</button></div>
             <div className="catalog-summary-stat"><span>{t("workspaceUpcoming")}</span><strong>{summary.upcoming}</strong></div>
             <div className="catalog-summary-stat"><span>{t("walletCount")}</span><strong>{data.assets.filter(asset=>!asset.deleted && !!asset.walletCard && isManagedAsset(asset)).length}</strong></div>
-            <Button variant="primary" onClick={() => { setCreateKind(kind ?? 'record');setNewCategory(category?.id ?? ''); if(categoryId !== undefined || kind === 'wallet')setRecordEdit(true);else if(kind)setEditor(kind);else setCreateOpen(true); }}><Plus size={17} />{t("workspaceAddAsset")}</Button>
+            <Button variant="primary" onClick={beginCreate}><Plus size={17} />{t("workspaceAddAsset")}</Button>
         </div>
         {navigation}
         <div className="workspace-catalog-controls">
@@ -215,7 +217,7 @@ export function AssetsWorkspace({ view = "all", categoryId }: { view?: AssetView
 	const {t}=useTranslation();const navigate=useNavigate();const registry=useCatalogCategories();const [manager,setManager]=useState<boolean|null>(null);
 	const selected=categoryId !== undefined ? (registry.categories.some(category=>category.id===categoryId)?categoryId:'') : (view==='project'||view==='domains'?registry.categories.find(category=>category.source===view)?.id ?? '':undefined);
     const navigation = <AssetTabs view={selected!==undefined?'project':view} categories={registry.categories} categoryId={selected} onManage={setManager}/>;
-    return <div className="workspace-page">{registry.error&&<div role="alert" className="notice">{t('error')}<Button onClick={registry.retry}>{t('retry')}</Button></div>}{<AssetCatalog key={view + (selected ?? 'all')} categoryId={selected} kind={view === 'item' || view === 'subscription' || view === 'wallet' ? view : undefined} navigation={navigation}/>}{manager!==null&&<CatalogCategoryManager creating={manager} onClose={()=>setManager(null)} onCreated={id=>void navigate({to:'/assets/category/$categoryId',params:{categoryId:id}})}/>}</div>;
+    return <div className="workspace-page">{registry.error&&<div role="alert" className="notice">{t('error')}<Button onClick={registry.retry}>{t('retry')}</Button></div>}{<AssetCatalog entryPath={categoryId !== undefined ? `/assets/category/${encodeURIComponent(categoryId)}` : view === "wallet" ? "/cards" : view === "all" ? "/assets" : `/assets/${view}`} key={view + (selected ?? 'all')} categoryId={selected} kind={view === 'item' || view === 'subscription' || view === 'wallet' ? view : undefined} navigation={navigation}/>}{manager!==null&&<CatalogCategoryManager creating={manager} onClose={()=>setManager(null)} onCreated={id=>void navigate({to:'/assets/category/$categoryId',params:{categoryId:id}})}/>}</div>;
 }
 
 export function CategoryWorkspaceRoute(){const categoryId=useRouterState({select:state=>(state.matches.at(-1)?.params as {categoryId:string}).categoryId});return <AssetsWorkspace categoryId={categoryId}/>;}
@@ -225,6 +227,11 @@ export function CardsWorkspaceRoute() { return <AssetsWorkspace view="wallet" />
 export function WorkspaceLegacyRoute() {
 	const params = useRouterState({ select: (state) => state.matches.at(-1)?.params }) as { kind?: string } | undefined;
 	const kind = params?.kind;
+	const hash = useRouterState({select:state=>state.location.hash});
+	const navigate = useNavigate();
+	const entryLocation = useRouterState({select:state=>state.location.pathname});
+	useEffect(() => { if(entryLocation === "/assets/project" && kind === "project" && hash === "new") void navigate({to:"/assets",hash:"new",replace:true}); },[kind,hash,entryLocation,navigate]);
+	if(kind === "project" && hash === "new") return null;
 	if (kind === "account" || kind === "vault") return <AccountsWorkspace />;
 	return <AssetsWorkspace view={kind === "item" || kind === "subscription" || kind === "domains" ? kind : "project"} />;
 }

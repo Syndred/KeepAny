@@ -87,6 +87,9 @@ jobs:
       - name: Verify compact todo controls, persistence and responsive candidate evidence
         run: node scripts/check-todo-style.mjs
         timeout-minutes: 15
+      - name: Verify generic usage dates, retained metrics and unified galleries
+        run: node scripts/check-detail-consistency.mjs
+        timeout-minutes: 10
       - name: Verify sidebar bottom links and responsive candidate evidence
         run: node scripts/check-sidebar-bottom.mjs
         timeout-minutes: 5

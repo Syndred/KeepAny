@@ -519,7 +519,12 @@ for (const locale of ["zh-CN", "en"] as const) {
 				await completed.locator(".task-complete-toggle").focus();
 				await page.keyboard.press("Space");
 				for (const button of await completed.getByRole("button").all())
+				{
 					await expect(button).toBeDisabled();
+					await expect(button).toHaveCSS("cursor","pointer");
+					await expect(button).toHaveCSS("opacity","1");
+					await expect(button).toHaveCSS("filter","none");
+				}
 				await shot(page, info, `${locale}-${kind}-busy`, completed);
 			} finally {
 				await page.evaluate(() =>

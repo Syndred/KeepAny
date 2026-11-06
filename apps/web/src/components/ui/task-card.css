@@ -19,6 +19,12 @@
 .compact-task-actions .button svg { width: 18px; height: 18px; }
 .simple-task-row .button.ghost:hover:not(:disabled), .simple-task-row .button.ghost:active:not(:disabled) { border-color: transparent; background: transparent; box-shadow: none; transform: none; }
 .simple-task-row .button:focus-visible { outline: 2px solid var(--ink); outline-offset: -8px; }
+.simple-task-row[data-task-busy="true"] .button:disabled { cursor: pointer; opacity: 1; filter: none; }
+.simple-task-row > .task-summary-meta { grid-column: 2 / -1; margin-top: -4px; padding-bottom: 4px; color: var(--muted); font-size: 12px; line-height: 18px; overflow-wrap: anywhere; }
+.simple-task-row:has(> .task-summary-meta) { row-gap: 0; }
+.task-detail-content { display: grid; gap: 12px; min-width: 0; }
+.task-detail-content .impact-task-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.task-detail-content .impact-task-info { display: grid; gap: 5px; }
 .account-compact-task .task-status-check { display: grid; place-items: center; width: 20px; height: 20px; border: 2px solid var(--line); border-radius: 5px; color: var(--ink); background: var(--paper); }
 .account-compact-task .task-complete-toggle[aria-pressed="true"] .task-status-check { background: var(--accent); }
 .account-compact-task .task-complete-toggle:hover:not(:disabled) .task-status-check { background: var(--accent-soft); }

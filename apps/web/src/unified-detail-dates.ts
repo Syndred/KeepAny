@@ -8,7 +8,7 @@ export function detailDates(asset: Asset, today: string) {
 			? asset.itemStartDate
 			: asset.kind === "subscription"
 				? (asset.subscriptionStartDate ?? "")
-				: "";
+				: (asset.usageStartDate ?? "");
 	const distance = (from: string, to: string) => {
 		if (!from || !to) return null;
 		try {

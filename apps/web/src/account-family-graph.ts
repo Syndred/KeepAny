@@ -1,6 +1,16 @@
 import { getConnectedEdges, type Edge, type Node } from "@xyflow/react";
 import type { Asset, Relation } from "../../../packages/domain/src";
 
+export function hasAdditionalGraphRelations(
+	family: Relation[],
+	direct: Relation[],
+) {
+	const ids = new Set(
+		direct.filter((row) => !row.deleted).map((row) => row.id),
+	);
+	return family.some((row) => !row.deleted && !ids.has(row.id));
+}
+
 /** Expand using the same React Flow endpoints as the account graph; deleted nodes cannot bridge families. */
 export function accountFamilyGraph(
 	root: string,
@@ -10,7 +20,13 @@ export function accountFamilyGraph(
 	const liveAssets = new Map([...assets].filter(([, asset]) => !asset.deleted));
 	if (!liveAssets.has(root)) return { relations: [], neighbors: [] };
 	const edges: Edge[] = relations
-		.filter((r) => !r.deleted && r.from !== r.to && liveAssets.has(r.from) && liveAssets.has(r.to))
+		.filter(
+			(r) =>
+				!r.deleted &&
+				r.from !== r.to &&
+				liveAssets.has(r.from) &&
+				liveAssets.has(r.to),
+		)
 		.map((r) => ({ id: r.id, source: r.from, target: r.to }));
 	const levels = new Map([[root, 0]]);
 	let frontier = [root];
@@ -33,9 +49,12 @@ export function accountFamilyGraph(
 		frontier = next;
 	}
 	const included = relations.filter(
-		(r) => !r.deleted && r.from !== r.to && levels.has(r.from) && levels.has(r.to),
+		(r) =>
+			!r.deleted && r.from !== r.to && levels.has(r.from) && levels.has(r.to),
 	);
-	const includedAssets = [...levels.keys()].map((id) => liveAssets.get(id)).filter((asset): asset is Asset => !!asset);
+	const includedAssets = [...levels.keys()]
+		.map((id) => liveAssets.get(id))
+		.filter((asset): asset is Asset => !!asset);
 	return {
 		relations: included,
 		neighbors: includedAssets.filter((asset) => asset.id !== root),

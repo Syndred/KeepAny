@@ -9,7 +9,7 @@ import { DatePicker } from "./components/ui/date-picker";
 import { DetailDisclosure } from "./components/DetailDisclosure";
 import { ProjectProfile } from "./components/ProjectProfile";
 import { assetNotes } from "./asset-notes";
-import { accountFamilyGraph } from "./account-family-graph";
+import { accountFamilyGraph, hasAdditionalGraphRelations } from "./account-family-graph";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft, Check, ExternalLink, Plus, Mail, Pencil, MoreHorizontal, MapPin, ChevronRight, Network, Smartphone, UserRound } from "lucide-react";
@@ -308,6 +308,7 @@ function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domain
 	const normalizedFilter =
 		kind === "account" || relations.length >= 5 ? relationFilter.trim().toLocaleLowerCase() : "";
 	const family = useMemo(() => kind === "account" && centerId ? accountFamilyGraph(centerId, liveById, data.relations) : null, [kind, centerId, liveById, data.relations]);
+	const hasIndirectRelations = hasAdditionalGraphRelations(family?.relations ?? [], relations);
 	const scopedRelations = kind === "account" && graphScope === "family" ? family?.relations ?? relations : relations;
 	const visibleRelations = normalizedFilter
 		? scopedRelations.filter((relation) => {
@@ -1037,13 +1038,13 @@ function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domain
  {asset.username && <div><dt>{t("username")}</dt><dd>{asset.username}</dd></div>}{asset.contact && <div><dt>{t("contact")}</dt><dd>{asset.contact}</dd></div>}
  </dl></section>;
  const unifiedDescription = <UnifiedDetailDescription asset={asset} actions={<div className="actions">
-  {asset.kind === "item" && <Select aria-label={t("itemPhotosAndEvidence")} value={itemImageRole} onValueChange={value => setItemImageRole(value as ItemImageRole)}><SelectOption value="other">{t("itemOtherImages")}</SelectOption><SelectOption value="coverId">{t("itemCoverPhoto")}</SelectOption><SelectOption value="detailIds">{t("itemDetailPhotos")}</SelectOption><SelectOption value="receiptIds">{t("itemReceiptImages")}</SelectOption></Select>}
-  <Button size="small" variant="ghost" disabled={uploading || asset.attachments.length >= 20 && !(itemImageRole === "coverId" && itemMedia.coverId)} onClick={() => chooseImage(itemImageRole, itemImageRole === "coverId" ? itemMedia.coverId : "")}>{t("addPhoto")}</Button>
+
+  <Button size="small" variant="ghost" disabled={uploading || asset.attachments.length >= 20} onClick={() => chooseImage("other", "")}>{t("addPhoto")}</Button>
  </div>}>
   <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden tabIndex={-1} aria-label={t("addPhoto")} onChange={event => { const file=event.target.files?.[0]; event.target.value=""; if(!file)return; if(!["image/png","image/jpeg","image/webp","image/gif"].includes(file.type)||!file.size||file.size>20*1024*1024||file.name.length>255)notify(t("uploadError")); else {setPendingImageUrl("");setPendingImageStatus("loading");imageExpectedAsset.current=structuredClone(asset);setPendingImage(file);} }}/>
   {asset.attachments.length ? <div className="unified-detail-gallery">{asset.attachments.map((id,index)=>{
    const role:ItemImageRole = itemMedia.coverId===id ? "coverId" : itemMedia.detailIds.includes(id) ? "detailIds" : itemMedia.receiptIds.includes(id) ? "receiptIds" : "other";
-   const label = asset.kind === "item" ? t(role === "coverId" ? "itemCoverPhoto" : role === "detailIds" ? "itemDetailPhotos" : role === "receiptIds" ? "itemReceiptImages" : "itemOtherImages") : t("detailPhotoNumber",{number:index+1});
+   const label = t("detailPhotoNumber",{number:index+1});
    return <UnifiedDetailImage key={id} id={id} label={label} actions={<><DropdownMenuItem disabled={uploading} onClick={()=>chooseImage(role,id)}>{t("replaceImage")}</DropdownMenuItem><DropdownMenuItem disabled={uploading} onClick={()=>void removeImage(id)}>{t("removeImage")}</DropdownMenuItem></>}/>;
   })}</div> : <p className="unified-detail-empty">{t("detailNoImages")}</p>}
  </UnifiedDetailDescription>;
@@ -1301,8 +1302,8 @@ function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domain
 						<>
 							{kind === "account" ? <div className="account-graph-toolbar">
 								<div className="actions">
-									<Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
-									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button>
+									{hasIndirectRelations && <><Button size="small" variant={graphScope === "direct" ? "primary" : "default"} aria-pressed={graphScope === "direct"} onClick={() => changeGraphScope("direct")}>{t("accountGraphDirect")}</Button>
+									<Button size="small" variant={graphScope === "family" ? "primary" : "default"} aria-pressed={graphScope === "family"} onClick={() => changeGraphScope("family")}>{t("accountGraphFamily")}</Button></>}
                                     <AccountDetailActions asset={asset} entry={currentLogin?.entry} />
 								</div>
 								{relationSearch}

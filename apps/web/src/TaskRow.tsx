@@ -1,3 +1,4 @@
+import { TaskSummaryCells } from "./components/TaskSummaryCells";
 import { DatePicker } from "./components/ui/date-picker";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
@@ -117,155 +118,52 @@ export function TaskRow({
 			hour: "2-digit",
 			minute: "2-digit",
 		});
+	async function toggleComplete() {
+		if (inFlight.current) return;
+		inFlight.current = true;
+		setBusy(true);
+		try {
+			const updated = await setTaskDone(task.id, task.done, task.reminder?.at);
+			notify(
+				t(
+					updated.reminder && !updated.done && !task.done
+						? "reminderRepeatNext"
+						: "saved",
+				),
+			);
+		} catch (error) {
+			notify(
+				t(
+					error instanceof Error && error.message === "task-stale"
+						? "workflowTaskStale"
+						: error instanceof Error && error.message === "task-duplicate"
+							? "taskDuplicatePending"
+							: "error",
+				),
+			);
+		} finally {
+			inFlight.current = false;
+			setBusy(false);
+		}
+	}
 	return (
 		<TaskCard
 			className={`list-row impact-task-row${compact ? " account-compact-task simple-task-row" : ""}`}
 			id={`task-${task.id}`}
+			data-task-busy={busy || undefined}
+			aria-busy={busy || undefined}
 			tabIndex={-1}
 		>
-			<Button
-				size="icon"
-				variant="ghost"
-				className={compact ? "task-complete-toggle" : undefined}
-				aria-pressed={compact ? task.done : undefined}
-				title={compact ? t(task.done ? "reopen" : "complete") : undefined}
-				disabled={busy}
-				aria-label={t(task.done ? "reopen" : "complete")}
-				onClick={async () => {
-					if (inFlight.current) return;
-					inFlight.current = true;
-					setBusy(true);
-					try {
-						const updated = await setTaskDone(
-							task.id,
-							task.done,
-							task.reminder?.at,
-						);
-						notify(
-							t(
-								updated.reminder && !updated.done && !task.done
-									? "reminderRepeatNext"
-									: "saved",
-							),
-						);
-					} catch (error) {
-						notify(
-							t(
-								error instanceof Error && error.message === "task-stale"
-									? "workflowTaskStale"
-									: error instanceof Error && error.message === "task-duplicate"
-										? "taskDuplicatePending"
-										: "error",
-							),
-						);
-					} finally {
-						inFlight.current = false;
-						setBusy(false);
-					}
-				}}
-			>
-				{compact ? (
-					<span className="task-status-check" aria-hidden="true">
-						{task.done && <Check size={16} />}
-					</span>
-				) : task.done ? (
-					<Check size={18} />
-				) : (
-					<span className="check-circle" />
-				)}
-			</Button>
-			<div className="impact-task-info">
-				<strong className={task.done ? "done" : ""}>{task.name}</strong>
-				{!compact && (
-					<>
-						{task.reminder && reminderAt ? (
-							<>
-								<small>
-									{t("reminderSavedDue")}:{" "}
-									<time dateTime={task.reminder.at}>
-										{formatReminderTime(task.reminder.at)}
-									</time>
-								</small>
-								<small>
-									{t("reminderSavedTime")}:{" "}
-									<time dateTime={reminderAt}>
-										{formatReminderTime(reminderAt)}
-									</time>
-								</small>
-								<small>
-									{t("reminderSavedZone", { timeZone: task.reminder.timeZone })}
-								</small>
-								<small>
-									{t("reminderSavedLead", { count: task.reminder.leadMinutes })}{" "}
-									·{" "}
-									{task.reminder.rule.mode === "once"
-										? t("reminderSavedOnce")
-										: t(
-												`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`,
-												{ count: task.reminder.rule.every },
-											)}
-								</small>
-							</>
-						) : (
-							(task.dueDate || !compact) && (
-								<small>{date(task.dueDate, i18n.language)}</small>
-							)
-						)}
-						{task.assetId && !hideRelated && (
-							<small>
-								{t("related")}:{" "}
-								{related ? (
-									<TextLink asChild>
-										<Link
-											to="/assets/$kind/$id"
-											params={{ kind: related.kind, id: related.id }}
-										>
-											{related.name}
-										</Link>
-									</TextLink>
-								) : (
-									t("taskRelatedMissing")
-								)}
-							</small>
-						)}
-					</>
-				)}
-			</div>
-			{compact && (
-				<time
-					className="task-due-date"
-					dateTime={task.dueDate || undefined}
-					aria-label={`${t("date")}: ${task.dueDate ? task.dueDate.replaceAll("-", "/") : t("none")}`}
-				>
-					{task.dueDate ? task.dueDate.replaceAll("-", "/") : "—"}
-				</time>
-			)}
 			{compact ? (
-				<div className="compact-task-actions">
-					<Button
-						size="icon"
-						variant="ghost"
-						aria-label={t("editTask")}
-						title={t("editTask")}
-						disabled={busy}
-						onClick={() => setEditing(true)}
-					>
-						<Pencil size={18} aria-hidden="true" />
-					</Button>
-					<DropdownMenu>
-						<DropdownMenuTrigger
-							render={
-								<Button
-									size="icon"
-									variant="ghost"
-									aria-label={t("moreActions")}
-									disabled={busy}
-								/>
-							}
-						>
-							<MoreHorizontal size={18} />
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
+				<TaskSummaryCells
+					name={task.name}
+					done={task.done}
+					dueDate={task.dueDate}
+					busy={busy}
+					onToggle={toggleComplete}
+					onEdit={() => setEditing(true)}
+					menu={
+						<>
 							<DropdownMenuItem onClick={() => setEditing(true)}>
 								{t("edit")}
 							</DropdownMenuItem>
@@ -308,33 +206,205 @@ export function TaskRow({
 									</DropdownMenuItem>
 								</>
 							)}
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</div>
-			) : (
-				<div className="impact-task-actions">
-					<Button size="small" disabled={busy} onClick={() => setEditing(true)}>
-						{t("edit")}
-					</Button>
-					{!task.done && (
-						<>
-							<label htmlFor={`task-due-${task.id}`}>{t("remindLater")}</label>
-							<DatePicker
-								className="field"
-								id={`task-due-${task.id}`}
-								value={task.dueDate}
-								disabled={busy}
-								onValueChange={(dateValue) => void reschedule(dateValue)}
-							/>
-							<Button size="small" disabled={busy} onClick={postponeDay}>
-								{t("taskPostponeDay")}
-							</Button>
 						</>
+					}
+				/>
+			) : (
+				<>
+					{" "}
+					<Button
+						size="icon"
+						variant="ghost"
+						className={compact ? "task-complete-toggle" : undefined}
+						aria-pressed={compact ? task.done : undefined}
+						title={compact ? t(task.done ? "reopen" : "complete") : undefined}
+						disabled={busy}
+						aria-label={t(task.done ? "reopen" : "complete")}
+						onClick={toggleComplete}
+					>
+						{compact ? (
+							<span className="task-status-check" aria-hidden="true">
+								{task.done && <Check size={16} />}
+							</span>
+						) : task.done ? (
+							<Check size={18} />
+						) : (
+							<span className="check-circle" />
+						)}
+					</Button>
+					<div className="impact-task-info">
+						<strong className={task.done ? "done" : ""}>{task.name}</strong>
+						{!compact && (
+							<>
+								{task.reminder && reminderAt ? (
+									<>
+										<small>
+											{t("reminderSavedDue")}:{" "}
+											<time dateTime={task.reminder.at}>
+												{formatReminderTime(task.reminder.at)}
+											</time>
+										</small>
+										<small>
+											{t("reminderSavedTime")}:{" "}
+											<time dateTime={reminderAt}>
+												{formatReminderTime(reminderAt)}
+											</time>
+										</small>
+										<small>
+											{t("reminderSavedZone", {
+												timeZone: task.reminder.timeZone,
+											})}
+										</small>
+										<small>
+											{t("reminderSavedLead", {
+												count: task.reminder.leadMinutes,
+											})}{" "}
+											·{" "}
+											{task.reminder.rule.mode === "once"
+												? t("reminderSavedOnce")
+												: t(
+														`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`,
+														{ count: task.reminder.rule.every },
+													)}
+										</small>
+									</>
+								) : (
+									(task.dueDate || !compact) && (
+										<small>{date(task.dueDate, i18n.language)}</small>
+									)
+								)}
+								{task.assetId && !hideRelated && (
+									<small>
+										{t("related")}:{" "}
+										{related ? (
+											<TextLink asChild>
+												<Link
+													to="/assets/$kind/$id"
+													params={{ kind: related.kind, id: related.id }}
+												>
+													{related.name}
+												</Link>
+											</TextLink>
+										) : (
+											t("taskRelatedMissing")
+										)}
+									</small>
+								)}
+							</>
+						)}
+					</div>
+					{compact && (
+						<time
+							className="task-due-date"
+							dateTime={task.dueDate || undefined}
+							aria-label={`${t("date")}: ${task.dueDate ? task.dueDate.replaceAll("-", "/") : t("none")}`}
+						>
+							{task.dueDate ? task.dueDate.replaceAll("-", "/") : "—"}
+						</time>
 					)}
-					<Badge tone={task.done ? "success" : "pending"}>
-						{t(task.done ? "done" : "pending")}
-					</Badge>
-				</div>
+					{compact ? (
+						<div className="compact-task-actions">
+							<Button
+								size="icon"
+								variant="ghost"
+								aria-label={t("editTask")}
+								title={t("editTask")}
+								disabled={busy}
+								onClick={() => setEditing(true)}
+							>
+								<Pencil size={18} aria-hidden="true" />
+							</Button>
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									render={
+										<Button
+											size="icon"
+											variant="ghost"
+											aria-label={t("moreActions")}
+											disabled={busy}
+										/>
+									}
+								>
+									<MoreHorizontal size={18} />
+								</DropdownMenuTrigger>
+								<DropdownMenuContent align="end">
+									<DropdownMenuItem onClick={() => setEditing(true)}>
+										{t("edit")}
+									</DropdownMenuItem>
+									{task.reminder && (
+										<DropdownMenuItem onClick={() => setDetailsOpen(true)}>
+											{t("reminderEntryDetails")}
+										</DropdownMenuItem>
+									)}
+									{task.assetId &&
+										!hideRelated &&
+										(related ? (
+											<DropdownMenuItem
+												render={
+													<Link
+														to="/assets/$kind/$id"
+														params={{ kind: related.kind, id: related.id }}
+													/>
+												}
+											>
+												{t("related")}: {related.name}
+											</DropdownMenuItem>
+										) : (
+											<DropdownMenuItem disabled>
+												{t("taskRelatedMissing")}
+											</DropdownMenuItem>
+										))}
+									{!task.done && (
+										<>
+											<DropdownMenuItem
+												onClick={() => {
+													setReminderDraft(task.dueDate);
+													setReminderError("");
+													setReminderOpen(true);
+												}}
+											>
+												{t("remindLater")}
+											</DropdownMenuItem>
+											<DropdownMenuItem onClick={postponeDay}>
+												{t("taskPostponeDay")}
+											</DropdownMenuItem>
+										</>
+									)}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</div>
+					) : (
+						<div className="impact-task-actions">
+							<Button
+								size="small"
+								disabled={busy}
+								onClick={() => setEditing(true)}
+							>
+								{t("edit")}
+							</Button>
+							{!task.done && (
+								<>
+									<label htmlFor={`task-due-${task.id}`}>
+										{t("remindLater")}
+									</label>
+									<DatePicker
+										className="field"
+										id={`task-due-${task.id}`}
+										value={task.dueDate}
+										disabled={busy}
+										onValueChange={(dateValue) => void reschedule(dateValue)}
+									/>
+									<Button size="small" disabled={busy} onClick={postponeDay}>
+										{t("taskPostponeDay")}
+									</Button>
+								</>
+							)}
+							<Badge tone={task.done ? "success" : "pending"}>
+								{t(task.done ? "done" : "pending")}
+							</Badge>
+						</div>
+					)}
+				</>
 			)}
 			{detailsOpen && task.reminder && reminderAt && (
 				<Dialog

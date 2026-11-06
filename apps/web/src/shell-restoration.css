@@ -39,8 +39,12 @@
 .sidebar-user small { color: var(--muted); font-size: 10px; }
 .topbar { min-height: 64px; gap: 10px; }
 .topbar-page-label { flex: none; font-size: 12px; font-weight: 650; }
-.topbar-back-link { display: inline-flex; align-items: center; gap: 5px; width: fit-content; min-width: 44px; min-height: 44px; color: var(--ink); text-decoration: none; }
-.topbar-back-link:hover .text-link, .topbar-back-link:focus-visible .text-link { background: var(--accent); text-decoration-color: var(--ink); }
+.topbar-back-link { display: inline-flex; align-items: center; gap: 8px; width: fit-content; min-width: 44px; min-height: 44px; padding: 0 13px; border: 1.5px solid var(--line); border-radius: 11px; background: var(--paper); color: var(--ink); text-decoration: none; font-size: 14px; }
+.topbar-back-link .text-link { background: transparent; text-decoration: none; font-weight: 650; }
+.topbar-back-link .text-link svg { width: 17px; height: 17px; }
+.topbar-back-link:hover { background: var(--accent-soft); }
+.topbar-back-link:hover .text-link, .topbar-back-link:focus-visible .text-link { background: transparent; text-decoration: none; }
+.topbar-back-link:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .topbar-spacer { flex: 1; }
 .top-search { width: 190px; min-height: 34px; border: 2px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); }
 .top-search-trigger { display: flex; flex: none; align-items: center; gap: 7px; cursor: pointer; }
@@ -70,7 +74,7 @@
   .shell .sidebar-customize { padding-left: 15px; }
   .shell .topbar { flex-wrap: wrap; min-height: 60px; padding: 9px 12px; }
   .shell .topbar-page-label { flex: 1 1 auto; width: auto; }
-  .shell .topbar-back-link { display: inline-flex; }
+  .shell .topbar-back-link { display: inline-flex; flex: none; width: fit-content; }
   .shell .topbar-spacer { display: none; }
   .shell .top-search { flex: none; width: 32px; height: 32px; min-height: 32px; margin-left: auto; padding: 0; border-radius: 50%; cursor: pointer; }
   .shell .top-search-trigger { justify-content: center; }

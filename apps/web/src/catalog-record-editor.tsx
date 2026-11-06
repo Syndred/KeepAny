@@ -1,7 +1,11 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { assetSchema, parseMinorUnits, inputFromMinorUnits } from "../../../packages/domain/src";
-import { newWalletCard, walletTypes } from './wallet-cards';
+import {
+	assetSchema,
+	parseMinorUnits,
+	inputFromMinorUnits,
+} from "../../../packages/domain/src";
+import { newWalletCard, walletTypes } from "./wallet-cards";
 import { localRepository } from "../../../packages/local-db/src";
 import {
 	applyCatalogEdit,
@@ -33,19 +37,32 @@ export function CatalogRecordEditor({
 	const { data, notify } = useAppContext();
 	const [original] = useState(() => record && structuredClone(record));
 	const [draft, setDraft] = useState(
-		() => original?.asset ?? (wallet ? newWalletCard() : newCatalogAsset(categoryId)),
+		() =>
+			original?.asset ??
+			(wallet ? newWalletCard() : newCatalogAsset(categoryId)),
 	);
 	const [chosen, setChosen] = useState(original?.categoryId ?? categoryId);
 	const [tags, setTags] = useState(draft.tags.join(", "));
-	const [balance, setBalance] = useState(() => draft.walletCard?.balanceMinor == null ? '' : inputFromMinorUnits(draft.walletCard.balanceMinor,'CNY'));
-	const [uses, setUses] = useState(() => draft.walletCard?.remainingUses == null ? '' : String(draft.walletCard.remainingUses));
+	const [balance, setBalance] = useState(() =>
+		draft.walletCard?.balanceMinor == null
+			? ""
+			: inputFromMinorUnits(draft.walletCard.balanceMinor, "CNY"),
+	);
+	const [uses, setUses] = useState(() =>
+		draft.walletCard?.remainingUses == null
+			? ""
+			: String(draft.walletCard.remainingUses),
+	);
 	const [error, setError] = useState("");
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	const validation = useValidationFocus(errors);
 	const [busy, setBusy] = useState(false);
 	const running = useRef(false);
 	const categories = catalogCategories(data.categories);
-	function change(key: "name" | "url" | "dueDate" | "description", value: string) {
+	function change(
+		key: "name" | "url" | "dueDate" | "usageStartDate" | "description",
+		value: string,
+	) {
 		setDraft((current) => ({ ...current, [key]: value }));
 		setErrors((current) => ({ ...current, [key]: "" }));
 	}
@@ -56,15 +73,37 @@ export function CatalogRecordEditor({
 		// An unchanged legacy domain can exceed the ordinary asset's 160-character name limit.
 		const legacyLongName =
 			!!original?.domain && name === original.domain.name && name.length > 160;
-		const balanceMinor = balance.trim() ? parseMinorUnits(balance,'CNY') : null;
-		const remainingUses = uses.trim() ? (/^\d+$/.test(uses.trim()) ? Number(uses.trim()) : NaN) : null;
-		if (draft.walletCard && ((balanceMinor !== null && !Number.isSafeInteger(balanceMinor)) || (remainingUses !== null && !Number.isSafeInteger(remainingUses)))) {
+		const balanceMinor = balance.trim()
+			? parseMinorUnits(balance, "CNY")
+			: null;
+		const remainingUses = uses.trim()
+			? /^\d+$/.test(uses.trim())
+				? Number(uses.trim())
+				: NaN
+			: null;
+		if (
+			draft.walletCard &&
+			((balanceMinor !== null && !Number.isSafeInteger(balanceMinor)) ||
+				(remainingUses !== null && !Number.isSafeInteger(remainingUses)))
+		) {
 			validation.requestFocus();
-			setErrors({ balance: balanceMinor !== null && !Number.isSafeInteger(balanceMinor) ? t('invalid') : '', uses: remainingUses !== null && !Number.isSafeInteger(remainingUses) ? t('invalid') : '' }); return;
+			setErrors({
+				balance:
+					balanceMinor !== null && !Number.isSafeInteger(balanceMinor)
+						? t("invalid")
+						: "",
+				uses:
+					remainingUses !== null && !Number.isSafeInteger(remainingUses)
+						? t("invalid")
+						: "",
+			});
+			return;
 		}
 		const parsed = assetSchema.safeParse({
 			...draft,
-			...(draft.walletCard ? {walletCard:{...draft.walletCard,balanceMinor,remainingUses}} : {}),
+			...(draft.walletCard
+				? { walletCard: { ...draft.walletCard, balanceMinor, remainingUses } }
+				: {}),
 			name: legacyLongName ? name.slice(0, 160) : name,
 			tags: tags
 				.split(",")
@@ -77,7 +116,11 @@ export function CatalogRecordEditor({
 			setErrors(
 				Object.fromEntries(
 					parsed.error.issues.map((issue) => [
-						String(issue.path[0] === 'walletCard' ? issue.path[1] ?? 'walletCard' : issue.path[0]),
+						String(
+							issue.path[0] === "walletCard"
+								? (issue.path[1] ?? "walletCard")
+								: issue.path[0],
+						),
 						t("invalid"),
 					]),
 				),
@@ -119,7 +162,11 @@ export function CatalogRecordEditor({
 			onClose={onClose}
 			closeDisabled={busy}
 		>
-			<form ref={validation.formRef} className="asset-editor" onSubmit={(event) => void submit(event)}>
+			<form
+				ref={validation.formRef}
+				className="asset-editor"
+				onSubmit={(event) => void submit(event)}
+			>
 				<fieldset disabled={busy} className="catalog-fields">
 					<div className="form-grid">
 						<Field
@@ -129,19 +176,124 @@ export function CatalogRecordEditor({
 							onChange={(value) => change("name", value)}
 							error={errors.name}
 						/>
-                        {!original?.domain && <Field name="catalog-record-description" label={t('description')} value={draft.description} onChange={value=>change('description',value)} error={errors.description}/>}
-						{draft.walletCard && <>
-							<Field name="wallet-type" label={t('walletType')}><Select id="wallet-type" value={draft.walletCard.type} onValueChange={value=>setDraft(current=>({...current,walletCard:{...current.walletCard!,type:value as typeof walletTypes[number]}}))}>{walletTypes.map(type=><SelectOption key={type} value={type}>{t(`walletType_${type}`)}</SelectOption>)}</Select></Field>
-							<Field name="wallet-issuer" label={t('walletIssuer')} value={draft.walletCard.issuer} error={errors.issuer} onChange={issuer=>setDraft(current=>({...current,walletCard:{...current.walletCard!,issuer}}))}/>
-							<Field name="wallet-last-four" label={t('walletLastFour')} value={draft.walletCard.lastFour} error={errors.lastFour} onChange={lastFour=>setDraft(current=>({...current,walletCard:{...current.walletCard!,lastFour}}))}/>
-							<Field name="wallet-balance" label={t('walletBalance')} value={balance} error={errors.balance} onChange={value=>{setBalance(value);setErrors(current=>({...current,balance:''}));}}/>
-							<Field name="wallet-uses" label={t('walletRemaining')} value={uses} error={errors.uses} onChange={value=>{setUses(value);setErrors(current=>({...current,uses:''}));}}/>
-						</>}
-                        {original && !original.domain && !draft.walletCard && <>
-                            <Field name="catalog-record-contact" label={t("contact")} value={draft.contact} error={errors.contact} onChange={contact=>setDraft(current=>({...current,contact}))}/>
-                            <Field name="catalog-record-launch" label={t("projectLaunchMonth")} type="month" value={draft.projectLaunchMonth} error={errors.projectLaunchMonth} onChange={projectLaunchMonth=>setDraft(current=>({...current,projectLaunchMonth}))}/>
-                            <Field name="catalog-record-inspection" label={t("projectNextInspection")} error={errors.projectInspectionDate}><DatePicker id="catalog-record-inspection" aria-label={t("projectNextInspection")} value={draft.projectInspectionDate} onValueChange={projectInspectionDate=>setDraft(current=>({...current,projectInspectionDate}))}/></Field>
-                        </>}
+						{!original?.domain && (
+							<Field
+								name="catalog-record-description"
+								label={t("description")}
+								value={draft.description}
+								onChange={(value) => change("description", value)}
+								error={errors.description}
+							/>
+						)}
+						{draft.walletCard && (
+							<>
+								<Field name="wallet-type" label={t("walletType")}>
+									<Select
+										id="wallet-type"
+										value={draft.walletCard.type}
+										onValueChange={(value) =>
+											setDraft((current) => ({
+												...current,
+												walletCard: {
+													...current.walletCard!,
+													type: value as (typeof walletTypes)[number],
+												},
+											}))
+										}
+									>
+										{walletTypes.map((type) => (
+											<SelectOption key={type} value={type}>
+												{t(`walletType_${type}`)}
+											</SelectOption>
+										))}
+									</Select>
+								</Field>
+								<Field
+									name="wallet-issuer"
+									label={t("walletIssuer")}
+									value={draft.walletCard.issuer}
+									error={errors.issuer}
+									onChange={(issuer) =>
+										setDraft((current) => ({
+											...current,
+											walletCard: { ...current.walletCard!, issuer },
+										}))
+									}
+								/>
+								<Field
+									name="wallet-last-four"
+									label={t("walletLastFour")}
+									value={draft.walletCard.lastFour}
+									error={errors.lastFour}
+									onChange={(lastFour) =>
+										setDraft((current) => ({
+											...current,
+											walletCard: { ...current.walletCard!, lastFour },
+										}))
+									}
+								/>
+								<Field
+									name="wallet-balance"
+									label={t("walletBalance")}
+									value={balance}
+									error={errors.balance}
+									onChange={(value) => {
+										setBalance(value);
+										setErrors((current) => ({ ...current, balance: "" }));
+									}}
+								/>
+								<Field
+									name="wallet-uses"
+									label={t("walletRemaining")}
+									value={uses}
+									error={errors.uses}
+									onChange={(value) => {
+										setUses(value);
+										setErrors((current) => ({ ...current, uses: "" }));
+									}}
+								/>
+							</>
+						)}
+						{original && !original.domain && !draft.walletCard && (
+							<>
+								<Field
+									name="catalog-record-contact"
+									label={t("contact")}
+									value={draft.contact}
+									error={errors.contact}
+									onChange={(contact) =>
+										setDraft((current) => ({ ...current, contact }))
+									}
+								/>
+								<Field
+									name="catalog-record-launch"
+									label={t("projectLaunchMonth")}
+									type="month"
+									value={draft.projectLaunchMonth}
+									error={errors.projectLaunchMonth}
+									onChange={(projectLaunchMonth) =>
+										setDraft((current) => ({ ...current, projectLaunchMonth }))
+									}
+								/>
+								<Field
+									name="catalog-record-inspection"
+									label={t("projectNextInspection")}
+									error={errors.projectInspectionDate}
+								>
+									<DatePicker
+										id="catalog-record-inspection"
+										aria-label={t("projectNextInspection")}
+										value={draft.projectInspectionDate}
+										onValueChange={(projectInspectionDate) =>
+											setDraft((current) => ({
+												...current,
+												projectInspectionDate,
+											}))
+										}
+									/>
+								</Field>
+							</>
+						)}
 						<Field name="catalog-record-category" label={t("category")}>
 							<Select
 								id="catalog-record-category"
@@ -203,9 +355,23 @@ export function CatalogRecordEditor({
 						>
 							<DatePicker
 								id="catalog-record-date"
-								aria-label={t(draft.walletCard ? "walletExpiry" : "catalogDate")}
+								aria-label={t(
+									draft.walletCard ? "walletExpiry" : "catalogDate",
+								)}
 								value={draft.dueDate}
 								onValueChange={(value) => change("dueDate", value)}
+							/>
+						</Field>
+						<Field
+							name="catalog-record-start"
+							label={t("detailUsageStart")}
+							error={errors.usageStartDate}
+						>
+							<DatePicker
+								id="catalog-record-start"
+								aria-label={t("detailUsageStart")}
+								value={draft.usageStartDate ?? ""}
+								onValueChange={(value) => change("usageStartDate", value)}
 							/>
 						</Field>
 					</div>

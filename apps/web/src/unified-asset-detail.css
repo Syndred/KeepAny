@@ -303,7 +303,7 @@
 	background: var(--paper);
 	color: var(--ink);
 }
-.unified-detail-photo figcaption {
+.unified-detail-photo figcaption:not(.sr-only) {
 	min-height: 44px;
 	padding: 5px 38px 0 0;
 	color: var(--muted);
@@ -312,8 +312,12 @@
 }
 .unified-detail-photo > button {
 	position: absolute;
-	right: 0;
-	bottom: 0;
+	right: 4px;
+	bottom: 4px;
+	background: var(--paper);
+	border-color: transparent;
+	border-radius: 9px;
+	box-shadow: none;
 }
 .unified-detail-photo-actions {
 	display: grid;
