@@ -1,3 +1,4 @@
+import { ACCOUNT_ORDER_ID, orderedAccountMembers, parseAccountOrder } from "./account-order";
 import { ACCOUNT_DEFAULTS_ID, defaultAccountId, parseAccountDefaults } from "./account-defaults";
 import { useMemo } from "react";
 import { newAsset } from "../../../packages/domain/src";
@@ -19,9 +20,21 @@ export function useAccountCardGroups() {
  ], [data.assets, grouped.linked, virtualAccounts, virtualEntries]);
  const value = data.preferences.find(preference => preference.id === ACCOUNT_CARD_GROUPS_PREFERENCE_ID && !("deleted" in preference && preference.deleted === true))?.value;
  const explicitGroups = useMemo(() => parseAccountCardGroups(value), [value]);
- const cardGroups = useMemo(() => accountCardGroups(members, snapshot.status === "unlocked" ? snapshot.trash : [], explicitGroups), [members, snapshot.status, snapshot.trash, explicitGroups]);
+ const baseGroups = useMemo(() => accountCardGroups(members, snapshot.status === "unlocked" ? snapshot.trash : [], explicitGroups), [members, snapshot.status, snapshot.trash, explicitGroups]);
+ const orderPreference = data.preferences.find(preference => preference.id === ACCOUNT_ORDER_ID);
+ const order = useMemo(() => parseAccountOrder(orderPreference && "deleted" in orderPreference && orderPreference.deleted === true ? undefined : orderPreference?.value), [orderPreference]);
+ const cardGroups = useMemo(() => {
+  const sorted = new Map<string, ReturnType<typeof orderedAccountMembers>>();
+  const cached = new Map<ReturnType<typeof orderedAccountMembers>, ReturnType<typeof orderedAccountMembers>>();
+  for (const [id, bucket] of baseGroups.groups) {
+   let ordered = cached.get(bucket);
+   if (!ordered) { ordered = orderedAccountMembers(bucket, order); cached.set(bucket, ordered); }
+   sorted.set(id, ordered);
+  }
+  return { groups: sorted, ids: baseGroups.ids };
+ }, [baseGroups, order]);
  const defaultPreference = data.preferences.find(preference => preference.id === ACCOUNT_DEFAULTS_ID);
  const defaults = useMemo(() => parseAccountDefaults(defaultPreference && "deleted" in defaultPreference && defaultPreference.deleted === true ? undefined : defaultPreference?.value), [defaultPreference]);
- const defaultFor = (id: string) => defaultAccountId(cardGroups.groups.get(id) ?? [], defaults);
- return { grouped, virtualAccounts, virtualEntries, cardGroups, defaultPreference, defaults, defaultFor };
+ const defaultFor = (id: string) => defaultAccountId(baseGroups.groups.get(id) ?? [], defaults);
+ return { grouped, virtualAccounts, virtualEntries, cardGroups, defaultPreference, defaults, defaultFor, orderPreference, order };
 }

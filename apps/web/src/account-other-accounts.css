@@ -6,12 +6,20 @@
 .account-other-viewport { min-width:0; width:100%; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; overscroll-behavior-inline:contain; border-radius:10px; outline-offset:-2px; }
 .account-other-viewport::-webkit-scrollbar { display:none; }
 .account-other-track { display:flex; align-items:stretch; gap:12px; width:max-content; min-width:100%; padding:4px 4px 8px; }
-.account-other-track > .account-related-link { flex:0 0 220px; width:220px; min-width:0; align-items:center; gap:8px; padding:12px; }
+.account-other-track > .account-other-item { position:relative; flex:0 0 220px; width:220px; min-width:0; }
+.account-other-item > .account-related-link { display:flex; align-items:center; gap:8px; padding:12px; min-height:102px; height:100%; }
 .account-other-track .account-related-avatar { display:grid; }
 .account-other-track .account-related-link > svg { margin:0; flex:none; }
 .account-other-scroll:not([data-has-overflow-x]) .account-other-controls { display:none; }
 .account-other-scroll:not([data-overflow-x-start]) .account-other-previous,
 .account-other-scroll:not([data-overflow-x-end]) .account-other-next { opacity:.4; }
 @media(max-width:700px) {
- .account-other-track > .account-related-link { flex-basis:200px; width:200px; }
+ .account-other-track > .account-other-item { flex-basis:200px; width:200px; }
 }
+
+.account-other-item.has-drag-handle > .account-related-link { padding-right:48px; }
+.account-other-item .account-order-handle.button.icon { position:absolute; right:2px; top:50%; transform:translateY(-50%); width:44px; height:44px; min-width:44px; padding:0; box-shadow:none; touch-action:none; cursor:grab; z-index:1; }
+.account-other-item .account-order-handle.button.icon:active { cursor:grabbing; }
+.account-other-item.is-dragging { z-index:2; opacity:.85; }
+.account-other-item.is-dragging > a { pointer-events:none; }
+.account-order-feedback { margin:0 0 8px; font-size:13px; }
