@@ -214,3 +214,30 @@ for (const language of ['zh-CN','en'] as const) test(`${language} list edit moda
 
  } finally {await context.close();}
 });
+
+for(const language of ['zh-CN','en'] as const) test(`${language} reordered platform cycle is shared by cards details and editor`,async({browser},info)=>{
+ const t=(key:string)=>(resources[language].translation as Record<string,string>)[key]??key;
+ const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);const page=await context.newPage(),master='SyntheticOrderCycle2026!';
+ const save=async()=>{await page.getByRole('dialog').getByRole('button',{name:/^(保存|Save|保存条目|Save entry)$/}).click();await expect(page.getByRole('dialog')).toHaveCount(0);};
+ try{
+  await page.goto('/accounts');await openVaultAccess(page);await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();
+  const cards=page.locator('.compact-account-card');
+  for(const name of ['A','B','C','D']){
+   if(name==='A') await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();else await cards.getByRole('button',{name:t('add'),exact:true}).click();
+   await page.locator('#password-vault-entry-title').fill(`Order ${name}`);await page.locator('#password-vault-entry-username').fill(`order-${name.toLowerCase()}`);await page.locator('#password-vault-entry-password').fill(`Synthetic${name}!`);await save();
+  }
+  if(await cards.locator('[data-login-username]').innerText()!=='order-a') for(let i=0;i<4&&await cards.locator('[data-login-username]').innerText()!=='order-a';i++) await cards.locator('[data-account-switch]').click();
+  await cards.locator('.compact-account-title-block').click();
+  const handles=page.getByRole('button',{name:/^(调整|Reorder)/});
+  await expect(handles).toHaveCount(3);
+  await handles.first().press('Space');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.keyboard.press('Space');
+  await expect(page.locator('.account-related-info > strong')).toHaveText(['Order C','Order D','Order B']);
+  await expect(page.locator('[data-account-default]')).toBeDisabled();
+  for(const name of ['c','d','b','a']){await page.locator('[data-account-detail-switch]').click();await expect(page.locator('[data-login-username]')).toHaveText(`order-${name}`);}
+  await page.getByRole('link',{name:t('accountBack'),exact:true}).click();await expect(cards.locator('[data-login-username]')).toHaveText('order-a');
+  await page.reload();await openVaultAccess(page);await page.locator('#password-vault-unlock-master').fill(master);await page.getByRole('button',{name:t('accountUnlockAction'),exact:true}).first().click();await expect(cards.locator('[data-login-username]')).toHaveText('order-a');
+  await cards.locator('[data-account-switch]').click();await expect(cards.locator('[data-login-username]')).toHaveText('order-c');await cards.getByRole('button',{name:t('edit'),exact:true}).click();
+  for(const name of ['d','b','a']){await page.locator('[data-account-editor-switch]').click();await expect(page.locator('#password-vault-entry-username')).toHaveValue(`order-${name}`);}
+  await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
+ }finally{await context.close();}
+});

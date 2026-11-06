@@ -231,7 +231,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 				closeDisabled={busy || defaultBusy}
                 headerActions={platformAccount && editing ? <div className="actions account-entry-platform-actions">
                  <Button type="button" data-account-editor-switch aria-label={t("compactAccountNextAccount", {index:Math.max(1,platformAccount.position),total:Math.max(1,platformAccount.total)})} disabled={busy || defaultBusy || !unlocked || platformAccount.total < 2 || platformAccount.position < 1 || editProgress.current.accountChanged} onClick={() => { if (dirty) setConfirmSwitch(true); else platformAccount.onNext(); }}><RefreshCw size={17}/>{t("accountSwitchAction")}</Button>
-                 <AccountDefaultButton assetId={platformAccount.id} disabled={busy || defaultBusy || platformAccount.position < 1 || editProgress.current.accountChanged} onBusyChange={setDefaultBusy} onError={() => setError(t("error"))}/>
+                 <AccountDefaultButton assetId={platformAccount.id} disabled={busy || defaultBusy || platformAccount.position < 1 || editProgress.current.accountChanged} onBusyChange={value => { setDefaultBusy(value); if (value) setError(""); }} onError={() => setError(t("error"))}/>
                 </div> : undefined}
 			>
 				<form
