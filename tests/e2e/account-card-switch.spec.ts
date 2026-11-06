@@ -106,6 +106,20 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
   await whole.click();
   await expect(page.locator('[data-login-username]')).toHaveText('second-login');
   await expect(page.locator('[data-account-default]')).toBeEnabled();
+  // Synthetic storage outage: the existing persistence adapter must reject this preference write.
+  await page.evaluate(() => {
+   const put = IDBObjectStore.prototype.put, add = IDBObjectStore.prototype.add;
+   const fail = (value: unknown) => { if (JSON.stringify(value).includes('keepany-account-defaults-v1')) throw new DOMException('Synthetic preference quota failure', 'QuotaExceededError'); };
+   IDBObjectStore.prototype.put = function(value, key) { fail(value); return key === undefined ? put.call(this,value) : put.call(this,value,key); };
+   IDBObjectStore.prototype.add = function(value, key) { fail(value); return key === undefined ? add.call(this,value) : add.call(this,value,key); };
+   addEventListener('keepany-test-clear-fault', () => { IDBObjectStore.prototype.put=put; IDBObjectStore.prototype.add=add; }, {once:true});
+  });
+  await page.locator('[data-account-default]').click();
+  await expect(page.getByRole('status').filter({hasText:t('error')})).toBeVisible();
+  await expect(page.locator('[data-account-default]')).toBeEnabled();
+  await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','false');
+  await page.screenshot({path:`${output}/${language}-default-save-error.png`,fullPage:true});
+  await page.evaluate(() => dispatchEvent(new Event('keepany-test-clear-fault')));
   await page.locator('[data-account-default]').click();
   await expect(page.locator('[data-account-default]')).toBeDisabled();
   await page.getByRole('link', { name:t('accountBack'), exact:true }).click();
