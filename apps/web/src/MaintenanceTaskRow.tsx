@@ -181,7 +181,7 @@ export function MaintenanceTaskRow({ task }: { task: Task }) {
 						{cadence} · {t("maintenanceReminder")}:{" "}
 						{reminderDate.replaceAll("-", "/")}
 						{schedule.plannedAmountMinor !== null
-							? ` · ${t("maintenanceAmount")}: ${money(schedule.plannedAmountMinor, schedule.currency, i18n.language)}`
+							? ` · ${t("taskPlannedAmount")}: ${money(schedule.plannedAmountMinor, schedule.currency, i18n.language)}`
 							: ""}
 						{reminderState ? ` · ${t(reminderState)}` : ""}
 					</>
@@ -218,7 +218,7 @@ export function MaintenanceTaskRow({ task }: { task: Task }) {
 			/>
 			{detailsOpen && (
 				<Dialog
-					title={task.name}
+					title={t("taskDetails")}
 					onClose={() => {
 						if (!busy) {
 							setDetailsOpen(false);
@@ -267,7 +267,7 @@ export function MaintenanceTaskRow({ task }: { task: Task }) {
 							</span>
 							{schedule.plannedAmountMinor !== null && (
 								<span>
-									{t("maintenanceAmount")}:{" "}
+									{t("taskPlannedAmount")}:{" "}
 									{money(
 										schedule.plannedAmountMinor,
 										schedule.currency,

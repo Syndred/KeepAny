@@ -214,7 +214,7 @@ export function ProjectWorkflowTaskRow({
 			/>
 			{detailsOpen && (
 				<Dialog
-					title={t(`workflowStep_${workflow.step}`)}
+					title={t("taskDetails")}
 					onClose={() => {
 						if (!busy) {
 							setDetailsOpen(false);

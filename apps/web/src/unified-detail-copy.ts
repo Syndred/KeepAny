@@ -5,6 +5,7 @@ export const unifiedDetailCopy: Record<string, [string, string]> = {
 	detailUsageStart: ["开始使用日期", "Usage start date"],
 	taskDetails: ["待办详情", "Task details"],
 	taskViewDetails: ["查看详情", "View details"],
+	taskPlannedAmount: ["预计金额", "Planned amount"],
 	detailWarrantyRecordedRemaining: ["按记录保修剩余", "Recorded warranty left"],
 	detailWarrantyRemaining: ["保修剩余", "Warranty left"],
 	detailDueRemaining: ["到期剩余", "Time left"],
