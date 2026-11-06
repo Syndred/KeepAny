@@ -574,6 +574,19 @@ export class VaultSession {
     }));
   }
 
+  async deleteHistory(id: string, index: number, expected: { contentRevision: string; at: string }): Promise<void> {
+    if (!expected || typeof expected.contentRevision !== 'string' || !expected.contentRevision || typeof expected.at !== 'string' || !expected.at) fail('vault-invalid');
+    const baseline = { ...expected };
+    return this.run((generation) => this.mutate(generation, (candidate) => {
+      const entry = findEntry(candidate, id);
+      if (this.contentRevision(candidate) !== baseline.contentRevision) fail('vault-stale');
+      if (isTrash(candidate, entry) || !Number.isSafeInteger(index) || index < 0 || !entry.history[index]) fail('vault-invalid');
+      if ((entry.history[index].times.lastModTime ?? new Date(0)).toISOString() !== baseline.at) fail('vault-stale');
+      // kdbxweb's public API records the history tombstone; the current entry is untouched.
+      entry.removeHistory(index, 1);
+    }));
+  }
+
   async changeMasterPassword(current: string, next: string): Promise<void> {
     return this.run(async (generation) => {
       const record = this.record;
