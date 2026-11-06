@@ -167,3 +167,7 @@
  .account-relation-layout .page-header > .actions:has([data-account-detail-switch]) { min-width:0; justify-self:stretch; flex-wrap:nowrap; }
  .account-relation-layout .page-header > .actions:has([data-account-detail-switch]) > .button { flex:1 1 auto; padding-inline:6px; gap:6px; font-size:13px; }
 }
+@media(min-width:701px) and (max-width:1000px) {
+ .page.account-relation-layout > .page-header { grid-template-columns:minmax(0,1fr); }
+ .account-relation-layout .page-header > .actions:has([data-account-detail-switch]) { grid-column:1; grid-row:2; justify-self:end; flex-wrap:nowrap; }
+}
