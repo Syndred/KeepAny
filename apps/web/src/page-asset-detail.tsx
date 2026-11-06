@@ -66,6 +66,7 @@ import {
 import { Select, SelectOption } from "./components/ui/select";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
 import { AccountDetailActions } from "./components/AccountDetailActions";
+import { AccountPlatformSwitch } from "./components/AccountPlatformSwitch";
 import { AccountLoginSummary } from "./components/AccountLoginSummary";
 import { accountLoginChoices, preferredAccountLogin, nextAccountLogin } from "./account-login-choices";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./components/ui/dropdown-menu";
@@ -1206,7 +1207,7 @@ function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domain
 					</p>}
 					{kind === "project" && <div className="asset-project-hero-meta">{asset.category && <span>{niceCategory(asset.category, t)}</span>}{asset.status && <span>{t(asset.status)}</span>}{asset.url && <a href={asset.url} target="_blank" rel="noopener noreferrer">{asset.url}<ExternalLink size={13} /></a>}</div>}
 				</div>
-				{kind === "account" ? <div className="actions"><Button onClick={() => { setAccountAddingLogin(true); setEdit(true); }}><Plus size={17} />{t("add")}</Button><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button></div> : kind !== "project" && <div className="actions">
+				{kind === "account" ? <div className="actions"><AccountPlatformSwitch assetId={asset.id}/><Button onClick={() => { setAccountAddingLogin(true); setEdit(true); }}><Plus size={17} />{t("add")}</Button><Button variant="primary" onClick={() => { setAccountAddingLogin(false); setEdit(true); }}><Pencil size={17} />{t("edit")}</Button></div> : kind !== "project" && <div className="actions">
 					<Button onClick={() => setEdit(true)}>{t("edit")}</Button>
 					<Button
 						variant="danger"

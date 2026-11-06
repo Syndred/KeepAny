@@ -72,3 +72,66 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} notes and ind
   await expect(cards.getByRole('button', { name: /^(切换账号|Switch account)/ })).toBeEnabled();
  } finally { await context.close(); }
 });
+
+for (const language of ['zh-CN', 'en'] as const) test(`${language} platform detail switch follows the whole account`, async ({ browser }, info) => {
+ const t = (key: string) => (resources[language].translation as Record<string,string>)[key] ?? key;
+ const context = await browser.newContext({ baseURL: info.project.use.baseURL, permissions: ['clipboard-read', 'clipboard-write'], viewport: { width: 1280, height: 900 } });
+ await context.addInitScript(lang => localStorage.setItem('keepany-language', lang), language);
+ const page = await context.newPage(), master = 'SyntheticDetailSwitch2026!';
+ const save = async () => { await page.getByRole('dialog').getByRole('button', { name: /^(保存|Save|保存条目|Save entry)$/ }).click(); await expect(page.getByRole('dialog')).toHaveCount(0); };
+ try {
+  await page.goto('/accounts'); await openVaultAccess(page);
+  await page.locator('#password-vault-master').fill(master); await page.locator('#password-vault-master-confirm').fill(master);
+  await page.getByRole('button', { name: t('accountSetUp'), exact: true }).click();
+  await page.locator('.asset-category-toolbar').getByRole('button', { name: t('add'), exact: true }).click();
+  await page.locator('#password-vault-entry-title').fill('Synthetic first platform');
+  await page.locator('#password-vault-entry-username').fill('first-login');
+  await page.locator('#password-vault-entry-password').fill('SyntheticFirstPassword!');
+  await page.locator('#password-vault-entry-notes').fill('First account note');
+  await page.getByRole('dialog').getByRole('button', { name: t('pwVaultAddIdentifier'), exact: true }).click();
+  await page.locator('.pw-smart-identifier-row input').last().fill('first-alias');
+  await save();
+  const cards = page.locator('.compact-account-card');
+  await cards.getByRole('button', { name: t('add'), exact: true }).click();
+  await page.locator('#password-vault-entry-title').fill('Synthetic second platform');
+  await page.locator('#password-vault-entry-username').fill('second-login');
+  await page.locator('#password-vault-entry-password').fill('SyntheticSecondPassword!');
+  await page.locator('#password-vault-entry-notes').fill('Second account note'); await save();
+  if ((await cards.locator('[data-login-username]').innerText()) !== 'first-login') await cards.locator('[data-account-switch]').click();
+  await cards.locator('.compact-account-title-block').click();
+  const whole = page.locator('[data-account-detail-switch]'), login = page.locator('.account-login-summary');
+  await expect(page.getByRole('heading', { name: 'Synthetic first platform', exact: true })).toBeVisible();
+  const firstURL = page.url().split("#")[0];
+  await login.getByRole('button', { name: /^(切换登录账号|Next login)/ }).click();
+  await expect(login.locator('[data-login-username]')).toHaveText('first-alias');
+  await expect(page.getByRole('heading', { name: 'Synthetic first platform', exact: true })).toBeVisible();
+  for (const width of [390,768,1280,1920,2262]) {
+   await page.setViewportSize({width,height:900});
+   await login.getByRole('button', { name: t('pwVaultRevealPassword'), exact: true }).click();
+   await whole.press('Enter');
+   await expect(page.getByRole('heading', { name: 'Synthetic second platform', exact: true })).toBeVisible();
+   await expect(whole).toBeFocused();
+   await expect(login.locator('[data-login-username]')).toHaveText('second-login');
+   await expect(login.locator('[data-login-password]')).toHaveText('••••••••••');
+   await expect(page.locator('.account-note-summary')).toContainText('Second account note');
+   await login.getByRole('button', { name: t('pwVaultCopyPassword'), exact: true }).click();
+   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('SyntheticSecondPassword!');
+   await page.locator('.page-header').getByRole('button', { name: t('edit'), exact: true }).click();
+   await expect(page.locator('#password-vault-entry-username')).toHaveValue('second-login');
+   await page.getByRole('dialog').getByRole('button', { name: t('cancel'), exact: true }).click();
+   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+   const buttons = await page.locator('.page-header > .actions .button').evaluateAll(elements => elements.map(e => { const r=e.getBoundingClientRect();return {x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width,height:r.height}; }));
+   expect(buttons[0].width).toBeGreaterThanOrEqual(44); expect(buttons[0].height).toBeGreaterThanOrEqual(44);
+   for(let i=1;i<buttons.length;i++) expect(buttons[i].x-buttons[i-1].right).toBeGreaterThanOrEqual(7);
+   await page.screenshot({path:`${output}/${language}-${width}-detail-second.png`,fullPage:true});
+   await whole.click();
+   await expect(page).toHaveURL(firstURL);
+   await expect(login.locator('[data-login-username]')).toHaveText('first-login');
+   await expect(page.locator('.account-note-summary')).toContainText('First account note');
+  }
+  await whole.click(); const secondURL=page.url(); await page.goBack(); await expect(page).toHaveURL(firstURL); await page.goForward(); await expect(page).toHaveURL(secondURL);
+  await page.reload(); await openVaultAccess(page);
+  await page.locator('#password-vault-unlock-master').fill(master); await page.getByRole('button', { name:t('accountUnlockAction'),exact:true }).first().click();
+  await expect(login.locator('[data-login-username]')).toHaveText('second-login'); await expect(whole).toBeEnabled();
+ } finally { await context.close(); }
+});

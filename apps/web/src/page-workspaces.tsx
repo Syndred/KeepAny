@@ -19,7 +19,6 @@ import { AssetMasonry } from './components/AssetMasonry';
 import { addWalletSamples, walletSamplesId } from './wallet-cards';
 import { matchesAssetSearch } from "./asset-search";
 import { SAMPLE_LIBRARY_ID, sampleLibraryAssetIds } from "./sample-library";
-import { partitionAccountPasswords } from "./workspace-summary";
 import { useWorkspaceSummary } from "./use-workspace-summary";
 import { Empty, liveAssets, PageTitle, useAppContext } from "./view-shared";
 import "./workspaces.css";
@@ -28,7 +27,8 @@ import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
 import { localRepository } from "../../../packages/local-db/src";
 import type { AccountTemplate } from "./account-entry-save";
 import { CompactAccountCard } from "./components/CompactAccountCard";
-import { ACCOUNT_CARD_GROUPS_PREFERENCE_ID, parseAccountCardGroups, accountCardGroups, type AccountCardMember } from "./account-card-groups";
+import type { AccountCardMember } from "./account-card-groups";
+import { useAccountCardGroups } from "./use-account-card-groups";
 
 type CompactAccountProps = Parameters<typeof CompactAccountCard>[0];
 function GroupedAccountCard({ members, initialAssetId, connectionCountFor, ...props }: Omit<CompactAccountProps, "asset" | "entries" | "virtual" | "connectionCount"> & { members: AccountCardMember[]; initialAssetId: string; connectionCountFor: (member: AccountCardMember) => number }) {
@@ -81,20 +81,11 @@ export function AccountsWorkspace() {
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
 	const sampleAccounts = data.assets.filter((asset) => !asset.deleted && asset.kind === "account" && sampleIds.includes(asset.id));
-	const grouped = useMemo(() => partitionAccountPasswords(snapshot.status === "unlocked" ? snapshot.entries : [], data.assets), [snapshot.status, snapshot.entries, data.assets]);
+    const { grouped, virtualAccounts, virtualEntries, cardGroups } = useAccountCardGroups();
     const searchExtras = useMemo(() => new Map([
         ...[...grouped.linked].map(([id, entries]) => [id, entries.flatMap(entry => [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url]).join(" ").toLocaleLowerCase()] as const),
         ...grouped.unlinked.map(entry => [`login-${entry.id}`, [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url].join(" ").toLocaleLowerCase()] as const),
     ]), [grouped.linked, grouped.unlinked]);
-    const virtualAccounts = useMemo(() => grouped.unlinked.map(entry => ({ ...newAsset("account"), id: `login-${entry.id}`, name: entry.title, category: "other", username: entry.username, url: entry.url, updatedAt: entry.modifiedAt })), [grouped.unlinked]);
-    const virtualEntries = new Map(grouped.unlinked.map(entry => [`login-${entry.id}`, entry]));
-    const cardMembers = useMemo(() => [
-        ...data.assets.filter(asset => !asset.deleted && !asset.purged && asset.kind === "account").map(asset => ({asset, entries: grouped.linked.get(asset.id) ?? [], virtual: false})),
-        ...virtualAccounts.map(asset => ({asset,entries:[virtualEntries.get(asset.id)!],virtual:true})),
-    ], [data.assets,grouped.linked,virtualAccounts]);
-    const explicitGroupValue = data.preferences.find(preference => preference.id === ACCOUNT_CARD_GROUPS_PREFERENCE_ID && !("deleted" in preference && preference.deleted === true))?.value;
-    const explicitGroups = useMemo(() => parseAccountCardGroups(explicitGroupValue), [explicitGroupValue]);
-    const cardGroups = useMemo(() => accountCardGroups(cardMembers, snapshot.status === "unlocked" ? snapshot.trash : [], explicitGroups), [cardMembers,snapshot.status,snapshot.trash,explicitGroups]);
     const memberConnectionCount = (member: AccountCardMember) => member.virtual
         ? member.entries[0].linkedAssetIds.filter(id => data.assets.some(asset => asset.id === id && !asset.deleted)).length
         : new Set(data.relations.filter(relation => !relation.deleted && relation.from !== relation.to && (relation.from === member.asset.id || relation.to === member.asset.id) && [relation.from,relation.to].every(id => data.assets.some(asset => asset.id === id && !asset.deleted && !asset.purged))).map(relation => relation.from === member.asset.id ? relation.to : relation.from)).size;
