@@ -156,3 +156,6 @@
  .account-related-link > svg { margin:0; }
  .account-related-info > strong { font-size:13px; }
 }
+
+/* Keep the additional platform action separated at every breakpoint. */
+.account-relation-layout .page-header > .actions:has([data-account-detail-switch]) { gap:8px; }
