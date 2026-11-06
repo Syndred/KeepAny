@@ -435,7 +435,7 @@
 .unified-detail-task-list {
 	padding: 0 20px 12px;
 }
-.unified-detail-tasks .list-row {
+.unified-detail-tasks .list-row:not(.simple-task-row) {
 	min-width: 0;
 	gap: 10px;
 	min-height: 56px;
@@ -446,11 +446,6 @@
 	border-radius: 0;
 	background: transparent;
 	box-shadow: none;
-}
-.unified-detail-tasks .account-compact-task {
-	display: grid;
-	grid-template-columns: 44px minmax(0, 1fr) auto;
-	align-items: center;
 }
 .unified-detail-tasks .impact-task-info {
 	flex: 1;

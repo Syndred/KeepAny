@@ -86,7 +86,7 @@ if (run.error || run.status !== 0) {
 	walk(data.suites);
 	if (
 		data.errors?.length ||
-		tests.length !== 8 ||
+		tests.length !== 10 ||
 		tests.some(
 			(test) =>
 				test.status !== "expected" ||
@@ -109,7 +109,19 @@ if (run.error || run.status !== 0) {
 		);
 	const images = attachments.filter((a) => a.contentType === "image/png");
 	for (const locale of ["zh-CN", "en"]) {
-		for (const id of ["TS01", "TS02", "TS03", "TS04", "TS05"])
+		for (const id of [
+			"TS01",
+			"TS02",
+			"TS03",
+			"TS04",
+			"TS05",
+			"SC01",
+			"SC02",
+			"SC03",
+			"SC04",
+			"SC05",
+			"SC06",
+		])
 			if (
 				!receipts.some(
 					(r) =>
@@ -127,6 +139,7 @@ if (run.error || run.status !== 0) {
 				"subscription-rows",
 				"wallet-rows",
 				"hover",
+				"checkbox-hover",
 				"focus",
 				"pressed",
 				"editor",
@@ -138,6 +151,8 @@ if (run.error || run.status !== 0) {
 				"ts-item-0-shared",
 				"ts-orphan-shared-editor",
 				"ts-item-0-shared-editor",
+				"ts-timed-shared",
+				"reminder-details",
 			])
 				if (!images.some((a) => a.name === `${locale}-${width}-${state}.png`))
 					throw Error(`Missing ${locale}/${width}/${state}`);
@@ -172,7 +187,7 @@ if (run.error || run.status !== 0) {
 			{
 				status: "machine-checks-passed",
 				candidate: identity,
-				tests: 8,
+				tests: 10,
 				screenshots: images.length,
 				manualVisual: "separate",
 				controller: "separate",

@@ -99,9 +99,6 @@ export function ImpactTaskRow({
 				<small>{t("impactSnapshotAt")}: {new Date(snapshot.generatedAt).toLocaleString(i18n.language)}</small>
 				{relationInactive && <small className="field-error">{t("impactRelationInactive")}</small>}
 				{relationChanged && <small className="field-error">{t("impactRelationChanged")}</small>}
-				{completionHistory.length > 0 && (
-					<small>{t("impactCompletedHistory")}: {completionHistory.map((value) => new Date(value).toLocaleString(i18n.language)).join(" · ")}</small>
-				)}
 				{showTaskLink && (
 					<small><button type="button" className="text-link reminder-entry-button" onClick={() => openReminderCenter({ taskId: task.id })}>{t("reminderEntryDetails")}</button></small>
 				)}

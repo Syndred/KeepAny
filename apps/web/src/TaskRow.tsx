@@ -32,7 +32,7 @@ const TaskEditor = lazy(() =>
 export function TaskRow({
 	task,
 	hideRelated = false,
-	compact = false,
+	compact = true,
 }: {
 	task: Task;
 	hideRelated?: boolean;
@@ -43,6 +43,7 @@ export function TaskRow({
 	const [busy, setBusy] = useState(false);
 	const inFlight = useRef(false);
 	const [editing, setEditing] = useState(false);
+	const [detailsOpen, setDetailsOpen] = useState(false);
 	const [reminderOpen, setReminderOpen] = useState(false),
 		[reminderDraft, setReminderDraft] = useState(task.dueDate),
 		[reminderError, setReminderError] = useState("");
@@ -102,11 +103,6 @@ export function TaskRow({
 			notify(t("error"));
 		}
 	}
-	const completionHistory = task.completionHistory?.length
-		? task.completionHistory
-		: task.done && task.completedAt
-			? [task.completedAt]
-			: [];
 	const reminderAt = task.reminder
 		? new Date(
 				Date.parse(task.reminder.at) - task.reminder.leadMinutes * 60_000,
@@ -123,7 +119,7 @@ export function TaskRow({
 		});
 	return (
 		<TaskCard
-			className={`list-row impact-task-row${compact ? " account-compact-task" : ""}`}
+			className={`list-row impact-task-row${compact ? " account-compact-task simple-task-row" : ""}`}
 			id={`task-${task.id}`}
 			tabIndex={-1}
 		>
@@ -180,64 +176,70 @@ export function TaskRow({
 			</Button>
 			<div className="impact-task-info">
 				<strong className={task.done ? "done" : ""}>{task.name}</strong>
-				{task.reminder && reminderAt ? (
+				{!compact && (
 					<>
-						<small>
-							{t("reminderSavedDue")}:{" "}
-							<time dateTime={task.reminder.at}>
-								{formatReminderTime(task.reminder.at)}
-							</time>
-						</small>
-						<small>
-							{t("reminderSavedTime")}:{" "}
-							<time dateTime={reminderAt}>
-								{formatReminderTime(reminderAt)}
-							</time>
-						</small>
-						<small>
-							{t("reminderSavedZone", { timeZone: task.reminder.timeZone })}
-						</small>
-						<small>
-							{t("reminderSavedLead", { count: task.reminder.leadMinutes })} ·{" "}
-							{task.reminder.rule.mode === "once"
-								? t("reminderSavedOnce")
-								: t(
-										`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`,
-										{ count: task.reminder.rule.every },
-									)}
-						</small>
-					</>
-				) : (
-					(task.dueDate || !compact) && (
-						<small>{date(task.dueDate, i18n.language)}</small>
-					)
-				)}
-				{task.assetId && !hideRelated && (
-					<small>
-						{t("related")}:{" "}
-						{related ? (
-							<TextLink asChild>
-								<Link
-									to="/assets/$kind/$id"
-									params={{ kind: related.kind, id: related.id }}
-								>
-									{related.name}
-								</Link>
-							</TextLink>
+						{task.reminder && reminderAt ? (
+							<>
+								<small>
+									{t("reminderSavedDue")}:{" "}
+									<time dateTime={task.reminder.at}>
+										{formatReminderTime(task.reminder.at)}
+									</time>
+								</small>
+								<small>
+									{t("reminderSavedTime")}:{" "}
+									<time dateTime={reminderAt}>
+										{formatReminderTime(reminderAt)}
+									</time>
+								</small>
+								<small>
+									{t("reminderSavedZone", { timeZone: task.reminder.timeZone })}
+								</small>
+								<small>
+									{t("reminderSavedLead", { count: task.reminder.leadMinutes })}{" "}
+									·{" "}
+									{task.reminder.rule.mode === "once"
+										? t("reminderSavedOnce")
+										: t(
+												`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`,
+												{ count: task.reminder.rule.every },
+											)}
+								</small>
+							</>
 						) : (
-							t("taskRelatedMissing")
+							(task.dueDate || !compact) && (
+								<small>{date(task.dueDate, i18n.language)}</small>
+							)
 						)}
-					</small>
+						{task.assetId && !hideRelated && (
+							<small>
+								{t("related")}:{" "}
+								{related ? (
+									<TextLink asChild>
+										<Link
+											to="/assets/$kind/$id"
+											params={{ kind: related.kind, id: related.id }}
+										>
+											{related.name}
+										</Link>
+									</TextLink>
+								) : (
+									t("taskRelatedMissing")
+								)}
+							</small>
+						)}
+					</>
 				)}
-				{completionHistory.length ? (
-					<small>
-						{t("impactCompletedHistory")}:{" "}
-						{completionHistory
-							.map((value) => new Date(value).toLocaleString(i18n.language))
-							.join(" · ")}
-					</small>
-				) : null}
 			</div>
+			{compact && (
+				<time
+					className="task-due-date"
+					dateTime={task.dueDate || undefined}
+					aria-label={`${t("date")}: ${task.dueDate ? task.dueDate.replaceAll("-", "/") : t("none")}`}
+				>
+					{task.dueDate ? task.dueDate.replaceAll("-", "/") : "—"}
+				</time>
+			)}
 			{compact ? (
 				<div className="compact-task-actions">
 					<Button
@@ -267,6 +269,29 @@ export function TaskRow({
 							<DropdownMenuItem onClick={() => setEditing(true)}>
 								{t("edit")}
 							</DropdownMenuItem>
+							{task.reminder && (
+								<DropdownMenuItem onClick={() => setDetailsOpen(true)}>
+									{t("reminderEntryDetails")}
+								</DropdownMenuItem>
+							)}
+							{task.assetId &&
+								!hideRelated &&
+								(related ? (
+									<DropdownMenuItem
+										render={
+											<Link
+												to="/assets/$kind/$id"
+												params={{ kind: related.kind, id: related.id }}
+											/>
+										}
+									>
+										{t("related")}: {related.name}
+									</DropdownMenuItem>
+								) : (
+									<DropdownMenuItem disabled>
+										{t("taskRelatedMissing")}
+									</DropdownMenuItem>
+								))}
 							{!task.done && (
 								<>
 									<DropdownMenuItem
@@ -310,6 +335,45 @@ export function TaskRow({
 						{t(task.done ? "done" : "pending")}
 					</Badge>
 				</div>
+			)}
+			{detailsOpen && task.reminder && reminderAt && (
+				<Dialog
+					title={t("reminderEntryDetails")}
+					onClose={() => setDetailsOpen(false)}
+				>
+					<dl className="task-reminder-details">
+						<div>
+							<dt>{t("reminderSavedDue")}</dt>
+							<dd>
+								<time dateTime={task.reminder.at}>
+									{formatReminderTime(task.reminder.at)}
+								</time>
+							</dd>
+						</div>
+						<div>
+							<dt>{t("reminderSavedTime")}</dt>
+							<dd>
+								<time dateTime={reminderAt}>
+									{formatReminderTime(reminderAt)}
+								</time>
+							</dd>
+						</div>
+						<div>
+							<dt>
+								{t("reminderSavedZone", { timeZone: task.reminder.timeZone })}
+							</dt>
+							<dd>
+								{t("reminderSavedLead", { count: task.reminder.leadMinutes })} ·{" "}
+								{task.reminder.rule.mode === "once"
+									? t("reminderSavedOnce")
+									: t(
+											`reminderSavedRepeat_${task.reminder.rule.mode}_${task.reminder.rule.unit}`,
+											{ count: task.reminder.rule.every },
+										)}
+							</dd>
+						</div>
+					</dl>
+				</Dialog>
 			)}
 			{reminderOpen && (
 				<Dialog

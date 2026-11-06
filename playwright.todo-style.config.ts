@@ -10,6 +10,7 @@ export default defineConfig({
 	timeout: 300_000,
 	outputDir: process.env.KEEPANY_EVIDENCE_DIR ?? "test-results/todo-style",
 	use: {
+		channel: process.env.KEEPANY_TEST_BROWSER_CHANNEL || undefined,
 		baseURL: `http://127.0.0.1:${port}`,
 		timezoneId: "Asia/Shanghai",
 		actionTimeout: 12_000,

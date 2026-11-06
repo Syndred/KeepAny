@@ -46,7 +46,6 @@
 .reminder-center-task-feedback { margin: 0 0 10px; padding: 9px 12px; border: 1px solid var(--line-soft); border-radius: 9px; background: var(--paper-soft); color: var(--ink); font-size: 13px; overflow-wrap: anywhere; }
 .reminder-center-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-bottom: 8px; padding: 5px 6px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
 .reminder-center-back:hover { background: var(--accent-soft); }
-.reminder-center-task-detail .task-card.account-compact-task { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; align-items: start; gap: 7px; margin: 0; padding: 9px 6px; }
 .reminder-center-task-detail .task-card .impact-task-info { min-width: 0; }
 .reminder-center-task-detail .task-card .impact-task-info small { display: block; }
 .reminder-center-task-detail .task-card .maintenance-task-actions { display: flex; flex-wrap: wrap; gap: 8px; }

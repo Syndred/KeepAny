@@ -8,6 +8,7 @@ import {
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { newAsset, taskSchema } from "../../packages/domain/src";
+import { createTaskReminder } from "../../packages/domain/src/task-reminder";
 import { resources } from "../../apps/web/src/i18n";
 import {
 	prepareCompletionArchive,
@@ -114,9 +115,24 @@ test.beforeAll(async ({}, info) => {
 				createdAt: stamp,
 			}),
 		);
+		await db.save(
+			"task",
+			taskSchema.parse({
+				id: "ts-timed",
+				name: "TS timed / 定时提醒",
+				dueDate: "2026-11-20",
+				createdAt: stamp,
+				reminder: createTaskReminder({
+					at: "2026-11-20T01:00:00.000Z",
+					timeZone: "Asia/Shanghai",
+					leadMinutes: 30,
+					rule: { mode: "fixed", unit: "week", every: 2 },
+				}),
+			}),
+		);
 		return {
 			assets: 6,
-			tasks: 18,
+			tasks: 19,
 			kind: "synthetic-fixture-not-user-operation",
 		};
 	});
@@ -138,12 +154,9 @@ async function openAssets(
 	page: Page,
 	kind: (typeof kinds)[number] = "ordinary",
 ) {
-	if (
-		(await page.locator(".mobile-menu").isVisible()) &&
-		!(await page.locator(".sidebar.open").count())
-	)
-		await page.locator(".mobile-menu").click();
-	await page.locator('.sidebar nav a[href="/assets"]').click();
+	if (await page.locator(".mobile-nav").isVisible())
+		await page.locator('.mobile-nav a[href="/assets"]').click();
+	else await page.locator('.sidebar nav a[href="/assets"]').click();
 	await expect(page.locator(".workspace-navigation")).toBeVisible();
 	if (kind !== "ordinary")
 		await page
@@ -207,6 +220,7 @@ async function geometry(page: Page, rows: Locator) {
 		elements.map((el) => {
 			const box = el.getBoundingClientRect(),
 				info = el.querySelector(".impact-task-info")!.getBoundingClientRect();
+			const date = el.querySelector(".task-due-date")!.getBoundingClientRect();
 			const buttons = [...el.querySelectorAll("button")].map((b) => {
 				const r = b.getBoundingClientRect();
 				return {
@@ -222,6 +236,11 @@ async function geometry(page: Page, rows: Locator) {
 				right: box.right,
 				infoLeft: info.left,
 				infoRight: info.right,
+				dateLeft: date.left,
+				dateRight: date.right,
+				height: box.height,
+				titleHeight: el.querySelector("strong")!.getBoundingClientRect().height,
+				extraLines: el.querySelectorAll("small").length,
 				buttons,
 			};
 		}),
@@ -235,7 +254,10 @@ async function geometry(page: Page, rows: Locator) {
 			expect(b.height).toBeGreaterThanOrEqual(44);
 		}
 		expect(r.buttons[0].right).toBeLessThanOrEqual(r.infoLeft);
-		expect(r.infoRight).toBeLessThanOrEqual(r.buttons[1].left);
+		expect(r.infoRight).toBeLessThanOrEqual(r.dateLeft);
+		expect(r.dateRight).toBeLessThanOrEqual(r.buttons[1].left);
+		expect(r.extraLines).toBe(0);
+		if (r.titleHeight <= 23) expect(r.height).toBeLessThanOrEqual(49);
 	}
 	expect(
 		await page.evaluate(
@@ -246,6 +268,50 @@ async function geometry(page: Page, rows: Locator) {
 		await expect(icon).toHaveCSS("width", "18px");
 		await expect(icon).toHaveCSS("height", "18px");
 	}
+}
+
+// Auxiliary observation only: all mutation comes from candidate UI. Read only
+// existing RxDB IndexedDB stores in this isolated fictional browser context.
+async function storedTask(
+	page: Page,
+	id: string,
+): Promise<import("../../packages/domain/src").Task> {
+	return page.evaluate(async (taskId) => {
+		for (const entry of await indexedDB.databases()) {
+			if (!entry.name?.includes("keepany-v1")) continue;
+			const database = await new Promise<IDBDatabase>((resolve, reject) => {
+				const request = indexedDB.open(entry.name!);
+				request.onsuccess = () => resolve(request.result);
+				request.onerror = () => reject(request.error);
+				request.onupgradeneeded = () => {
+					request.transaction?.abort();
+					reject(Error("Unexpected database creation"));
+				};
+			});
+			try {
+				for (const store of database.objectStoreNames) {
+					const rows = await new Promise<
+						Array<{ type?: string; payload?: string }>
+					>((resolve, reject) => {
+						const request = database
+							.transaction(store, "readonly")
+							.objectStore(store)
+							.getAll();
+						request.onsuccess = () => resolve(request.result);
+						request.onerror = () => reject(request.error);
+					});
+					for (const row of rows)
+						if (row.type === "task" && row.payload) {
+							const task = JSON.parse(row.payload);
+							if (task.id === taskId) return task;
+						}
+				}
+			} finally {
+				database.close();
+			}
+		}
+		throw Error(`Stored task not found: ${taskId}`);
+	}, id);
 }
 for (const locale of ["zh-CN", "en"] as const) {
 	const t = text(locale);
@@ -287,7 +353,18 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await enter(page, "ordinary");
 			const target = row(page, "ordinary", 1),
 				edit = target.getByRole("button", { name: t("editTask"), exact: true });
+			const complete = target.locator(".task-complete-toggle");
+			await complete.hover();
+			await expect(complete).toHaveCSS("border-color", "rgba(0, 0, 0, 0)");
+			await expect(complete).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+			await expect(complete).toHaveCSS("transform", "none");
+			await expect(complete.locator(".task-status-check")).toHaveCSS(
+				"width",
+				"20px",
+			);
+			await shot(page, info, `${locale}-${width}-checkbox-hover`, target);
 			await edit.hover();
+			await expect(edit).toHaveCSS("border-color", "rgba(0, 0, 0, 0)");
 			await shot(page, info, `${locale}-${width}-hover`, target);
 			await edit.focus();
 			await shot(page, info, `${locale}-${width}-focus`, target);
@@ -338,7 +415,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				);
 			}
 		}
-		await receipt(info, locale, ["TS04"], {
+		await receipt(info, locale, ["TS04", "SC01", "SC02", "SC03"], {
 			widths,
 			kinds,
 			states: [
@@ -366,7 +443,13 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await enter(page, kind);
 			const completed = row(page, kind, 1),
 				pending = row(page, kind, 0);
-			const history = await completed.locator("small").last().innerText();
+			const history = (await storedTask(page, `ts-${kind}-1`))
+				.completionHistory;
+			expect(history).toEqual([
+				"2026-10-27T01:00:00.000Z",
+				"2026-10-28T02:00:00.000Z",
+			]);
+			await expect(completed).not.toContainText(t("impactCompletedHistory"));
 			const edit = completed.getByRole("button", {
 				name: t("editTask"),
 				exact: true,
@@ -408,7 +491,9 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await expect(completed.locator("strong")).toHaveText(
 				`TS saved ${kind} / 已修改`,
 			);
-			await expect(completed.locator("small").last()).toHaveText(history);
+			expect(
+				(await storedTask(page, `ts-${kind}-1`)).completionHistory,
+			).toEqual(history);
 			await expect(completed.locator(".task-complete-toggle")).toHaveAttribute(
 				"aria-pressed",
 				"true",
@@ -445,13 +530,24 @@ for (const locale of ["zh-CN", "en"] as const) {
 				"aria-pressed",
 				"false",
 			);
-			await expect(completed.locator("small").last()).toHaveText(history);
+			expect(
+				(await storedTask(page, `ts-${kind}-1`)).completionHistory,
+			).toEqual(history);
 			await completed.locator(".task-complete-toggle").click();
 			await expect(completed.locator(".task-complete-toggle")).toHaveAttribute(
 				"aria-pressed",
 				"true",
 			);
-			await expect(completed.locator("small").last()).toContainText(history);
+			expect(
+				(await storedTask(page, `ts-${kind}-1`)).completionHistory.slice(
+					0,
+					history.length,
+				),
+			).toEqual(history);
+			expect(
+				(await storedTask(page, `ts-${kind}-1`)).completionHistory,
+			).toHaveLength(history.length + 1);
+			await expect(completed).not.toContainText(t("impactCompletedHistory"));
 			await pending
 				.getByRole("button", { name: t("moreActions"), exact: true })
 				.click();
@@ -495,7 +591,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await page
 				.getByRole("menuitem", { name: t("taskPostponeDay"), exact: true })
 				.click();
-			await expect(pending.locator("small").first()).toContainText("23");
+			await expect(pending.locator(".task-due-date")).toHaveText("2026/11/23");
 			await page.reload();
 			await pending
 				.getByRole("button", { name: t("editTask"), exact: true })
@@ -505,7 +601,16 @@ for (const locale of ["zh-CN", "en"] as const) {
 			await dialog
 				.getByRole("button", { name: t("cancel"), exact: true })
 				.click();
-			await expect(completed.locator("small").last()).toContainText(history);
+			expect(
+				(await storedTask(page, `ts-${kind}-1`)).completionHistory.slice(
+					0,
+					history.length,
+				),
+			).toEqual(history);
+			expect(
+				(await storedTask(page, `ts-${kind}-1`)).completionHistory,
+			).toHaveLength(history.length + 1);
+			await expect(completed).not.toContainText(t("impactCompletedHistory"));
 			await expect(
 				row(page, kind, 2).locator(".task-complete-toggle"),
 			).toHaveAttribute("aria-pressed", "false");
@@ -516,7 +621,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 				page.locator(".unified-detail-tasks"),
 			);
 		}
-		await receipt(info, locale, ["TS01", "TS02", "TS03"], { kinds });
+		await receipt(info, locale, ["TS01", "TS02", "TS03", "SC04"], { kinds });
 	});
 	test(`${locale} TS05 shared reminder parents`, async ({ page }, info) => {
 		await start(page, locale);
@@ -561,9 +666,56 @@ for (const locale of ["zh-CN", "en"] as const) {
 				page.locator(`#task-${target}`),
 			);
 		}
-		await receipt(info, locale, ["TS05"], {
+		await receipt(info, locale, ["TS05", "SC01"], {
 			widths,
 			parents: ["standalone-center", "unified-detail-from-bell"],
+		});
+	});
+	test(`${locale} SC05 timed reminder parameters remain reachable`, async ({
+		page,
+	}, info) => {
+		await start(page, locale);
+		const original = await storedTask(page, "ts-timed");
+		for (const width of widths) {
+			await page.setViewportSize({ width, height: 1000 });
+			await page.getByTestId("reminder-bell").click();
+			await page.locator('[data-reminder-id="task-ts-timed"]').click();
+			const task = page.locator("#task-ts-timed");
+			await geometry(page, task);
+			await expect(task.locator(".task-due-date")).toHaveText("2026/11/20");
+			await expect(task).not.toContainText("Asia/Shanghai");
+			await shot(page, info, `${locale}-${width}-ts-timed-shared`, task);
+			await task
+				.getByRole("button", { name: t("moreActions"), exact: true })
+				.click();
+			await page
+				.getByRole("menuitem", { name: t("reminderEntryDetails"), exact: true })
+				.click();
+			const dialog = page
+				.getByRole("dialog")
+				.filter({ has: page.locator(".task-reminder-details") });
+			await expect(dialog).toContainText("Asia/Shanghai");
+			await expect(
+				dialog.locator('time[datetime="2026-11-20T00:30:00.000Z"]'),
+			).toContainText("08:30");
+			await expect(dialog).toContainText(
+				t("reminderSavedLead").replace("{{count}}", "30"),
+			);
+			await expect(dialog).toContainText(
+				locale === "zh-CN" ? "每 2 周" : "Every 2 weeks",
+			);
+			await shot(page, info, `${locale}-${width}-reminder-details`);
+			await dialog
+				.getByRole("button", { name: t("close"), exact: true })
+				.click();
+			await expect(dialog).toBeHidden();
+			await page.keyboard.press("Escape");
+		}
+		await page.reload();
+		expect(await storedTask(page, "ts-timed")).toEqual(original);
+		await receipt(info, locale, ["SC05"], {
+			widths,
+			observation: "readonly-isolated-IDB; UI actions only",
 		});
 	});
 	test(`${locale} TS05 direct editor lazy loading failure recovery`, async ({
@@ -616,7 +768,7 @@ for (const locale of ["zh-CN", "en"] as const) {
 		} finally {
 			release();
 		}
-		await receipt(info, locale, ["TS05"], {
+		await receipt(info, locale, ["TS05", "SC06"], {
 			states: ["loading", "resource-error", "recovered"],
 		});
 	});
