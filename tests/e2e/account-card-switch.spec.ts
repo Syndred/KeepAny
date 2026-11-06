@@ -102,6 +102,24 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
   const whole = page.locator('[data-account-detail-switch]'), login = page.locator('.account-login-summary');
   await expect(page.getByRole('heading', { name: 'Synthetic first platform', exact: true })).toBeVisible();
   const firstURL = page.url().split("#")[0];
+  await expect(page.locator('[data-account-default]')).toBeDisabled();
+  await whole.click();
+  await expect(page.locator('[data-login-username]')).toHaveText('second-login');
+  await expect(page.locator('[data-account-default]')).toBeEnabled();
+  await page.locator('[data-account-default]').click();
+  await expect(page.locator('[data-account-default]')).toBeDisabled();
+  await page.getByRole('link', { name:t('accountBack'), exact:true }).click();
+  await expect(cards.locator('[data-login-username]')).toHaveText('second-login');
+  await page.reload(); await openVaultAccess(page);
+  await page.locator('#password-vault-unlock-master').fill(master); await page.getByRole('button', { name:t('accountUnlockAction'),exact:true }).first().click();
+  await expect(cards.locator('[data-login-username]')).toHaveText('second-login');
+  await page.getByRole('searchbox', { name:t('accountListSearch'),exact:true }).fill('first-login');
+  await expect(cards.locator('[data-login-username]')).toHaveText('first-login');
+  await page.getByRole('searchbox', { name:t('accountListSearch'),exact:true }).fill('');
+  await expect(cards.locator('[data-login-username]')).toHaveText('second-login');
+  await cards.locator('.compact-account-title-block').click(); await whole.click();
+  await expect(page.locator('[data-login-username]')).toHaveText('first-login');
+
   await login.getByRole('button', { name: /^(切换登录账号|Next login)/ }).click();
   await expect(login.locator('[data-login-username]')).toHaveText('first-alias');
   await expect(page.getByRole('heading', { name: 'Synthetic first platform', exact: true })).toBeVisible();

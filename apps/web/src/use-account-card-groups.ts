@@ -1,3 +1,4 @@
+import { ACCOUNT_DEFAULTS_ID, defaultAccountId, parseAccountDefaults } from "./account-defaults";
 import { useMemo } from "react";
 import { newAsset } from "../../../packages/domain/src";
 import { useAppContext } from "./view-shared";
@@ -19,5 +20,8 @@ export function useAccountCardGroups() {
  const value = data.preferences.find(preference => preference.id === ACCOUNT_CARD_GROUPS_PREFERENCE_ID && !("deleted" in preference && preference.deleted === true))?.value;
  const explicitGroups = useMemo(() => parseAccountCardGroups(value), [value]);
  const cardGroups = useMemo(() => accountCardGroups(members, snapshot.status === "unlocked" ? snapshot.trash : [], explicitGroups), [members, snapshot.status, snapshot.trash, explicitGroups]);
- return { grouped, virtualAccounts, virtualEntries, cardGroups };
+ const defaultPreference = data.preferences.find(preference => preference.id === ACCOUNT_DEFAULTS_ID);
+ const defaults = useMemo(() => parseAccountDefaults(defaultPreference && "deleted" in defaultPreference && defaultPreference.deleted === true ? undefined : defaultPreference?.value), [defaultPreference]);
+ const defaultFor = (id: string) => defaultAccountId(cardGroups.groups.get(id) ?? [], defaults);
+ return { grouped, virtualAccounts, virtualEntries, cardGroups, defaultPreference, defaults, defaultFor };
 }

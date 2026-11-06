@@ -31,11 +31,11 @@ import type { AccountCardMember } from "./account-card-groups";
 import { useAccountCardGroups } from "./use-account-card-groups";
 
 type CompactAccountProps = Parameters<typeof CompactAccountCard>[0];
-function GroupedAccountCard({ members, initialAssetId, connectionCountFor, ...props }: Omit<CompactAccountProps, "asset" | "entries" | "virtual" | "connectionCount"> & { members: AccountCardMember[]; initialAssetId: string; connectionCountFor: (member: AccountCardMember) => number }) {
- const scope = JSON.stringify([props.queries, props.focusEntryId, initialAssetId]);
+function GroupedAccountCard({ members, initialAssetId, defaultAssetId, connectionCountFor, ...props }: Omit<CompactAccountProps, "asset" | "entries" | "virtual" | "connectionCount"> & { members: AccountCardMember[]; initialAssetId: string; defaultAssetId?: string; connectionCountFor: (member: AccountCardMember) => number }) {
+ const scope = JSON.stringify([props.queries, props.focusEntryId, initialAssetId, defaultAssetId]);
  const [selection,setSelection] = useState({scope, id: ""});
  const focused = props.focusEntryId && members.find(member => member.entries.some(entry => entry.id === props.focusEntryId));
- const active = (selection.scope === scope && members.find(member => member.asset.id === selection.id)) || focused || members.find(member => member.asset.id === initialAssetId) || members[0];
+ const active = (selection.scope === scope && members.find(member => member.asset.id === selection.id)) || focused || (!props.queries.some(query => query.trim()) && members.find(member => member.asset.id === defaultAssetId)) || members.find(member => member.asset.id === initialAssetId) || members[0];
  const index = members.indexOf(active);
  const restoreSwitchFocus = useRef(false);
  useLayoutEffect(() => {
@@ -81,7 +81,7 @@ export function AccountsWorkspace() {
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
 	const sampleAccounts = data.assets.filter((asset) => !asset.deleted && asset.kind === "account" && sampleIds.includes(asset.id));
-    const { grouped, virtualAccounts, virtualEntries, cardGroups } = useAccountCardGroups();
+    const { grouped, virtualAccounts, virtualEntries, cardGroups, defaultFor } = useAccountCardGroups();
     const searchExtras = useMemo(() => new Map([
         ...[...grouped.linked].map(([id, entries]) => [id, entries.flatMap(entry => [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url]).join(" ").toLocaleLowerCase()] as const),
         ...grouped.unlinked.map(entry => [`login-${entry.id}`, [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url].join(" ").toLocaleLowerCase()] as const),
@@ -112,7 +112,7 @@ export function AccountsWorkspace() {
                     accountExtras={virtualAccounts} filterAccountId={filterAccountId} accountCardGroupIds={cardGroups.ids}
                     beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
-					renderAccountCard={(asset, context) => <GroupedAccountCard members={cardGroups.groups.get(asset.id)!} initialAssetId={asset.id} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={asset => { const current = session?.getSnapshot(); if (current?.status !== "unlocked" || !current.revision || current.entries.some(entry => entry.linkedAssetIds.includes(asset.id))) return; setDeleteError(""); setDeleteAccount({ asset, vaultRevision: current.revision }); }} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
+					renderAccountCard={(asset, context) => <GroupedAccountCard members={cardGroups.groups.get(asset.id)!} initialAssetId={asset.id} defaultAssetId={defaultFor(asset.id)} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={asset => { const current = session?.getSnapshot(); if (current?.status !== "unlocked" || !current.revision || current.entries.some(entry => entry.linkedAssetIds.includes(asset.id))) return; setDeleteError(""); setDeleteAccount({ asset, vaultRevision: current.revision }); }} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
 		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".account-toolbar-actions button")} onClose={() => setEditAccount(null)} /></Suspense>}
