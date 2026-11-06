@@ -183,6 +183,22 @@ async function shot(
 	selector?: string,
 ) {
 	await page.evaluate(() => document.fonts.ready);
+	await expect(
+		page.locator('.unified-detail-main [role="status"]'),
+	).toHaveCount(0);
+	await expect
+		.poll(() =>
+			page
+				.locator(".unified-detail-photo img,.image-preview")
+				.evaluateAll((images) =>
+					images.every(
+						(image) =>
+							(image as HTMLImageElement).complete &&
+							(image as HTMLImageElement).naturalWidth > 0,
+					),
+				),
+		)
+		.toBe(true);
 	await expect
 		.poll(() =>
 			page
