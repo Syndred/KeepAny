@@ -63,6 +63,7 @@ function AssetTabs({ view, categories, categoryId, onManage }: { view: AssetView
 
 const PasswordVaultPanel = lazy(() => import("./components/PasswordVaultPanel").then((module) => ({ default: module.PasswordVaultPanel })));
 const AccountEntryDialog = lazy(() => import("./components/AccountEntryDialog").then((module) => ({ default: module.AccountEntryDialog })));
+const AccountCardEditDialog = lazy(() => import("./components/AccountCardEditDialog").then(module => ({default: module.AccountCardEditDialog})));
 const PrivateAccountDetail = lazy(() => import("./components/PrivateAccountDetail").then(module => ({ default: module.PrivateAccountDetail })));
 
 export function AccountsWorkspace() {
@@ -115,7 +116,7 @@ export function AccountsWorkspace() {
 					renderAccountCard={(asset, context) => <GroupedAccountCard members={cardGroups.groups.get(asset.id)!} initialAssetId={asset.id} defaultAssetId={defaultFor(asset.id)} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={asset => { const current = session?.getSnapshot(); if (current?.status !== "unlocked" || !current.revision || current.entries.some(entry => entry.linkedAssetIds.includes(asset.id))) return; setDeleteError(""); setDeleteAccount({ asset, vaultRevision: current.revision }); }} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
-		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}><AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".account-toolbar-actions button")} onClose={() => setEditAccount(null)} /></Suspense>}
+		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}>{editAccount.asset || editAccount.entryId ? <AccountCardEditDialog {...editAccount} returnFocusTo={() => (editAccount.triggerId ? document.getElementById(editAccount.triggerId) : null) ?? document.querySelector<HTMLElement>(".asset-category-toolbar button")} onClose={() => setEditAccount(null)}/> : <AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".account-toolbar-actions button")} onClose={() => setEditAccount(null)} />}</Suspense>}
         {snapshot.status === "unlocked" && deleteAccount && <Dialog title={t("pwVaultDeleteEntry")} onClose={() => { if (!deleteBusy) setDeleteAccount(null); }} closeDisabled={deleteBusy}><p>{deleteAccount.asset.name}</p>{deleteError && <p role="alert" className="field-error">{deleteError}</p>}<div className="actions"><Button disabled={deleteBusy} onClick={() => setDeleteAccount(null)}>{t("cancel")}</Button><Button variant="danger" disabled={deleteBusy} onClick={() => void removeOrdinaryAccount()}>{t("pwVaultDeleteEntry")}</Button></div></Dialog>}
 	</main>;
 }

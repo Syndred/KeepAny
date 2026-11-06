@@ -1,3 +1,5 @@
+import { RefreshCw } from "lucide-react";
+import { AccountDefaultButton } from "./AccountPlatformSwitch";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ZodError } from "zod";
@@ -24,7 +26,7 @@ import { Select, SelectOption } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import "../account-entry.css";
 
-export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFocusTo, template, linking = false, initialName = "" }: { onClose: () => void; onSaved?: () => void; asset?: Asset; entryId?: string; template?: AccountTemplate; linking?: boolean; initialName?: string; returnFocusTo?: () => HTMLElement | null }) {
+export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFocusTo, template, linking = false, initialName = "", platformAccount }: { onClose: () => void; onSaved?: () => void; asset?: Asset; entryId?: string; template?: AccountTemplate; linking?: boolean; initialName?: string; returnFocusTo?: () => HTMLElement | null; platformAccount?: { id: string; position: number; total: number; onNext: () => void } }) {
 	const { t } = useTranslation();
 	const { data, notify } = useAppContext();
 	const { snapshot, session, generatePassword } = usePasswordVault();
@@ -36,6 +38,9 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 	const editProgress = useRef<AccountEditProgress>({ account: asset ?? null, accountChanged: false });
 	const [draft, setDraft] = useState<PasswordVaultEntryDraft | null>(() => fromTemplate?.draft ?? { ...mergedAccountDraft(asset, originalEntry), ...(!asset && !originalEntry ? { title: initialName } : {}) });
 	const [busy, setBusy] = useState(false);
+ const [defaultBusy, setDefaultBusy] = useState(false), [confirmSwitch, setConfirmSwitch] = useState(false);
+ const initialDraft = useRef(platformAccount ? JSON.stringify(draft) : "");
+ const dirty = Boolean(platformAccount) && (JSON.stringify(profile) !== JSON.stringify(baseProfile) || JSON.stringify(draft) !== initialDraft.current);
 	const running = useRef(false);
 	const mounted = useRef(true);
 	const generation = useRef(0);
@@ -66,6 +71,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 	}, []);
 	useEffect(() => {
 		if (!unlocked && wasUnlocked.current) {
+            initialDraft.current = "";
 			generation.current++;
 			inputError.current = false;
 			setDraft((value) =>
@@ -91,7 +97,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 	const set = <K extends keyof Asset>(key: K, value: Asset[K]) =>
 		setProfile((current) => ({ ...current, [key]: value }));
 	const close = () => {
-		if (!running.current) onClose();
+		if (!running.current && !defaultBusy) onClose();
 	};
 	async function access() {
 		if (running.current || !session || snapshot.status === "loading") return;
@@ -148,7 +154,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 	}
 	async function submit(event: React.FormEvent) {
 		event.preventDefault();
-		if (running.current || !draft || snapshot.status === "loading") return;
+		if (running.current || defaultBusy || !draft || snapshot.status === "loading") return;
 		running.current = true;
 		setBusy(true);
 		inputError.current = false;
@@ -222,7 +228,11 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
                 returnFocusTo={returnFocusTo}
 				className="account-entry-dialog"
 				onClose={close}
-				closeDisabled={busy}
+				closeDisabled={busy || defaultBusy}
+                headerActions={platformAccount && editing ? <div className="actions account-entry-platform-actions">
+                 <Button type="button" data-account-editor-switch aria-label={t("compactAccountNextAccount", {index:Math.max(1,platformAccount.position),total:Math.max(1,platformAccount.total)})} disabled={busy || defaultBusy || !unlocked || platformAccount.total < 2 || platformAccount.position < 1 || editProgress.current.accountChanged} onClick={() => { if (dirty) setConfirmSwitch(true); else platformAccount.onNext(); }}><RefreshCw size={17}/>{t("accountSwitchAction")}</Button>
+                 <AccountDefaultButton assetId={platformAccount.id} disabled={busy || defaultBusy || platformAccount.position < 1 || editProgress.current.accountChanged} onBusyChange={setDefaultBusy} onError={() => setError(t("error"))}/>
+                </div> : undefined}
 			>
 				<form
 					className="password-vault-editor account-entry-form"
@@ -232,7 +242,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 					{draft && (
 						<EntryEditor
 							draft={draft}
-							busy={busy || snapshot.status === "loading"}
+							busy={busy || defaultBusy || snapshot.status === "loading"}
 							assets={assets}
 							assetsById={new Map(assets.map((asset) => [asset.id, asset]))}
 							showPassword={showPassword}
@@ -254,7 +264,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 									<Select
 										id="account-entry-category"
 										value={profile.category}
-										disabled={busy}
+										disabled={busy || defaultBusy}
 										onValueChange={(value) => set("category", value)}
 									>
 										{[
@@ -292,7 +302,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 										}
 										value={master}
 										onChange={setMaster}
-										disabled={busy}
+										disabled={busy || defaultBusy}
 									/>
 									{snapshot.status === "empty" && (
 										<Field
@@ -302,7 +312,7 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 											autoComplete="new-password"
 											value={confirm}
 											onChange={setConfirm}
-											disabled={busy}
+											disabled={busy || defaultBusy}
 										/>
 									)}
 									<Button
@@ -328,6 +338,9 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 					)}
 				</form>
 			</Dialog>
+            {unlocked && confirmSwitch && platformAccount && <Dialog title={t("accountEditorUnsavedTitle")} onClose={() => setConfirmSwitch(false)}>
+             <p>{t("accountEditorUnsavedSwitch")}</p><div className="actions"><Button type="button" onClick={() => setConfirmSwitch(false)}>{t("accountEditorKeepEditing")}</Button><Button type="button" variant="danger" onClick={() => { setConfirmSwitch(false); platformAccount.onNext(); }}>{t("accountEditorDiscardSwitch")}</Button></div>
+            </Dialog>}
 			{unlocked && manualCopy !== null && (
 				<Dialog
 					title={t("pwVaultManualCopyTitle")}

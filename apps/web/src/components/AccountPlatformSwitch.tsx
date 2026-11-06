@@ -35,7 +35,7 @@ export function AccountPlatformSwitch({ assetId }: { assetId: string }) {
 }
 
 
-export function AccountDefaultButton({ assetId }: { assetId: string }) {
+export function AccountDefaultButton({ assetId, disabled = false, onBusyChange, onError }: { assetId: string; disabled?: boolean; onBusyChange?: (busy: boolean) => void; onError?: () => void }) {
  const { t } = useTranslation();
  const { notify } = useAppContext();
  const { snapshot, session } = usePasswordVault();
@@ -44,14 +44,14 @@ export function AccountDefaultButton({ assetId }: { assetId: string }) {
  const running = useRef(false);
  const selected = defaultFor(assetId) === assetId;
  async function choose() {
-  if (running.current || selected || session?.getSnapshot().status !== "unlocked") return;
-  running.current = true; setBusy(true);
+  if (running.current || disabled || selected || session?.getSnapshot().status !== "unlocked") return;
+  running.current = true; setBusy(true); onBusyChange?.(true);
   try {
    const value = chooseAccountDefault(cardGroups.groups.get(assetId) ?? [], defaults, assetId);
    await savePreferenceIfCurrent(defaultPreference ?? null, { id: ACCOUNT_DEFAULTS_ID, value });
    notify(t("saved"));
-  } catch { notify(t("error")); }
-  finally { running.current = false; setBusy(false); }
+  } catch { if (onError) onError(); else notify(t("error")); }
+  finally { running.current = false; setBusy(false); onBusyChange?.(false); }
  }
- return <Button data-account-default aria-pressed={selected} aria-label={t("accountDefaultAction")} title={t(selected ? "accountIsDefault" : "accountSetDefault")} className={selected ? "account-default-selected" : undefined} disabled={busy || selected || snapshot.status !== "unlocked"} onClick={() => void choose()}><Star size={17}/>{t("accountDefaultAction")}</Button>;
+ return <Button data-account-default aria-pressed={selected} aria-label={t("accountDefaultAction")} title={t(selected ? "accountIsDefault" : "accountSetDefault")} className={selected ? "account-default-selected" : undefined} disabled={disabled || busy || selected || snapshot.status !== "unlocked"} onClick={() => void choose()}><Star size={17}/>{t("accountDefaultAction")}</Button>;
 }

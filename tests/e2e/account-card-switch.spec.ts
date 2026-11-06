@@ -167,3 +167,50 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
   await expect(login.locator('[data-login-username]')).toHaveText('second-login'); await expect(whole).toBeEnabled();
  } finally { await context.close(); }
 });
+
+for (const language of ['zh-CN','en'] as const) test(`${language} list edit modal switches accounts without losing drafts`, async ({browser},info) => {
+ const t=(key:string)=>(resources[language].translation as Record<string,string>)[key]??key;
+ const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});
+ await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);
+ const page=await context.newPage(),master='SyntheticEditorSwitch2026!';
+ const save=async()=>{await page.getByRole('dialog').getByRole('button',{name:/^(保存|Save|保存条目|Save entry)$/}).click();await expect(page.getByRole('dialog')).toHaveCount(0);};
+ try {
+  await page.goto('/accounts');await openVaultAccess(page);await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();
+  await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();
+  await page.locator('#password-vault-entry-title').fill('Editor platform A');await page.locator('#password-vault-entry-username').fill('editor-a');await page.locator('#password-vault-entry-password').fill('SyntheticA!');await page.locator('#password-vault-entry-notes').fill('Note A');await save();
+  const cards=page.locator('.compact-account-card');await cards.getByRole('button',{name:t('add'),exact:true}).click();
+  await page.locator('#password-vault-entry-title').fill('Editor platform B');await page.locator('#password-vault-entry-username').fill('editor-b');await page.locator('#password-vault-entry-password').fill('SyntheticB!');await page.locator('#password-vault-entry-notes').fill('Note B');await save();
+  if(await cards.locator('[data-login-username]').innerText()!=='editor-a') await cards.locator('[data-account-switch]').click();
+  await cards.getByRole('button',{name:t('edit'),exact:true}).click();
+  const switcher=page.locator('[data-account-editor-switch]'),def=page.locator('[data-account-default]');
+  await expect(switcher).toBeEnabled();await expect(def).toBeDisabled();
+  await switcher.click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-b');await expect(def).toBeEnabled();
+  await page.locator('#password-vault-entry-notes').fill('Unsaved B draft');await def.click();await expect(def).toBeDisabled();await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
+  await switcher.click();await expect(page.getByRole('dialog')).toHaveCount(2);await page.getByRole('dialog').last().getByRole('button',{name:t('accountEditorKeepEditing'),exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
+  await switcher.click();await page.getByRole('dialog').last().press('Escape');await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-b');
+  await switcher.click();await page.getByRole('dialog').last().getByRole('button',{name:t('accountEditorDiscardSwitch'),exact:true}).click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-a');await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Note A');
+  await page.locator('#password-vault-entry-notes').fill('Saved A only');await save();await expect(cards.locator('[data-login-username]')).toHaveText('editor-b');
+  await cards.getByRole('button',{name:t('edit'),exact:true}).click();await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Note B');await switcher.click();await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Saved A only');
+  for(const width of [390,768,1280,1920,2262]) {
+   await page.setViewportSize({width,height:900});await expect(switcher).toBeVisible();
+   const layout=await page.getByRole('dialog').evaluate(el=>({overflow:el.scrollWidth>el.clientWidth,buttons:Array.from(el.querySelectorAll('.account-entry-platform-actions .button')).map(b=>{const r=b.getBoundingClientRect();return{x:r.x,right:r.right,y:r.y,height:r.height};})}));
+   expect(layout.overflow).toBe(false);expect(layout.buttons[0].height).toBeGreaterThanOrEqual(44);expect(layout.buttons[1].x-layout.buttons[0].right).toBeGreaterThanOrEqual(8);
+   await page.screenshot({path:`${output}/${language}-${width}-edit-modal.png`,fullPage:true});
+  }
+  await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
+  await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();await expect(switcher).toHaveCount(0);await expect(def).toHaveCount(0);await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
+  if(await cards.locator('[data-login-username]').innerText()!=='editor-a') await cards.locator('[data-account-switch]').click();
+  await cards.locator('.compact-account-title-block').click();
+  const history=page.locator('.account-history-row');await expect(history).toHaveCount(1);
+  await history.getByRole('button',{name:/^(恢复|Restore) ·/}).click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
+  await history.getByRole('button',{name:/^(删除|Delete) ·/}).click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(history).toHaveCount(1);
+  for(const width of [390,768,1280,1920,2262]) {
+   await page.setViewportSize({width,height:900});await expect(history.getByRole('button',{name:/^(删除|Delete) ·/})).toBeVisible();
+   await page.screenshot({path:`${output}/${language}-${width}-history-icons.png`,fullPage:true});
+  }
+  await history.getByRole('button',{name:/^(删除|Delete) ·/}).click();await page.getByRole('dialog').getByRole('button',{name:t('accountHistoryDeleteAction'),exact:true}).click();await expect(history).toHaveCount(0);await expect(page.locator('.account-note-summary')).toContainText('Saved A only');
+  await page.locator('.page-header').getByRole('button',{name:t('edit'),exact:true}).click();await page.locator('#password-vault-entry-notes').fill('Latest A note');await save();await expect(history).toHaveCount(1);
+  await history.getByRole('button',{name:/^(恢复|Restore) ·/}).click();await page.getByRole('dialog').getByRole('button',{name:t('pwVaultHistoryRestore'),exact:true}).click();await expect(page.locator('.account-note-summary')).toContainText('Saved A only');
+
+ } finally {await context.close();}
+});

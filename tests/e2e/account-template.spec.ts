@@ -68,7 +68,7 @@ for (const language of ["zh-CN", "en"] as const) {
   await expect(page.locator(".account-detail-actions,.account-impact-details,.asset-tasks-card")).toHaveCount(0); await expect(page.locator(".page-header").getByRole("button", { name: t("pwVaultHistory"), exact: true })).toHaveCount(0);
   await login.getByRole("button", { name: t("compactAccountCopyUrl"), exact: true }).click(); expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("https://mail.example.test/");
   await expect(page.locator(".account-history-row")).not.toHaveCount(0); await shot(page, `history-${language}`);
-  await page.locator(".account-history-row").first().getByRole("button").click(); await expect(page.getByRole("dialog")).toHaveAccessibleName(t("pwVaultHistoryRestore"));
+  await page.locator(".account-history-row").first().getByRole("button", {name:/^(恢复|Restore) ·/}).click(); await expect(page.getByRole("dialog")).toHaveAccessibleName(t("pwVaultHistoryRestore"));
   await page.getByRole("dialog").getByRole("button", { name: t("pwVaultHistoryRestore"), exact: true }).first().click(); await expect(page.getByRole("dialog")).toHaveCount(0); await expect(page.locator(".account-note-summary")).toContainText("Private source notes");
   await expect(page.getByRole("button", { name: t("accountViewRelations"), exact: true })).toHaveCount(0); await expect(page.locator("#account-relations")).toBeInViewport();
   await unlink.click(); await page.getByRole("dialog").getByRole("button", { name: t("cancel"), exact: true }).click(); await expect(unlink).toBeFocused();
