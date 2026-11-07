@@ -511,6 +511,61 @@ export class VaultSession {
     });
   }
 
+  /** Recycle every login of one reviewed account in one encrypted write, preserving shared owners. */
+  async trashAccountEntries(accountId: string, expectedContentRevision: string, liveAccountIds: readonly string[]): Promise<void> {
+    if (!accountId || accountId.length > 96 || !expectedContentRevision || !liveAccountIds.includes(accountId)) fail('vault-invalid');
+    // Non-account relations and deleted owners must not leave a password-only ghost.
+    const owners = new Set(liveAccountIds);
+    return this.run(async generation => {
+      const db = this.unlocked();
+      if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
+      const ids = [...db.getDefaultGroup().allEntries()].filter(entry => !isTrash(db, entry) && draftOf(entry).linkedAssetIds.includes(accountId)).map(entry => entry.uuid.id);
+      if (!ids.length) {
+        const stored = await this.storage.read();
+        this.checkGeneration(generation);
+        if (stored?.revision !== this.record?.revision) fail('vault-stale');
+        return;
+      }
+      if (ids.some(id => draftOf(findEntry(db, id)).aiKeyBinding)) fail('vault-invalid');
+      await this.mutate(generation, candidate => {
+        candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin();
+        for (const id of ids) {
+          const entry = findEntry(candidate, id), draft = draftOf(entry);
+          let target = entry;
+          if (draft.linkedAssetIds.some(link => link !== accountId && owners.has(link))) {
+            // Reuse the scoped-copy strategy used by removeLoginIdentifier: the
+            // reviewed account gets a recyclable copy with its complete history.
+            target = candidate.importEntry(entry, candidate.getDefaultGroup(), candidate);
+            copyOptionalEntryMetadata(entry, target);
+            entry.history.forEach((version, index) => copyOptionalEntryMetadata(version, target.history[index]));
+            for (const version of [target, ...target.history]) version.fields.set(VAULT_LINK_FIELD, ProtectedValue.fromString(JSON.stringify([accountId])));
+            pushLoginHistory(entry);
+            applyDraft(entry, normalizeDraft({ ...draft, linkedAssetIds: draft.linkedAssetIds.filter(link => link !== accountId) }));
+          }
+          const previous = target.locationChanged;
+          candidate.remove(target); target.times.locationChanged = nextKdbxTime(previous);
+        }
+      });
+    });
+  }
+
+  /** A private account confirmation freezes its content revision, not just its entry ID. */
+  async trashEntryIfCurrent(id: string, expectedContentRevision: string): Promise<void> {
+    if (!id || !expectedContentRevision) fail('vault-invalid');
+    return this.run(async generation => {
+      const db = this.unlocked();
+      if (this.contentRevision(db) !== expectedContentRevision) fail('vault-stale');
+      const current = findEntry(db, id);
+      if (isTrash(db, current) || draftOf(current).aiKeyBinding) fail('vault-invalid');
+      await this.mutate(generation, candidate => {
+        const entry = findEntry(candidate, id);
+        candidate.meta.recycleBinEnabled = true; candidate.createRecycleBin();
+        const previous = entry.locationChanged;
+        candidate.remove(entry); entry.times.locationChanged = nextKdbxTime(previous);
+      });
+    });
+  }
+
   async trashEntry(id: string): Promise<void> {
     return this.run((generation) => this.mutate(generation, (candidate) => {
       const entry = findEntry(candidate, id);
