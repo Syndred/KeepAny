@@ -3,6 +3,7 @@ set -euo pipefail
 
 candidate=$1
 temp_dir=$(mktemp -d)
+temp_dir=$(cd "$temp_dir" && pwd -P)
 mount="$temp_dir/mount"
 app="$temp_dir/KeepAny.app"
 executable="$app/Contents/MacOS/keepany"
@@ -61,7 +62,11 @@ for attempt in 1 2; do
     fi
     sleep 1
   done
-  if [ "$visible" != true ]; then echo "KeepAny window did not appear, launch $attempt" >&2; exit 1; fi
+  if [ "$visible" != true ]; then
+    echo "KeepAny window did not appear, launch $attempt, matching process: ${app_pid:-none}" >&2
+    pgrep -x keepany | xargs -n 1 ps -o pid=,comm= -p || true
+    exit 1
+  fi
   kill -TERM "$app_pid"
   for check in {1..30}; do
     if ! kill -0 "$app_pid" 2>/dev/null; then break; fi
