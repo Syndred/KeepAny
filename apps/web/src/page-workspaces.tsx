@@ -14,7 +14,7 @@ import { Select, SelectOption } from "./components/ui/select";
 import { MoneyTotal } from "./components/AssetMetrics";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
 import { SubscriptionRatesDialog } from "./components/SubscriptionRatesDialog";
-import { AssetKindList, LibraryCard, type AccountListFilters } from "./page-asset-list";
+import { AssetKindList, LibraryCard } from "./page-asset-list";
 import { AssetMasonry } from './components/AssetMasonry';
 import { addWalletSamples, walletSamplesId } from './wallet-cards';
 import { matchesAssetSearch } from "./asset-search";
@@ -80,7 +80,6 @@ export function AccountsWorkspace() {
     useEffect(() => { if (hash === "vault-trash") void navigate({ to: "/trash", hash: "", replace: true }); }, [hash, navigate]);
     useEffect(() => { if (hash !== "new-account") { creationConsumed.current = false; return; } if (snapshot.status === "unlocked" && !creationConsumed.current) { creationConsumed.current = true; setEditAccount({ initialName: pendingAccountName ?? "" }); setPendingAccountName?.(""); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate, pendingAccountName, setPendingAccountName]);
     useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); } }, [snapshot.status]);
-	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
 	const sampleAccounts = data.assets.filter((asset) => !asset.deleted && asset.kind === "account" && sampleIds.includes(asset.id));
     const { grouped, virtualAccounts, virtualEntries, cardGroups, defaultFor } = useAccountCardGroups();
@@ -110,7 +109,7 @@ export function AccountsWorkspace() {
 				renderAccounts={(tools, toolbarActions) => <AssetKindList kind="account" embedded hideTitle toolbarActions={toolbarActions} privateSearch={snapshot.status === "unlocked"}
                     accountExtras={virtualAccounts} filterAccountId={filterAccountId} accountCardGroupIds={cardGroups.ids}
                     beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
-					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
+					accountSearchExtras={searchExtras}
 					renderAccountCard={(asset, context) => <GroupedAccountCard members={context.queries.some(query => query.trim()) ? cardGroups.groups.get(asset.id)!.filter(member => member.asset.id === asset.id) : cardGroups.groups.get(asset.id)!} initialAssetId={asset.id} defaultAssetId={defaultFor(asset.id)} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={confirmAccountDelete} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
