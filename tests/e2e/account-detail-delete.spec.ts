@@ -90,8 +90,8 @@ for(const language of ['zh-CN','en'] as const)test(`${language} whole account de
   const platformCard=cards.filter({has:page.locator('[data-account-switch]:not(:disabled)')});
   const survivingMembers:string[]=[];
   for(let index=0;index<2;index++){
-   await expect(platformCard).toHaveCount(1);survivingMembers.push((await platformCard.getAttribute('data-account-id'))!);
-   await platformCard.locator('[data-account-switch]').click();
+   await expect(platformCard).toHaveCount(1);const memberId=(await platformCard.getAttribute('data-account-id'))!;survivingMembers.push(memberId);
+   await platformCard.locator('[data-account-switch]').click();await expect(platformCard).not.toHaveAttribute('data-account-id',memberId);
   }
   expect(survivingMembers.sort()).toEqual(['detail-delete-b',privateCardId].sort());
   await page.reload();await enterAccounts(page,language,master);
@@ -109,9 +109,9 @@ for(const language of ['zh-CN','en'] as const)test(`${language} whole account de
   for(const query of ['Synthetic Delete A','keep-b@example.test','private-delete@example.test']){await search.fill(query);await expect(cards).toHaveCount(0);}
   // A list deletion remains in the list and retains the user's query.
   await search.fill('Empty list account');await expect(cards).toHaveCount(1);
-  await cards.locator('.compact-account-actions button').nth(2).click();await expect(page.getByRole('dialog')).toContainText('Empty list account');
+  await cards.getByRole('button',{name:t('accountDeleteAccountTitle'),exact:true}).click();await expect(page.getByRole('dialog')).toContainText('Empty list account');
   await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(1);
-  await cards.locator('.compact-account-actions button').nth(2).click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();
+  await cards.getByRole('button',{name:t('accountDeleteAccountTitle'),exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();
   await expect(page).toHaveURL(/\/accounts$/);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(0);
   await page.reload();await enterAccounts(page,language,master);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(0);
   await search.fill('Empty plain account');await cards.locator('.compact-account-title-block').click();await expect(page.locator('.account-login-summary [data-login-password]')).toHaveText(t('pwVaultNoPassword'));
