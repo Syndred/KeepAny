@@ -2,6 +2,8 @@ name: Build KeepAny desktop
 
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/tauri-desktop]
   pull_request:
     paths:
       - '.github/workflows/desktop.yml'
