@@ -34,6 +34,7 @@ type CompactAccountProps = Parameters<typeof CompactAccountCard>[0];
 function GroupedAccountCard({ members, initialAssetId, defaultAssetId, connectionCountFor, ...props }: Omit<CompactAccountProps, "asset" | "entries" | "virtual" | "connectionCount"> & { members: AccountCardMember[]; initialAssetId: string; defaultAssetId?: string; connectionCountFor: (member: AccountCardMember) => number }) {
  const scope = JSON.stringify([props.queries, props.focusEntryId, initialAssetId, defaultAssetId]);
  const [selection,setSelection] = useState({scope, id: ""});
+ useLayoutEffect(() => { setSelection({scope,id:""}); }, [scope]);
  const focused = props.focusEntryId && members.find(member => member.entries.some(entry => entry.id === props.focusEntryId));
  const active = (selection.scope === scope && members.find(member => member.asset.id === selection.id)) || focused || (!props.queries.some(query => query.trim()) && members.find(member => member.asset.id === defaultAssetId)) || members.find(member => member.asset.id === initialAssetId) || members[0];
  const index = members.indexOf(active);

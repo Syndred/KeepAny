@@ -102,17 +102,20 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
   const whole = page.locator('[data-account-detail-switch]'), login = page.locator('.account-login-summary');
   await expect(page.getByRole('heading', { name: 'Synthetic first platform', exact: true })).toBeVisible();
   const firstURL = page.url().split("#")[0];
+  if(await page.locator('[data-account-default]').isEnabled()) await page.locator('[data-account-default]').click();
+  await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('[data-account-default]')).toBeDisabled();
   await whole.click();
   await expect(page.locator('[data-login-username]')).toHaveText('second-login');
   await expect(page.locator('[data-account-default]')).toBeEnabled();
   // Synthetic storage outage: the existing persistence adapter must reject this preference write.
   await page.evaluate(() => {
-   const put = IDBObjectStore.prototype.put, add = IDBObjectStore.prototype.add;
-   const fail = (value: unknown) => { if (JSON.stringify(value).includes('keepany-account-defaults-v1')) throw new DOMException('Synthetic preference quota failure', 'QuotaExceededError'); };
+   const put = IDBObjectStore.prototype.put, add = IDBObjectStore.prototype.add, update = IDBCursor.prototype.update;
+   const fail = (_value: unknown) => { throw new DOMException('Synthetic isolated storage outage', 'QuotaExceededError'); };
+   IDBCursor.prototype.update = function(value) { fail(value); return update.call(this,value); };
    IDBObjectStore.prototype.put = function(value, key) { fail(value); return key === undefined ? put.call(this,value) : put.call(this,value,key); };
    IDBObjectStore.prototype.add = function(value, key) { fail(value); return key === undefined ? add.call(this,value) : add.call(this,value,key); };
-   addEventListener('keepany-test-clear-fault', () => { IDBObjectStore.prototype.put=put; IDBObjectStore.prototype.add=add; }, {once:true});
+   addEventListener('keepany-test-clear-fault', () => { IDBObjectStore.prototype.put=put; IDBObjectStore.prototype.add=add; IDBCursor.prototype.update=update; }, {once:true});
   });
   await page.locator('[data-account-default]').click();
   await expect(page.getByRole('status').filter({hasText:t('error')})).toBeVisible();
@@ -121,6 +124,7 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
   await page.screenshot({path:`${output}/${language}-default-save-error.png`,fullPage:true});
   await page.evaluate(() => dispatchEvent(new Event('keepany-test-clear-fault')));
   await page.locator('[data-account-default]').click();
+  await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('[data-account-default]')).toBeDisabled();
   await page.getByRole('link', { name:t('accountBack'), exact:true }).click();
   await expect(cards.locator('[data-login-username]')).toHaveText('second-login');
@@ -180,13 +184,19 @@ for (const language of ['zh-CN','en'] as const) test(`${language} list edit moda
   await page.locator('#password-vault-entry-title').fill('Editor platform A');await page.locator('#password-vault-entry-username').fill('editor-a');await page.locator('#password-vault-entry-password').fill('SyntheticA!');await page.locator('#password-vault-entry-notes').fill('Note A');await save();
   const cards=page.locator('.compact-account-card');await cards.getByRole('button',{name:t('add'),exact:true}).click();
   await page.locator('#password-vault-entry-title').fill('Editor platform B');await page.locator('#password-vault-entry-username').fill('editor-b');await page.locator('#password-vault-entry-password').fill('SyntheticB!');await page.locator('#password-vault-entry-notes').fill('Note B');await save();
+  // Establish B as the persisted default, then manually show A before changing defaults twice.
+  if(await cards.locator('[data-login-username]').innerText()!=='editor-b') await cards.locator('[data-account-switch]').click();
+  await cards.getByRole('button',{name:t('edit'),exact:true}).click();
+  if(await page.locator('[data-account-default]').isEnabled()) await page.locator('[data-account-default]').click();
+  await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
   if(await cards.locator('[data-login-username]').innerText()!=='editor-a') await cards.locator('[data-account-switch]').click();
   await cards.getByRole('button',{name:t('edit'),exact:true}).click();
   const switcher=page.locator('[data-account-editor-switch]'),def=page.locator('[data-account-default]');
-  await expect(switcher).toBeEnabled();await expect(def).toBeDisabled();
+  await expect(switcher).toBeEnabled();if(await def.isEnabled()) await def.click();await expect(def).toHaveAttribute('aria-pressed','true');await expect(def).toBeDisabled();
   await switcher.click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-b');await expect(def).toBeEnabled();
-  await page.locator('#password-vault-entry-notes').fill('Unsaved B draft');await def.click();await expect(def).toBeDisabled();await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
-  await switcher.click();await expect(page.getByRole('dialog')).toHaveCount(2);await page.getByRole('dialog').last().getByRole('button',{name:t('accountEditorKeepEditing'),exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
+  await page.locator('#password-vault-entry-notes').fill('Unsaved B draft');await def.click();await expect(def).toHaveAttribute('aria-pressed','true');await expect(def).toBeDisabled();await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
+  await switcher.click();await expect(page.getByRole('dialog',{includeHidden:true})).toHaveCount(2);await expect(page.getByRole('dialog')).toHaveCount(1);await page.getByRole('dialog').last().getByRole('button',{name:t('accountEditorKeepEditing'),exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
   await switcher.click();await page.getByRole('dialog').last().press('Escape');await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-b');
   await switcher.click();await page.getByRole('dialog').last().getByRole('button',{name:t('accountEditorDiscardSwitch'),exact:true}).click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-a');await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Note A');
   await page.locator('#password-vault-entry-notes').fill('Saved A only');await save();await expect(cards.locator('[data-login-username]')).toHaveText('editor-b');
