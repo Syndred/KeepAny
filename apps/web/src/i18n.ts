@@ -61,6 +61,7 @@ const copy: Record<string, [string, string]> = {
  accountEditorUnsavedSwitch: ["切换账号会放弃当前未保存的修改。", "Switching accounts will discard the current unsaved changes."],
  accountEditorKeepEditing: ["继续编辑", "Keep editing"],
  accountEditorDiscardSwitch: ["放弃并切换", "Discard and switch"],
+ accountDetailDelete: ["删除", "Delete"],
  accountSwitchAction: ["切换", "Switch"],
  accountDefaultAction: ["默认", "Default"],
  accountIsDefault: ["当前默认账号", "Current default account"],

@@ -1,5 +1,6 @@
 .account-detail-delete-control,
 .account-detail-delete-control > .password-vault-panel { display:contents; }
+.account-relation-layout .page-header > .actions:has([data-account-detail-switch]):has([data-account-detail-delete]) { min-width:0; max-width:100%; flex-wrap:wrap; }
 @media(max-width:700px) {
  .account-relation-layout .page-header > .actions:has([data-account-detail-switch]):has([data-account-detail-delete]) { flex-wrap:wrap; }
  .account-relation-layout .page-header > .actions:has([data-account-detail-switch]):has([data-account-detail-delete]) > .button,

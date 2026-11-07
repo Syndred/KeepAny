@@ -49,9 +49,20 @@ for(const language of ['zh-CN','en'] as const)test(`${language} detail deletion 
   for(const width of [390,768,1280,1920]) {
    await page.setViewportSize({width,height:900});
    await expect(page.getByRole('heading',{name:'Synthetic Delete A',exact:true})).toBeVisible();
-   const controls=await page.locator('.page-header > .actions .button').evaluateAll(elements=>elements.map(e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,width:r.width,height:r.height};}));
+   const header=await page.locator('.page-header').boundingBox();expect(header).not.toBeNull();
+   const controls=await page.locator('.page-header > .actions .button').evaluateAll(elements=>elements.map(e=>{
+    const r=e.getBoundingClientRect(),svg=e.querySelector('svg')?.getBoundingClientRect();
+    const text=Array.from(e.childNodes).filter(node=>node.nodeType===Node.TEXT_NODE && node.textContent?.trim()).flatMap(node=>{const range=document.createRange();range.selectNodeContents(node);return Array.from(range.getClientRects()).map(rect=>({left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom}));});
+    return{x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height,clientWidth:e.clientWidth,scrollWidth:e.scrollWidth,svg:svg?{left:svg.left,right:svg.right,top:svg.top,bottom:svg.bottom,width:svg.width,height:svg.height}:null,text};
+   }));
    expect(controls).toHaveLength(5);expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)).toBe(false);
-   for(const rect of controls){expect(rect.height).toBeGreaterThanOrEqual(44);expect(rect.width).toBeGreaterThanOrEqual(44);expect(rect.right).toBeLessThanOrEqual(width);}
+   await expect(remove).toHaveText(t('accountDetailDelete'));
+   for(const rect of controls){
+    expect(rect.height).toBeGreaterThanOrEqual(44);expect(rect.width).toBeGreaterThanOrEqual(44);
+    expect(rect.x).toBeGreaterThanOrEqual(Math.max(0,header!.x)-1);expect(rect.right).toBeLessThanOrEqual(Math.min(width,header!.x+header!.width)+1);
+    expect(rect.scrollWidth).toBeLessThanOrEqual(rect.clientWidth+1);expect(rect.svg).not.toBeNull();expect(rect.text).toHaveLength(1);
+    for(const content of [...rect.text,...(rect.svg?[rect.svg]:[])]){expect(content.left).toBeGreaterThanOrEqual(rect.x);expect(content.right).toBeLessThanOrEqual(rect.right);expect(content.top).toBeGreaterThanOrEqual(rect.y);expect(content.bottom).toBeLessThanOrEqual(rect.bottom);}
+   }
    for(let i=1;i<controls.length;i++)if(Math.abs(controls[i].y-controls[i-1].y)<1)expect(controls[i].x-controls[i-1].right).toBeGreaterThanOrEqual(7.5);
    await page.locator('.page-header').screenshot({path:info.outputPath(`header-${width}.png`)});
   }
