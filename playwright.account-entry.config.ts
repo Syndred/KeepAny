@@ -9,7 +9,7 @@ export default defineConfig({
 	testMatch: ["unified-account-editor.spec.ts", "compact-accounts.spec.ts", "simple-account-relations.spec.ts", "account-template.spec.ts", "toolbar-trash.spec.ts"],
 	outputDir: process.env.KEEPANY_INDEPENDENT_RESULTS ?? "test-results/account-entry-ci/browser",
 	timeout: 150_000,
-	workers: 1,
+	workers: process.env.CI ? 2 : 1,
 	reporter: [["list"], ["json", { outputFile: process.env.KEEPANY_INDEPENDENT_REPORT ?? "test-results/account-entry-ci/playwright.json" }]],
 	use: { ...browserDefaults.use, baseURL: `http://127.0.0.1:${port}`, trace: "retain-on-failure" },
 	webServer: compiledServer(port),

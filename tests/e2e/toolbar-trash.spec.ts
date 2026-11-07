@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve, join } from "node:path";
 import { resources } from "../../apps/web/src/i18n";
+import { importVisualKdbxEntries } from "./fixtures/password-smart-import-visual";
 import { portableCandidate } from "./helpers/portable-candidate";
 import { selectChoice } from "./helpers/select-choice";
 const output = resolve(process.env.KEEPANY_TOOLBAR_EVIDENCE ?? "test-results/toolbar-trash/evidence");
@@ -28,9 +29,17 @@ async function create(page: Page, t:T, title="Toolbar Mail", username="synthetic
  await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click(); await expect(page.getByRole("dialog")).toHaveCount(0);
  await returnCreatedAccountToList(page,t,title,username);
 }
-async function trashLogin(page:Page,t:T,index=0) {
- await page.locator(".compact-account-card").nth(index).getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
- await page.getByRole("dialog").getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click(); await expect(page.getByRole("dialog")).toHaveCount(0);
+function accountCard(page: Page, title: string) {
+ return page.getByRole("article", { name: title, exact: true });
+}
+async function trashAccount(page: Page, t: T, title: string) {
+ const card = accountCard(page, title);
+ await card.getByRole("button", { name: t("accountDeleteAccountTitle"), exact: true }).click();
+ const dialog = page.getByRole("dialog", { name: t("accountDeleteAccountTitle"), exact: true });
+ await expect(dialog.getByText(title, { exact: true })).toBeVisible();
+ await dialog.getByRole("button", { name: t("accountDetailDelete"), exact: true }).click();
+ await expect(dialog).toBeHidden();
+ await expect(card).toHaveCount(0);
 }
 async function accounts(page:Page,t:T){ await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click(); }
 async function unlock(page:Page,t:T){ await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button",{name:t("accountUnlockAction"),exact:true}).click(); await expect(page.locator("#password-vault-unlock-master")).toHaveCount(0); }
@@ -64,8 +73,7 @@ for (const language of ["zh-CN", "en"] as const) {
  });
  test(`${language} TT04-09 unified encrypted and ordinary trash lifecycle`,async({page})=>{
   await setup(page,t); await create(page,t); const card=page.locator(".compact-account-card");
-  await trashLogin(page,t); await expect(page.locator("#vault-trash")).toHaveCount(0);
-  await card.getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click(); await page.getByRole("dialog").getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click(); await expect(card).toHaveCount(0);
+  await trashAccount(page,t,"Toolbar Mail"); await expect(page.locator("#vault-trash")).toHaveCount(0);
   await page.locator(".sidebar-trash").click(); const encrypted=page.locator(".password-vault-entry-trash"),ordinary=page.locator(".trash-row");
   await expect(encrypted).toHaveCount(1); await expect(ordinary).toHaveCount(1); await shot(page,`mixed-trash-${language}`);
   await encrypted.getByRole("button",{name:t("deletePermanently"),exact:true}).click(); await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click(); await expect(encrypted).toHaveCount(1);
@@ -87,13 +95,19 @@ for (const language of ["zh-CN", "en"] as const) {
   await actions.getByRole("button",{name:t("pwVaultLock"),exact:true}).click();await expect(actions).toHaveCount(0);await expect(page.locator(".compact-account-card")).toHaveCount(0);await unlock(page,t);await expect(page.locator(".compact-account-card")).toHaveCount(1);
   await page.locator(".sidebar").getByRole("link",{name:t("settings"),exact:true}).click();await page.locator("#advanced-settings > summary").click();await page.getByRole("button",{name:t("loadSample"),exact:true}).click();await page.getByRole("dialog").getByRole("button",{name:t("loadSample"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0);
   await accounts(page,t);await expect(page.locator(".reminder-runtime-banner")).toHaveCount(0);const count=await page.locator(".compact-account-card").count();expect(count).toBeGreaterThan(1);
-  await page.locator(".account-options-trigger").click();await page.getByRole("menuitem",{name:t("sampleLogins"),exact:true}).click();await expect(page.locator(".compact-account-card[data-entry-id]")).toHaveCount(count);await page.locator(".account-options-trigger").click();await expect(page.getByRole("menuitem",{name:t("pwVaultImport"),exact:true})).toBeVisible();await expect(page.getByRole("menuitem",{name:t("sampleLogins"),exact:true})).toHaveCount(0);await page.keyboard.press("Escape");await expect(page.getByRole("menu")).toHaveCount(0);await shot(page,`demo-logins-${language}`);
+  await page.locator(".account-options-trigger").click();await page.getByRole("menuitem",{name:t("sampleLogins"),exact:true}).click();
+  // The vault saves each sample login before announcing completion.
+  await page.locator(".compact-account-feedback-message").filter({ hasText: t("sampleLoginsAdded") }).waitFor();
+  await expect(page.locator(".compact-account-card[data-entry-id]")).toHaveCount(count);await page.locator(".account-options-trigger").click();await expect(page.getByRole("menuitem",{name:t("pwVaultImport"),exact:true})).toBeVisible();await expect(page.getByRole("menuitem",{name:t("sampleLogins"),exact:true})).toHaveCount(0);await page.keyboard.press("Escape");await expect(page.getByRole("menu")).toHaveCount(0);await shot(page,`demo-logins-${language}`);
   await expect(page.locator("#asset-tag-filter-account")).toHaveCount(0);
   await expect(page.locator(".compact-account-card")).toHaveCount(count);
  });
  test(`${language} TT08 encrypted and ordinary purge keep confirmations and survive one write failure`,async({page})=>{
-  await setup(page,t);await create(page,t);await trashLogin(page,t);await page.locator(".compact-account-card").getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();await page.getByRole("dialog").getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
-  await create(page,t,"Second synthetic","second@example.test");await trashLogin(page,t);await page.locator(".sidebar-trash").click();const rows=page.locator(".password-vault-entry-trash");await expect(rows).toHaveCount(2);
+  await setup(page,t);await create(page,t);await trashAccount(page,t,"Toolbar Mail");
+  const privateTitle = "Second synthetic";
+  await importVisualKdbxEntries(page,t,[{ title:privateTitle, username:"second@example.test", password:"SyntheticOnlySecret2026!" }]);
+  await expect(accountCard(page,privateTitle)).toHaveAttribute("data-private-only","true");
+  await trashAccount(page,t,privateTitle);await page.locator(".sidebar-trash").click();const rows=page.locator(".password-vault-entry-trash");await expect(rows).toHaveCount(2);
   await rows.first().getByRole("button",{name:t("deletePermanently"),exact:true}).click();
   // A single synthetic IndexedDB failure prepares the error branch; actions use real UI.
   await page.evaluate(()=>{const original=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,key){if(this.name==="passwordVault"){IDBObjectStore.prototype.put=original;throw new DOMException("Synthetic one-write fault","QuotaExceededError");}return key===undefined?original.call(this,value):original.call(this,value,key);};});
@@ -105,17 +119,22 @@ for (const language of ["zh-CN", "en"] as const) {
   await page.getByRole("button",{name:t("trashEmptyAssets"),exact:true}).click();await page.getByRole("dialog").getByRole("button",{name:t("emptyTrash"),exact:true}).click();await expect(page.locator(".trash-row")).toHaveCount(0);await page.reload();await page.locator("#password-vault-unlock-master").fill(master);await page.getByRole("button",{name:t("pwVaultUnlock"),exact:true}).click();await expect(rows).toHaveCount(0);await expect(page.locator(".trash-row")).toHaveCount(0);await shot(page,`purged-reloaded-${language}`);
  });
  test(`${language} TT02 TT06 TT08 layouts and confirmation states`,async({page})=>{
-  test.setTimeout(180000);await setup(page,t);await create(page,t);await create(page,t,"Long account name · 很长的账号名称 "+"Example ".repeat(15),"long-identifier-".repeat(6)+"@example.test");await trashLogin(page,t,1);
+  test.setTimeout(180000);await setup(page,t);await create(page,t);
+  const longTitle = "Long account name · 很长的账号名称 " + "Example ".repeat(15).trimEnd();
+  await create(page,t,longTitle,"long-identifier-".repeat(6)+"@example.test");
   const matrix=[];
   for(const width of [390,768,1280,1810,1920,2262]){
    await page.setViewportSize({width,height:1000});await page.locator(".asset-category-manage").hover();await page.locator("#password-vault-search-input").focus();await shot(page,`toolbar-${language}-${width}`);
-   const geometry=await page.locator(".asset-category-toolbar").evaluate(node=>[node.querySelector(".asset-category-scroll button"),node.querySelector(".asset-account-search"),node.querySelector(".themed-select-trigger"),node.querySelector(".asset-category-manage"),...node.querySelectorAll(".account-toolbar-actions button")].map(n=>{const r=n!.getBoundingClientRect();return {y:r.y,h:r.height,center:r.y+r.height/2};}));
+   const toolbar = page.locator(".asset-category-toolbar");
+   await expect(toolbar.getByRole("button", {name:t("accountBatchSelect"),exact:true})).toBeVisible();
+   await expect(toolbar.locator(".account-toolbar-actions button")).toHaveCount(4);
+   const geometry=await toolbar.evaluate(node=>[node.querySelector(".asset-category-scroll button"),node.querySelector(".asset-account-search"),node.querySelector(".asset-category-manage"),...node.querySelectorAll(".account-toolbar-actions button")].map(n=>{const r=n!.getBoundingClientRect();return {y:r.y,h:r.height,center:r.y+r.height/2};}));
    for(const control of geometry)expect(control.h).toBe(44); if(width>=1280)expect(Math.max(...geometry.map(v=>v.center))-Math.min(...geometry.map(v=>v.center))).toBeLessThanOrEqual(1);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false); matrix.push({width,geometry});
    await page.locator(".account-options-trigger").click(); await shot(page,`menu-${language}-${width}`);await page.keyboard.press("Escape");
    await page.locator(".asset-category-add").click();await shot(page,`category-${language}-${width}`);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
   }
-  await page.setViewportSize({width:1280,height:1000});await page.locator(".sidebar-trash").click();
+  await page.setViewportSize({width:1280,height:1000});await trashAccount(page,t,longTitle);await page.locator(".sidebar-trash").click();
   for(const width of [390,768,1280,1810,1920,2262]){await page.setViewportSize({width,height:1000});await shot(page,`trash-${language}-${width}`);expect((await page.locator(".password-vault-section-title > small").boundingBox())!.height).toBeLessThan(60);await page.locator(".password-vault-entry-trash").getByRole("button",{name:t("deletePermanently"),exact:true}).click();await shot(page,`purge-${language}-${width}`);expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();}
   writeFileSync(join(output,`matrix-${language}.json`),JSON.stringify({ids:["TT02","TT06","TT08"],candidate:portableCandidate(),matrix},null,2));
  });

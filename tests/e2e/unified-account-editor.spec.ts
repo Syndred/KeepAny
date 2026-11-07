@@ -14,12 +14,23 @@ const card=(page:Page,name="UE main account")=>page.locator(".compact-account-ca
 async function returnCreatedAccountToList(page: Page, t: (key: string) => string, title: string, username: string) {
  await expect(page).toHaveURL(/\/assets\/account\/[^/#]+$/);
  await expect(page.locator(".page-header h1")).toHaveText(title);
- await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText(username);
+ await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText(username || t("pwVaultValueEmpty"));
  await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
  await expect(page).toHaveURL(/\/accounts$/);
  await expect(page.locator(".account-toolbar-actions")).toBeVisible();
 }
 async function save(page:Page,t:T){const d=page.getByRole("dialog");await d.getByRole("button",{name:t("save"),exact:true}).click();await expect(d).toHaveCount(0);}
+async function openAccountRecycle(account: Locator, page: Page, t: T) {
+ await account.getByRole("button", { name: t("accountDeleteAccountTitle"), exact: true }).click();
+ const dialog = page.getByRole("dialog", { name: t("accountDeleteAccountTitle"), exact: true });
+ await expect(dialog).toBeVisible();
+ return dialog;
+}
+async function restoreOrdinaryAccount(page: Page, t: T, id: string) {
+ const row = page.locator(`.trash-row[data-asset-id="${id}"]`);
+ await row.getByRole("button", { name: t("restore"), exact: true }).click();
+ await expect(row).toHaveCount(0);
+}
 async function setup(page:Page,t:T){await page.goto("/");await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();await expect(page.locator(".compact-account-card")).toHaveCount(0);await page.locator("#password-vault-master").fill(master);await page.locator("#password-vault-master-confirm").fill(master);await page.getByRole("button",{name:t("accountSetUp"),exact:true}).click();await expect(page.locator(".account-toolbar-actions")).toBeVisible();}
 async function create(page:Page,t:T,name="UE main account",user="main@example.test",password=primary,aliases:string[]=[]){await page.locator(".asset-category-toolbar").getByRole("button",{name:t("add"),exact:true}).click();const d=page.getByRole("dialog");await d.locator("#password-vault-entry-title").fill(name);await d.locator("#password-vault-entry-username").fill(user);await d.locator("#password-vault-entry-password").fill(password);await d.locator("#password-vault-entry-url").fill("https://main.example.test/");for(const alias of aliases){await d.getByRole("button",{name:t("pwVaultAddIdentifier"),exact:true}).click();await d.locator(".pw-smart-identifier-row input").last().fill(alias);}await save(page,t);await returnCreatedAccountToList(page,t,name,user);await expect(card(page,name)).toBeVisible();}
 async function unlock(page:Page,t:T,password=master){await page.locator("#password-vault-unlock-master").fill(password);await page.getByRole("button",{name:t("accountUnlockAction"),exact:true}).click();await expect(page.locator(".account-toolbar-actions")).toBeVisible();}
@@ -35,7 +46,9 @@ async function shot(page:Page,name:string){
   const header=await page.locator(".asset-category-toolbar").boundingBox(),tools=await page.locator(".account-toolbar-actions").boundingBox();
   expect(tools!.y).toBeGreaterThanOrEqual(header!.y);expect(tools!.y+tools!.height).toBeLessThanOrEqual(header!.y+header!.height+1);
   const buttons=await page.locator(".account-toolbar-actions button").evaluateAll(ns=>ns.map(n=>({y:n.getBoundingClientRect().top,h:n.getBoundingClientRect().height})));
-  expect(buttons).toHaveLength(3);expect(Math.abs(buttons[0].y-buttons[1].y)).toBeLessThanOrEqual(1);
+  expect(buttons).toHaveLength(4);
+  await expect(page.locator(".account-toolbar-actions .account-batch-toggle")).toBeVisible();
+  for (const button of buttons) { expect(Math.abs(button.y-buttons[0].y)).toBeLessThanOrEqual(1); expect(button.h).toBeGreaterThanOrEqual(44); }
   if(page.viewportSize()!.width===390)expect((await page.locator(".compact-account-card").first().boundingBox())!.y).toBeLessThanOrEqual(330);
  }
  await page.screenshot({path:join(evidence,name+".png"),fullPage:true});
@@ -68,25 +81,24 @@ for(const language of ["zh-CN","en"] as const){
   const page=await context.newPage();
   try {
    await setup(page,t);await create(page,t);const retained=card(page),retainedId=await retained.getAttribute("data-entry-id");await create(page,t,"UE ordinary only","","");
-   const ordinary=card(page,"UE ordinary only"),id=await ordinary.getAttribute("data-account-id");
-   await ordinary.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
-   await page.getByRole("dialog").getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
-   await expect(page.getByRole("dialog")).toHaveCount(0);
-   await expect(ordinary).not.toHaveAttribute("data-entry-id",/.+/);
-   await ordinary.getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
-   await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();
+   const ordinary=card(page,"UE ordinary only"),id=await ordinary.getAttribute("data-account-id"),entryId=await ordinary.getAttribute("data-entry-id");
+   const canceled = await openAccountRecycle(ordinary, page, t);
+   await canceled.getByRole("button",{name:t("cancel"),exact:true}).click();
    await expect(ordinary).toBeVisible();
-   await ordinary.getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
-   await page.getByRole("dialog").getByRole("button",{name:t("pwVaultDeleteEntry"),exact:true}).click();
+   const confirmed = await openAccountRecycle(ordinary, page, t);
+   await confirmed.getByRole("button",{name:t("accountDetailDelete"),exact:true}).click();
    await expect(page.getByRole("dialog")).toHaveCount(0);
    await expect(ordinary).toHaveCount(0);
    await expect(retained).toHaveAttribute("data-entry-id",retainedId!);await expect(page.locator("#vault-trash")).toHaveCount(0);
    await page.locator(".sidebar").getByRole("link",{name:t("trash"),exact:true}).click();
    await expect(page.locator("#vault-trash .password-vault-entry-trash")).toHaveCount(1);
-   const row=page.locator(".trash-row").filter({hasText:"UE ordinary only"});
-   await row.getByRole("button",{name:t("restore"),exact:true}).click();await expect(row).toHaveCount(0);
+   await restoreOrdinaryAccount(page, t, id!);
+   const encrypted = page.locator(`#vault-trash [data-entry-id="${entryId}"]`);
+   await encrypted.getByRole("button",{name:t("pwVaultRestoreEntry"),exact:true}).click();
+   await expect(encrypted).toHaveCount(0);
    await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();
    await expect(ordinary).toHaveAttribute("data-account-id",id!);
+   await expect(ordinary).toHaveAttribute("data-entry-id",entryId!);
    await page.reload();await unlock(page,t);await expect(ordinary).toHaveAttribute("data-account-id",id!);
    await expect(retained).toHaveAttribute("data-entry-id",retainedId!);await expect(page.locator("#vault-trash")).toHaveCount(0);
    await shot(page,`ordinary-restored-${language}`);
@@ -118,8 +130,9 @@ for(const language of ["zh-CN","en"] as const){
    await expect(account).toHaveAttribute("data-account-id",id!);await expect(account).toHaveAttribute("data-entry-id",entryId!);
    await account.getByRole("button",{name:t("pwVaultCopyPassword"),exact:true}).click();
    expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe("RetriedPassword!2026");
-   await account.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
-   await page.getByRole("dialog").getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();
+   const recycle = await openAccountRecycle(account, page, t);
+   await recycle.getByRole("button",{name:t("accountDetailDelete"),exact:true}).click();
+   await expect(recycle).toHaveCount(0);
    await page.locator(".sidebar-trash").click();
    const trash=page.locator("#vault-trash");await expect(trash.locator(".password-vault-entry-trash")).toHaveCount(1);
    await trash.getByRole("button",{name:t("deletePermanently"),exact:true}).click();
@@ -133,6 +146,7 @@ for(const language of ["zh-CN","en"] as const){
    await purge.getByRole("button",{name:t("cancel"),exact:true}).click();
    await trash.getByRole("button",{name:t("pwVaultRestoreEntry"),exact:true}).click();
    await expect(page.getByRole("dialog")).toHaveCount(0);
+   await restoreOrdinaryAccount(page, t, id!);
    await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();
    await expect(account).toHaveAttribute("data-entry-id",entryId!);
    await page.reload();await unlock(page,t);
@@ -150,8 +164,53 @@ for(const language of ["zh-CN","en"] as const){
  test(`${language} UE04 edits the selected backup without overwriting the primary`,async({browser},info)=>{
   const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language,permissions:["clipboard-read","clipboard-write"]});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();try{await setup(page,t);await create(page,t,"UE main account","main@example.test",primary,["alias@example.test"]);let account=card(page);const id=await account.getAttribute("data-account-id");await addLogin(page,t,account);account=page.locator(`.compact-account-card[data-account-id="${id}"]`);await chooseLogin(account,"backup@example.test");await account.getByRole("button",{name:t("edit"),exact:true}).click();const d=page.getByRole("dialog");await expect(d).toHaveCount(1);await expect(d.locator("#password-vault-entry-username")).toHaveValue("backup@example.test");await d.locator("#password-vault-entry-password").fill("EditedBackup!2026");await d.locator("#password-vault-entry-title").fill("UE private backup edited");await save(page,t);await expect(account).toContainText("UE private backup edited");await account.getByRole("button",{name:t("pwVaultCopyPassword"),exact:true}).click();expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe("EditedBackup!2026");await chooseLogin(account,"main@example.test");await account.getByRole("button",{name:t("pwVaultCopyPassword"),exact:true}).click();expect(await page.evaluate(()=>navigator.clipboard.readText())).toBe(primary);await chooseLogin(account,"alias@example.test");await account.getByRole("button",{name:t("edit"),exact:true}).click();await expect(d.locator("#password-vault-entry-username")).toHaveValue("main@example.test");await expect(d.locator(".pw-smart-identifier-row input")).toHaveValue("alias@example.test");await d.getByRole("button",{name:t("cancel"),exact:true}).click();await shot(page,`selected-backup-${language}`);}finally{await context.close();}
  });
- test(`${language} UE06 deleting alias or entry keeps other logins and restores`,async({browser},info)=>{
-  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();try{await setup(page,t);await create(page,t,"UE main account","main@example.test",primary,["alias@example.test"]);const id=await card(page).getAttribute("data-account-id"),account=page.locator(`.compact-account-card[data-account-id="${id}"]`);await addLogin(page,t,account);await chooseLogin(account,"alias@example.test");await account.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();let d=page.getByRole("dialog");await expect(d).toHaveCount(1);await expect(d).toContainText("alias@example.test");await d.getByRole("button",{name:t("cancel"),exact:true}).click();await expect(account.locator("[data-login-username]")).toHaveText("alias@example.test");await account.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();await d.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();await expect(d).toHaveCount(0);await expect(account.locator(".compact-account-switch")).toContainText("/2");await chooseLogin(account,"main@example.test");await account.locator(".compact-account-title-block").click();/* Approved inline version list replaces the history-menu modal. */await page.locator(".account-history-row").first().getByRole("button", {name:/^(恢复|Restore) ·/}).click();await page.getByRole("dialog").getByRole("button",{name:t("pwVaultHistoryRestore"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0);await page.locator(".topbar-back-link").click();await expect(account.locator(".compact-account-switch")).toContainText("/3");await chooseLogin(account,"backup@example.test");await account.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();await d.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();await expect(d).toHaveCount(0);await page.locator(".sidebar-trash").click();await expect(page.locator("#vault-trash .password-vault-entry-trash")).toHaveCount(1);await page.locator("#vault-trash").getByRole("button",{name:t("pwVaultRestoreEntry"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0);await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();await expect(account.locator(".compact-account-switch")).toContainText("/3");await shot(page,`delete-restored-${language}`);}finally{await context.close();}
+ test(`${language} UE06 removing an alias preserves other logins and whole-account recycle restores them`,async({browser},info)=>{
+  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});
+  await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);
+  const page=await context.newPage();
+  try {
+   await setup(page,t);
+   await create(page,t,"UE main account","main@example.test",primary,["alias@example.test"]);
+   const id=await card(page).getAttribute("data-account-id");
+   const account=page.locator(`.compact-account-card[data-account-id="${id}"]`);
+   await addLogin(page,t,account);
+   await chooseLogin(account,"alias@example.test");
+   const edit=account.getByRole("button",{name:t("edit"),exact:true});
+   await edit.click();
+   const dialog=page.getByRole("dialog");
+   const removeAlias=dialog.getByRole("button",{name:t("pwVaultRemoveIdentifier").replace("{{count}}","1"),exact:true});
+   await removeAlias.click();
+   await dialog.getByRole("button",{name:t("cancel"),exact:true}).click();
+   await expect(account.locator("[data-login-username]")).toHaveText("alias@example.test");
+   await edit.click();
+   await removeAlias.click();
+   await save(page,t);
+   await expect(account.locator(".compact-account-switch")).toContainText("/2");
+   await chooseLogin(account,"main@example.test");
+   await account.locator(".compact-account-title-block").click();
+   await page.locator(".account-history-row").first().getByRole("button",{name:/^(恢复|Restore) ·/}).click();
+   await dialog.getByRole("button",{name:t("pwVaultHistoryRestore"),exact:true}).click();
+   await expect(dialog).toHaveCount(0);
+   await page.locator(".topbar-back-link").click();
+   await expect(account.locator(".compact-account-switch")).toContainText("/3");
+   await chooseLogin(account,"backup@example.test");
+   const recycle=await openAccountRecycle(account,page,t);
+   await recycle.getByRole("button",{name:t("accountDetailDelete"),exact:true}).click();
+   await expect(recycle).toHaveCount(0);
+   await expect(account).toHaveCount(0);
+   await page.locator(".sidebar-trash").click();
+   const trashed=page.locator("#vault-trash .password-vault-entry-trash");
+   await expect(trashed).toHaveCount(2);
+   for (const remaining of [1,0]) {
+    await trashed.first().getByRole("button",{name:t("pwVaultRestoreEntry"),exact:true}).click();
+    await expect(trashed).toHaveCount(remaining);
+   }
+   await restoreOrdinaryAccount(page,t,id!);
+   await page.locator(".sidebar nav").getByRole("link",{name:t("accountsWorkspace"),exact:true}).click();
+   await expect(account.locator(".compact-account-switch")).toContainText("/3");
+   for (const username of ["main@example.test","alias@example.test","backup@example.test"]) await chooseLogin(account,username);
+   await shot(page,`delete-restored-${language}`);
+  } finally {await context.close();}
  });
  test(`${language} UE05 external save locks and clears the entire private editor`,async({browser},info)=>{
   const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();try{await setup(page,t);await create(page,t);const other=await context.newPage();await other.goto("/accounts");await unlock(other,t);await card(page).getByRole("button",{name:t("edit"),exact:true}).click();await page.locator("#password-vault-entry-password").fill("Unsaved private secret");await card(other).getByRole("button",{name:t("edit"),exact:true}).click();await other.locator("#password-vault-entry-password").fill("OtherTabChanged!2026");await save(other,t);await expect(page.getByRole("dialog")).toHaveCount(0);await expect(page.locator(".compact-account-card")).toHaveCount(0);await expect(page.locator("#password-vault-unlock-master")).toBeVisible();await shot(page,`locked-editor-${language}`);await unlock(page,t);await expect(page.getByRole("dialog")).toHaveCount(0);await card(page).getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.locator("#password-vault-entry-password")).toHaveValue("OtherTabChanged!2026");}finally{await context.close();}
@@ -162,10 +221,43 @@ for(const language of ["zh-CN","en"] as const){
  test(`${language} UE08-UE09 imported logins share the same cards and retain encrypted backups`,async({browser},info)=>{
   test.setTimeout(150000);const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language,acceptDownloads:true});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();try{await setup(page,t);await create(page,t);await importVisualKdbxEntries(page,t,Array.from({length:8},(_,i)=>({title:`UE imported ${i}`,username:`private-${i}@example.test`,password:`Imported-${i}!2026`,notes:`Private imported note ${i}`,usernameAliases:i===0?["private-alias@example.test"]:[]})));await expect(page.locator(".compact-account-card")).toHaveCount(9);await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(1);await expect(page.locator(".workspace-password-only")).toHaveCount(0);await page.locator("#password-vault-search-input").fill("private-alias@example.test");await expect(page.locator(".compact-account-card")).toHaveCount(1);await expect(page.locator("[data-login-username]")).toHaveText("private-alias@example.test");expect(await page.evaluate(()=>sessionStorage.getItem("keepany-account-list-search"))).not.toBe("private-alias@example.test");await page.locator("#password-vault-search-input").fill("");await expect(page.locator(".compact-account-card")).toHaveCount(9);const target=card(page,"UE imported 0"),id=await target.getAttribute("data-entry-id");await target.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(1);await page.locator("#password-vault-entry-password").fill("EditedImported!2026");await save(page,t);await expect(target).toHaveAttribute("data-entry-id",id!);await expect(target).toHaveAttribute("data-private-only","true");await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(1);await openAccountOption(page,t,"pwVaultChangeMaster");await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();const waiting=page.waitForEvent("download");await openAccountOption(page,t,"pwVaultExport");const download=await waiting,path=info.outputPath(`unified-${language}.kdbx`);await download.saveAs(path);const entries=await inspectVisualKdbx(path,master);expect(entries).toHaveLength(9);expect(entries.find(e=>e.draft.id===id)?.draft.password).toBe("EditedImported!2026");await shot(page,`imported-cards-${language}`);await page.reload();await unlock(page,t);await expect(page.locator(".compact-account-card")).toHaveCount(9);const restored=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});try{await restored.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const rp=await restored.newPage();await rp.goto("/accounts");await rp.getByRole("button",{name:t("accountImportBackup"),exact:true}).click();await rp.locator("#password-vault-import-file").setInputFiles(path);await rp.locator("#password-vault-import-password").fill(master);await rp.getByRole("dialog").getByRole("button",{name:t("pwVaultImportNow"),exact:true}).click();await expect(rp.getByRole("dialog")).toHaveCount(0);await expect(rp.locator(".compact-account-card")).toHaveCount(9);await expect(rp.locator(".compact-account-card:not([data-private-only])")).toHaveCount(0);}finally{await restored.close();}}finally{await context.close();}
  });
- test(`${language} AT02 UE08b a private template creates a separate ordinary card without changing its source`,async({browser},info)=>{
-  test.setTimeout(90000);const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();try{await setup(page,t);await create(page,t);await importVisualKdbxEntries(page,t,[{title:"UE private source",username:"source-private@example.test",password:"SourcePrivate!2026"}]);await expect(page.locator(".compact-account-card")).toHaveCount(2);await card(page,"UE private source").getByRole("button",{name:t("add"),exact:true}).click();await page.locator("#password-vault-entry-title").fill("UE additional private");await page.locator("#password-vault-entry-username").fill("additional.private@example.test");await page.locator("#password-vault-entry-password").fill("AdditionalPrivate!2026");await save(page,t);await returnCreatedAccountToList(page,t,"UE additional private","additional.private@example.test");await expect(page.locator(".compact-account-card")).toHaveCount(3);await expect(page.locator(".compact-account-card:not([data-private-only])")).toHaveCount(2);await expect(card(page,"UE additional private")).not.toHaveAttribute("data-private-only","true");await expect(card(page,"UE private source")).toHaveAttribute("data-private-only","true");await shot(page,`private-added-${language}`);}finally{await context.close();}
+ test(`${language} AT02 UE08b a private template creates a separate ordinary account without changing its source`,async({browser},info)=>{
+  test.setTimeout(90000);
+  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});
+  await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);
+  const page=await context.newPage();
+  const cards=page.locator(".compact-account-card");
+  const source=card(page,"UE private source"), created=card(page,"UE additional private");
+  const search=page.locator("#password-vault-search-input");
+  try {
+   await setup(page,t);
+   await create(page,t);
+   await importVisualKdbxEntries(page,t,[{title:"UE private source",username:"source-private@example.test",password:"SourcePrivate!2026"}]);
+   await expect(cards).toHaveCount(2);
+   const sourceEntryId=await source.getAttribute("data-entry-id");
+   await source.getByRole("button",{name:t("add"),exact:true}).click();
+   await page.locator("#password-vault-entry-title").fill("UE additional private");
+   await page.locator("#password-vault-entry-username").fill("additional.private@example.test");
+   await page.locator("#password-vault-entry-password").fill("AdditionalPrivate!2026");
+   await save(page,t);
+   await expect(page).toHaveURL(/\/assets\/account\/[^/#]+$/);
+   const createdId=decodeURIComponent(new URL(page.url()).pathname.split("/").at(-1)!);
+   await returnCreatedAccountToList(page,t,"UE additional private","additional.private@example.test");
+   await expect(cards).toHaveCount(2);
+   await search.fill("additional.private@example.test");
+   await expect(created).toHaveAttribute("data-account-id",createdId);
+   await expect(created).not.toHaveAttribute("data-private-only","true");
+   await expect(created.locator("[data-login-username]")).toHaveText("additional.private@example.test");
+   await search.fill("source-private@example.test");
+   await expect(source).toHaveAttribute("data-private-only","true");
+   await expect(source).toHaveAttribute("data-entry-id",sourceEntryId!);
+   await expect(source.locator("[data-login-username]")).toHaveText("source-private@example.test");
+   await search.fill("");
+   await expect(cards).toHaveCount(2);
+   await shot(page,`private-added-${language}`);
+  } finally {await context.close();}
  });
  test(`${language} UE02-UE10 merged card, editor, menus and gate at supported widths`,async({browser},info)=>{
-  test.setTimeout(180000);const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();try{await setup(page,t);await create(page,t);await create(page,t,"UE long account name · 名称用于核对紧凑卡片中的图标及长内容不会互相遮挡或横向溢出","long-identifier@example.test","");for(const width of [390,768,1280,1920,2262,2560]){await page.setViewportSize({width,height:1000});const account=card(page);await shot(page,`matrix-card-${language}-${width}`);const targets=await account.locator("button,a").evaluateAll(ns=>ns.filter(n=>n.checkVisibility()).map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));if(width===390)for(const r of targets){expect(r.h).toBeGreaterThanOrEqual(44);expect(r.w).toBeGreaterThanOrEqual(44);}expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);await account.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(1);await shot(page,`matrix-edit-${language}-${width}`);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();await account.getByRole("button",{name:t("add"),exact:true}).click();await shot(page,`matrix-create-${language}-${width}`);await page.keyboard.press("Escape");await account.getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();await shot(page,`matrix-delete-${language}-${width}`);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();}await page.getByRole("button",{name:t("pwVaultLock"),exact:true}).click();for(const width of [390,768,1280,1920,2262,2560]){await page.setViewportSize({width,height:1000});await expect(page.locator(".compact-account-card")).toHaveCount(0);await shot(page,`matrix-gate-${language}-${width}`);}}finally{writeFileSync(join(evidence,`matrix-${language}.json`),JSON.stringify({candidate:portableCandidate(),ids:["UE01","UE02","UE03","UE06","UE10"]},null,2));await context.close();}
+  test.setTimeout(180000);const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:1000},locale:language});await context.addInitScript(lang=>localStorage.setItem("keepany-language",lang),language);const page=await context.newPage();try{await setup(page,t);await create(page,t);await create(page,t,"UE long account name · 名称用于核对紧凑卡片中的图标及长内容不会互相遮挡或横向溢出","long-identifier@example.test","");for(const width of [390,768,1280,1920,2262,2560]){await page.setViewportSize({width,height:1000});const account=card(page);await shot(page,`matrix-card-${language}-${width}`);const targets=await account.locator("button,a").evaluateAll(ns=>ns.filter(n=>n.checkVisibility()).map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));if(width===390)for(const r of targets){expect(r.h).toBeGreaterThanOrEqual(44);expect(r.w).toBeGreaterThanOrEqual(44);}expect(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)).toBe(false);await account.getByRole("button",{name:t("edit"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(1);await shot(page,`matrix-edit-${language}-${width}`);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();await account.getByRole("button",{name:t("add"),exact:true}).click();await shot(page,`matrix-create-${language}-${width}`);await page.keyboard.press("Escape");await openAccountRecycle(account,page,t);await shot(page,`matrix-delete-${language}-${width}`);await page.getByRole("dialog").getByRole("button",{name:t("cancel"),exact:true}).click();}await page.getByRole("button",{name:t("pwVaultLock"),exact:true}).click();for(const width of [390,768,1280,1920,2262,2560]){await page.setViewportSize({width,height:1000});await expect(page.locator(".compact-account-card")).toHaveCount(0);await shot(page,`matrix-gate-${language}-${width}`);}}finally{writeFileSync(join(evidence,`matrix-${language}.json`),JSON.stringify({candidate:portableCandidate(),ids:["UE01","UE02","UE03","UE06","UE10"]},null,2));await context.close();}
  });
 }

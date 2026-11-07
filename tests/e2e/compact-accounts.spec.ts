@@ -71,14 +71,28 @@ for (const language of ["zh-CN", "en"] as const) {
 		const page = await context.newPage(), t = text(language);
 		try {
 			await prepare(page, t, [], false);
-			await account(page).getByRole("button", { name: t("accountDeleteLogin"), exact: true }).click();
-            await page.getByRole("dialog", { name: t("accountDeleteLogin"), exact: true }).getByRole("button", { name: t("accountDeleteLogin"), exact: true }).click();
+			const card = account(page);
+			await expect(card).toHaveAttribute("data-account-id", /.+/);
+			await expect(card).toHaveAttribute("data-entry-id", /.+/);
+			const accountId = await card.getAttribute("data-account-id"), entryId = await card.getAttribute("data-entry-id");
+			await card.getByRole("button", { name: t("accountDeleteAccountTitle"), exact: true }).click();
+			await page.getByRole("dialog", { name: t("accountDeleteAccountTitle"), exact: true }).getByRole("button", { name: t("accountDetailDelete"), exact: true }).click();
 			await expect(page.getByRole("dialog")).toHaveCount(0);
+			await expect(card).toHaveCount(0);
 			await page.locator(".sidebar-trash").click();
-			await page.locator("#vault-trash").getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true }).click();
+			const trashedAsset = page.locator(`.trash-row[data-asset-id="${accountId}"]`);
+			const trashedEntry = page.locator(`#vault-trash [data-entry-id="${entryId}"]`);
+			await expect(trashedAsset).toBeVisible();
+			await expect(trashedEntry).toBeVisible();
+			await trashedAsset.getByRole("button", { name: t("restore"), exact: true }).click();
+			await expect(trashedAsset).toHaveCount(0);
+			await trashedEntry.getByRole("button", { name: t("pwVaultRestoreEntry"), exact: true }).click();
+			await expect(trashedEntry).toHaveCount(0);
 			await expect(page.getByRole("dialog")).toHaveCount(0);
 			await page.locator(".sidebar nav").getByRole("link", { name: t("accountsWorkspace"), exact: true }).click();
-			await expect(account(page)).toHaveAttribute("data-entry-id", /.+/);
+			await expect(card).toHaveAttribute("data-account-id", accountId!);
+			await expect(card).toHaveAttribute("data-entry-id", entryId!);
+			await expect(card.locator("[data-login-username]")).toHaveText("main@example.test");
 			await screenshot(page, `entry-restored-${language}`);
 			await expect(page.getByRole("dialog")).toHaveCount(0);
 		} finally { await context.close(); }
@@ -198,21 +212,44 @@ for (const language of ["zh-CN", "en"] as const) {
 		try {
 			await page.goto("/accounts"); await screenshot(page, `empty-${language}`);
 			await prepare(page, t);
-			await createAccount(page, t, "CC long title · 账号名称用于核对紧凑卡片与相邻卡片不会互相拉伸的长标题", "long-identifier-for-compact-account@example.test");
+			const longTitle = "CC long title · 账号名称用于核对紧凑卡片与相邻卡片不会互相拉伸的长标题";
+			await createAccount(page, t, longTitle, "long-identifier-for-compact-account@example.test");
 			for (const width of [390, 768, 1280, 1920, 2262, 2560]) {
 				await page.setViewportSize({ width, height: 1000 });
 				await expect(account(page)).toBeVisible();
-				await account(page, "CC public account").getByRole("button", { name: t("pwVaultCopyUsername"), exact: true }).click();
+				// At the top the geometry can compare full cards, with none behind the sticky toolbar.
+				await page.evaluate(() => window.scrollTo(0, 0));
+				await account(page, longTitle).getByRole("button", { name: t("pwVaultCopyUsername"), exact: true }).click();
 				await expect(page.locator(".compact-account-feedback-message")).toBeVisible();
+				await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
 				const feedbackOverlap = await page.locator(".compact-account-feedback-message").evaluate(message => {
 					const r = message.getBoundingClientRect();
 					return [...document.querySelectorAll(".compact-account-card, .account-toolbar-actions button, .asset-category-toolbar")].some(node => { const c = node.getBoundingClientRect(); return r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top; });
 				});
 				expect(feedbackOverlap).toBe(false);
 				await screenshot(page, `matrix-normal-${language}-${width}`);
-				const result = await page.locator(".compact-account-card").evaluateAll((cards, width) => ({ width, overflow: document.documentElement.scrollWidth > innerWidth + 1, cards: cards.map(card => ({ height: card.getBoundingClientRect().height, width: card.getBoundingClientRect().width, targets: [...card.querySelectorAll("button,a")].filter(el => el.checkVisibility()).map(el => ({ label: el.getAttribute("aria-label") || el.textContent, width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height })) })) }), width);
+				const result = await page.locator(".compact-account-card").evaluateAll((cards, width) => ({
+					width,
+					overflow: document.documentElement.scrollWidth > innerWidth + 1,
+					cards: cards.map(card => {
+						const notes = card.querySelector("[data-login-notes]")!.closest(".compact-account-row")!;
+						return {
+							height: card.getBoundingClientRect().height,
+							width: card.getBoundingClientRect().width,
+							notesHeight: notes.getBoundingClientRect().height,
+							notesGap: parseFloat(getComputedStyle(notes).marginBottom),
+							targets: [...card.querySelectorAll("button,a")].filter(el => el.checkVisibility()).map(el => ({ label: el.getAttribute("aria-label") || el.textContent, width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height })),
+						};
+					}),
+				}), width);
 				matrix.push(result); expect(result.overflow).toBe(false);
-				for (const card of result.cards) { expect(card.height).toBeLessThanOrEqual(width === 390 ? 250 : 220); if (width === 390) for (const target of card.targets) expect(target.height).toBeGreaterThanOrEqual(44); }
+				for (const card of result.cards) {
+					// Keep the original two-row height budget and verify the added notes row separately.
+					expect(card.notesHeight).toBe(width === 390 ? 49 : 39);
+					expect(card.notesGap).toBe(7);
+					expect(card.height - card.notesHeight - card.notesGap).toBeLessThanOrEqual(width === 390 ? 250 : 220);
+					if (width === 390) for (const target of card.targets) expect(target.height).toBeGreaterThanOrEqual(44);
+				}
 			}
 			await page.setViewportSize({ width: 1280, height: 1000 });
 			await page.getByRole("button", { name: t("pwVaultLock"), exact: true }).click();

@@ -15,11 +15,13 @@ const byName = (page: Page, name: string) => cards(page).filter({ has: page.getB
 // List fixtures still verify the new-account destination before returning through the UI.
 async function returnCreatedAccountToList(page: Page, t: (key: string) => string, title: string, username: string) {
  await expect(page).toHaveURL(/\/assets\/account\/[^/#]+$/);
+ const accountId = decodeURIComponent(new URL(page.url()).pathname.split("/").at(-1)!);
  await expect(page.locator(".page-header h1")).toHaveText(title);
  await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText(username);
  await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
  await expect(page).toHaveURL(/\/accounts$/);
  await expect(page.locator(".account-toolbar-actions")).toBeVisible();
+ return accountId;
 }
 async function save(page: Page, t: T) { const dialog = page.getByRole("dialog"); await dialog.getByRole("button", { name: t("save"), exact: true }).click(); await expect(dialog).toHaveCount(0); }
 async function shot(page: Page, name: string) { if (page.viewportSize()!.width < 768) await expect.poll(() => page.locator(".sidebar").evaluate(node => node.getBoundingClientRect().right)).toBeLessThanOrEqual(1); await page.screenshot({ path: join(output, `${name}.png`), fullPage: true }); }
@@ -44,7 +46,8 @@ for (const language of ["zh-CN", "en"] as const) {
   const source = byName(page, "Template Mail"), sourceId = await source.getAttribute("data-account-id");
   await shot(page, `before-contract-${language}`);
   await expect(source.getByRole("button", { name: t("moreActions"), exact: true })).toHaveCount(0);
-  await expect(source.locator("header button")).toHaveCount(0); await expect(source.locator("footer button")).toHaveCount(3);
+  await expect(source.locator("header button")).toHaveCount(0); await expect(source.locator("footer button")).toHaveCount(4);
+  await expect(source.locator("[data-account-switch]")).toBeDisabled();
   const add = source.getByRole("button", { name: t("add"), exact: true }); await add.click();
   const dialog = page.getByRole("dialog"); await expect(dialog).toHaveAccessibleName(t("workspaceAddAccount"));
   for (const [field, value] of Object.entries({ title: "Template Mail", username: "", password: "", notes: "", url: "https://mail.example.test/" })) await expect(dialog.locator(`#password-vault-entry-${field}`)).toHaveValue(value);
@@ -52,13 +55,26 @@ for (const language of ["zh-CN", "en"] as const) {
   await dialog.locator("#password-vault-entry-username").fill("discard@example.test"); await dialog.getByRole("button", { name: t("cancel"), exact: true }).click(); await expect(cards(page)).toHaveCount(1); await expect(add).toBeFocused();
   await add.click(); await page.keyboard.press("Escape"); await expect(cards(page)).toHaveCount(1);
   await add.click(); await dialog.locator("#password-vault-entry-username").fill("new@example.test"); await dialog.locator("#password-vault-entry-password").fill("Synthetic new secret"); await save(page, t);
-  await returnCreatedAccountToList(page,t,"Template Mail","new@example.test");
-  await expect(cards(page)).toHaveCount(2); const created = cards(page).filter({ hasText: "new@example.test" });
-  expect(await created.getAttribute("data-account-id")).not.toBe(sourceId); const original = page.locator(`.compact-account-card[data-account-id="${sourceId}"]`); await expect(original.locator("[data-login-username]")).toHaveText("source@example.test"); await expect(original.locator(".compact-account-switch")).toHaveCount(0);
+  const createdId = await returnCreatedAccountToList(page,t,"Template Mail","new@example.test");
+  expect(createdId).not.toBe(sourceId);
+  await expect(cards(page)).toHaveCount(1);
+  await expect(cards(page).locator("[data-account-switch]")).toBeEnabled();
+  const search = page.locator(".asset-account-search input");
+  await search.fill("Template Mail");
+  await expect(cards(page)).toHaveCount(2);
+  const created = page.locator(`.compact-account-card[data-account-id="${createdId}"]`);
+  const original = page.locator(`.compact-account-card[data-account-id="${sourceId}"]`);
+  await expect(created.locator("[data-login-username]")).toHaveText("new@example.test");
+  await expect(original.locator("[data-login-username]")).toHaveText("source@example.test");
+  await expect(original.locator(".compact-account-switch")).toHaveCount(0);
   await created.getByRole("button", { name: t("edit"), exact: true }).click(); await expect(dialog.locator("#password-vault-entry-notes")).toHaveValue(""); await expect(dialog.locator("#account-entry-category")).toContainText(t("email")); await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
-  await page.reload(); await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(cards(page)).toHaveCount(2); await expect(created).toBeVisible(); await shot(page, `saved-reloaded-${language}`);
+  await search.fill("");
+  await page.reload(); await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click();
+  await expect(cards(page)).toHaveCount(1);
+  await expect(cards(page).locator("[data-account-switch]")).toBeEnabled();
+  await search.fill("Template Mail");
+  await expect(cards(page)).toHaveCount(2); await expect(created).toBeVisible(); await expect(original).toBeVisible(); await shot(page, `saved-reloaded-${language}`);
   // The same-name templates must remain distinguishable when used from Assets.
-  const createdId = await created.getAttribute("data-account-id");
   await page.locator(".sidebar nav").getByRole("link", { name: t("assetsWorkspace"), exact: true }).click();
   await page.locator(".workspace-navigation").getByRole("link", { name: t("subscription"), exact: true }).click();
   await page.getByRole("button", { name: t("workspaceAddAsset"), exact: true }).click();
@@ -68,7 +84,7 @@ for (const language of ["zh-CN", "en"] as const) {
   await dialog.locator("#name").fill("Template-linked subscription"); await dialog.locator("#amount").fill("20"); await save(page, t);
   await page.locator(".asset-summary-card").filter({ hasText: "Template-linked subscription" }).click();
   await page.getByRole("button", { name: t("edit"), exact: true }).click();
-  await expect(dialog.locator("#subscriptionLoginAccount")).toHaveAttribute("data-value", createdId!);
+  await expect(dialog.locator("#subscriptionLoginAccount")).toHaveAttribute("data-value", createdId);
   await dialog.getByRole("button", { name: t("cancel"), exact: true }).click();
  });
  test(`${language} AT08-11 detail actions work for linked and private cards`, async ({ page, context }) => {
@@ -91,14 +107,29 @@ for (const language of ["zh-CN", "en"] as const) {
   await page.locator("#password-vault-entry-username").fill("private-new@example.test"); await save(page, t); await returnCreatedAccountToList(page,t,"Private template","private-new@example.test"); await expect(cards(page).filter({ hasText: "private-new@example.test" })).toBeVisible(); await shot(page, `private-template-created-${language}`);
  });
  test(`${language} AT05-06 input and storage failures retain the draft and retry once`, async ({ page }) => {
-  await setup(page, t); await byName(page, "Template Mail").getByRole("button", { name: t("add"), exact: true }).click(); const dialog = page.getByRole("dialog");
+  await setup(page, t);
+  const source = byName(page, "Template Mail");
+  const sourceId = await source.getAttribute("data-account-id");
+  await source.getByRole("button", { name: t("add"), exact: true }).click(); const dialog = page.getByRole("dialog");
   await dialog.locator("#password-vault-entry-title").fill(""); await dialog.getByRole("button", { name: t("save"), exact: true }).click(); expect(await dialog.locator("#password-vault-entry-title").evaluate((node: HTMLInputElement) => node.validity.valueMissing)).toBe(true);
   await dialog.locator("#password-vault-entry-title").fill("Retry template"); await dialog.locator("#password-vault-entry-url").fill("ftp://example.test/"); await dialog.getByRole("button", { name: t("save"), exact: true }).click(); await expect(dialog.getByRole("alert")).toHaveText(t("pwVaultInvalidUrl")); await shot(page, `invalid-${language}`);
   await dialog.locator("#password-vault-entry-url").fill("https://mail.example.test/"); await dialog.locator("#password-vault-entry-username").fill("retry@example.test");
   // One injected disk failure, restored immediately; the save and retry are normal UI actions.
   await page.evaluate(() => { const original = IDBObjectStore.prototype.put; IDBObjectStore.prototype.put = function(value, key) { if (this.name === "passwordVault") { IDBObjectStore.prototype.put = original; throw new DOMException("Synthetic KDBX write fault", "QuotaExceededError"); } return key === undefined ? original.call(this, value) : original.call(this, value, key); }; });
   await dialog.getByRole("button", { name: t("save"), exact: true }).click(); await expect(dialog.getByRole("alert")).toHaveText(t("accountEntryPartial")); await expect(dialog.locator("#password-vault-entry-username")).toHaveValue("retry@example.test"); await shot(page, `write-failure-${language}`);
-  await save(page, t); await returnCreatedAccountToList(page,t,"Retry template","retry@example.test"); await expect(cards(page)).toHaveCount(2); await expect(byName(page, "Retry template")).toHaveCount(1);
+  await save(page, t);
+  const retriedId = await returnCreatedAccountToList(page,t,"Retry template","retry@example.test");
+  await expect(cards(page)).toHaveCount(1);
+  const changeAccount = cards(page).locator("[data-account-switch]");
+  await expect(changeAccount).toBeEnabled();
+  if (await cards(page).getAttribute("data-account-id") === sourceId) await changeAccount.click();
+  await expect(byName(page, "Retry template")).toHaveAttribute("data-account-id", retriedId);
+  await expect(byName(page, "Retry template").locator("[data-login-username]")).toHaveText("retry@example.test");
+  await changeAccount.click();
+  await expect(source).toHaveAttribute("data-account-id", sourceId!);
+  await expect(source.locator("[data-login-username]")).toHaveText("source@example.test");
+  await changeAccount.click();
+  await expect(byName(page, "Retry template")).toHaveAttribute("data-account-id", retriedId);
  });
  test(`${language} AT12-13 visible layouts and modal states at supported widths`, async ({ page }) => {
   test.setTimeout(180000); await setup(page, t); const matrix: unknown[] = [];
