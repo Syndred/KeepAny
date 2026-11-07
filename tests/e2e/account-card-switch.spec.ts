@@ -3,23 +3,24 @@ import { mkdirSync } from 'node:fs';
 import { resources } from '../../apps/web/src/i18n';
 import { openVaultAccess } from './helpers/vault-access';
 
-// Controlled fault preparation only: abort synthetic write transactions, keep reads intact.
-async function failStorageWrites(page: Page, preferenceId = "keepany-account-defaults-v1") {
- await page.evaluate(id => {
-  const descriptor=Object.getOwnPropertyDescriptor(IDBRequest.prototype,'onsuccess')!;
+// Auxiliary CAS preparation: supply one outdated expected preference snapshot; never alter stored data.
+async function makePreferenceSnapshotStale(page: Page, preferenceId = "keepany-account-defaults-v1") {
+ await page.evaluate(id=>{
+  const original=JSON.stringify;
   (window as unknown as {faultHits:number}).faultHits=0;
-  Object.defineProperty(IDBRequest.prototype,'onsuccess',{...descriptor,set(listener) {
-   descriptor.set!.call(this,function(this:IDBRequest,event:Event){
-    const transaction=this.transaction;
-    if(transaction?.mode==='readwrite' && typeof this.result==='string' && this.result.endsWith(id)) { (window as unknown as {faultHits:number}).faultHits++; transaction.abort(); }
-    if(typeof listener==='function') return listener.call(this,event);
-   });
-  }});
-  addEventListener('keepany-test-clear-fault',()=>{Object.defineProperty(IDBRequest.prototype,'onsuccess',descriptor);},{once:true});
+  JSON.stringify=((value:unknown,replacer?:never,space?:string|number)=>{
+   const expected=value as {id?:string;value?:unknown};
+   if(!(window as unknown as {faultHits:number}).faultHits && expected?.id===id) {
+    (window as unknown as {faultHits:number}).faultHits++;
+    return original({...expected,value:['synthetic-outdated-preference']});
+   }
+   return original(value,replacer,space);
+  }) as typeof JSON.stringify;
+  addEventListener('keepany-test-clear-fault',()=>{JSON.stringify=original;},{once:true});
  },preferenceId);
 }
-async function clearStorageFailure(page:Page) {
- await expect.poll(()=>page.evaluate(()=>(window as unknown as {faultHits:number}).faultHits)).toBeGreaterThan(0);
+async function clearPreferenceConflict(page:Page) {
+ await expect.poll(()=>page.evaluate(()=>(window as unknown as {faultHits:number}).faultHits)).toBe(1);
  await page.evaluate(()=>dispatchEvent(new Event('keepany-test-clear-fault')));
 }
 
@@ -123,20 +124,25 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
   const whole = page.locator('[data-account-detail-switch]'), login = page.locator('.account-login-summary');
   await expect(page.getByRole('heading', { name: 'Synthetic first platform', exact: true })).toBeVisible();
   const firstURL = page.url().split("#")[0];
+  // Persist a known baseline even if A was only the implicit initial default.
+  await whole.click();await expect(login.locator('[data-login-username]')).toHaveText('second-login');
+  if(await page.locator('[data-account-default]').isEnabled()) await page.locator('[data-account-default]').click();
+  await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
+  await whole.click();await expect(login.locator('[data-login-username]')).toHaveText('first-login');
+
   if(await page.locator('[data-account-default]').isEnabled()) await page.locator('[data-account-default]').click();
   await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('[data-account-default]')).toBeDisabled();
   await whole.click();
   await expect(page.locator('[data-login-username]')).toHaveText('second-login');
   await expect(page.locator('[data-account-default]')).toBeEnabled();
-  await failStorageWrites(page);
+  await makePreferenceSnapshotStale(page);
   await page.locator('[data-account-default]').click();
-  await expect.poll(()=>page.evaluate(()=>(window as unknown as {faultHits:number}).faultHits)).toBeGreaterThan(0);
   await expect(page.getByRole('status').filter({hasText:t('error')})).toBeVisible();
   await expect(page.locator('[data-account-default]')).toBeEnabled();
   await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','false');
   await page.screenshot({path:`${output}/${language}-default-save-error.png`,fullPage:true});
-  await clearStorageFailure(page);
+  await clearPreferenceConflict(page);
   await page.locator('[data-account-default]').click();
   await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('[data-account-default]')).toBeDisabled();
@@ -209,7 +215,10 @@ for (const language of ['zh-CN','en'] as const) test(`${language} list edit moda
   const switcher=page.locator('[data-account-editor-switch]'),def=page.locator('[data-account-default]');
   await expect(switcher).toBeEnabled();if(await def.isEnabled()) await def.click();await expect(def).toHaveAttribute('aria-pressed','true');await expect(def).toBeDisabled();
   await switcher.click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-b');await expect(def).toBeEnabled();
-  await page.locator('#password-vault-entry-notes').fill('Unsaved B draft');await def.click();await expect(def).toHaveAttribute('aria-pressed','true');await expect(def).toBeDisabled();await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
+  await page.locator('#password-vault-entry-notes').fill('Unsaved B draft');
+  await makePreferenceSnapshotStale(page);await def.click();await expect(page.getByRole('dialog').getByRole('alert')).toHaveText(t('error'));await expect(def).toBeEnabled();await expect(def).toHaveAttribute('aria-pressed','false');await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
+  await page.getByRole('dialog').getByRole('alert').scrollIntoViewIfNeeded();await page.screenshot({path:`${output}/${language}-editor-default-error.png`,fullPage:true});await clearPreferenceConflict(page);
+  await def.click();await expect(def).toHaveAttribute('aria-pressed','true');await expect(def).toBeDisabled();await expect(page.getByRole('dialog').getByRole('alert')).toHaveCount(0);await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
   await switcher.click();await expect(page.getByRole('dialog',{includeHidden:true})).toHaveCount(2);await expect(page.getByRole('dialog')).toHaveCount(1);await page.getByRole('dialog').last().getByRole('button',{name:t('accountEditorKeepEditing'),exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Unsaved B draft');
   await switcher.click();await page.getByRole('dialog').last().press('Escape');await expect(page.getByRole('dialog')).toHaveCount(1);await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-b');
   await switcher.click();await page.getByRole('dialog').last().getByRole('button',{name:t('accountEditorDiscardSwitch'),exact:true}).click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('editor-a');await expect(page.locator('#password-vault-entry-notes')).toHaveValue('Note A');
@@ -260,11 +269,19 @@ for(const language of ['zh-CN','en'] as const) test(`${language} reordered platf
   const position=Number((await page.locator('[data-account-detail-switch]').getAttribute('aria-label'))!.match(/(\d+)\/4/)![1])-1;
   const expected=[before[1],before[0],before[2]],cycle=[...expected];cycle.splice(position,0,'Order A');
   const first=handles.first();
-  await first.press('Space',{delay:50});await expect(page.locator('.account-other-item.is-dragging')).toHaveCount(1);
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('status').filter({hasText:language==='zh-CN'?'移到第 2 位':'to position 2'})).toHaveCount(1);
-  await page.keyboard.press('Space');
-  await expect(page.locator('.account-related-info > strong')).toHaveText(expected);
+  async function moveFirstRight() {
+   await first.press('Space',{delay:50});await expect(page.locator('.account-other-item.is-dragging')).toHaveCount(1);
+   await page.keyboard.press('ArrowRight');
+   await expect(page.getByRole('status').filter({hasText:language==='zh-CN'?'移到第 2 位':'to position 2'})).toHaveCount(1);
+   await page.keyboard.press('Space');
+  }
+  // Save and undo one real reorder so the stale-snapshot scenario updates an existing preference.
+  await moveFirstRight();await expect(page.locator('.account-related-info > strong')).toHaveText(expected);
+  await moveFirstRight();await expect(page.locator('.account-related-info > strong')).toHaveText(before);
+  await makePreferenceSnapshotStale(page,'keepany-account-order-v1');await moveFirstRight();
+  await expect(page.locator('.account-other-card').getByRole('alert')).toHaveText(t('accountOrderError'));await expect(page.locator('.account-related-info > strong')).toHaveText(before);
+  await page.screenshot({path:`${output}/${language}-order-save-error.png`,fullPage:true});await clearPreferenceConflict(page);
+  await moveFirstRight();await expect(page.locator('.account-related-info > strong')).toHaveText(expected);await expect(page.locator('.account-other-card').getByRole('alert')).toHaveCount(0);
   await expect(page.locator('[data-account-default]')).toBeDisabled();
   const username=(name:string)=>`order-${name.slice(-1).toLowerCase()}`;
   for(let step=1;step<=4;step++){await page.locator('[data-account-detail-switch]').click();await expect(page.locator('[data-login-username]')).toHaveText(username(cycle[(position+step)%4]));}
