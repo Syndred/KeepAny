@@ -24,6 +24,7 @@
     "mobile:build": "tsc --noEmit && vite build apps/mobile",
     "mobile:sync": "node scripts/mobile-cli.mjs sync",
     "mobile:doctor": "node scripts/mobile-cli.mjs doctor",
+    "desktop:dev": "pnpm --filter @keepany/desktop dev",
     "desktop:build": "pnpm --filter @keepany/desktop bundle"
   },
   "dependencies": {

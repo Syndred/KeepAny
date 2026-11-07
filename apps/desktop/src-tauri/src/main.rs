@@ -5,7 +5,16 @@ mod export;
 use tauri::{webview::NewWindowResponse, Manager, Url, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
 
-fn is_app_url(url: &Url) -> bool {
+fn is_app_url(app: &tauri::AppHandle, url: &Url) -> bool {
+    if !url.username().is_empty() || url.password().is_some() {
+        return false;
+    }
+    if tauri::is_dev() {
+        if let Some(dev_url) = &app.config().build.dev_url {
+            return url.origin() == dev_url.origin();
+        }
+    }
+
     let origin = if cfg!(windows) {
         ("http", "tauri.localhost")
     } else {
@@ -13,8 +22,6 @@ fn is_app_url(url: &Url) -> bool {
     };
     (url.scheme(), url.host_str().unwrap_or_default()) == origin
         && url.port().is_none()
-        && url.username().is_empty()
-        && url.password().is_none()
 }
 
 fn open_external(app: &tauri::AppHandle, url: &Url) {
@@ -22,7 +29,7 @@ fn open_external(app: &tauri::AppHandle, url: &Url) {
         && url.host().is_some()
         && url.username().is_empty()
         && url.password().is_none()
-        && !is_app_url(url)
+        && !is_app_url(app, url)
     {
         let _ = app.opener().open_url(url.as_str(), None::<&str>);
     }
@@ -54,9 +61,15 @@ fn main() {
                 .ok_or("missing main window configuration")?;
             let navigation_app = app.handle().clone();
             let popup_app = app.handle().clone();
-            WebviewWindowBuilder::from_config(app, config)?
+            let window = WebviewWindowBuilder::from_config(app, config)?;
+            let window = if tauri::is_dev() && app.config().build.dev_url.is_some() {
+                window.title("KeepAny · 开发预览")
+            } else {
+                window
+            };
+            window
                 .on_navigation(move |url| {
-                    if is_app_url(url) {
+                    if is_app_url(&navigation_app, url) {
                         return true;
                     }
                     open_external(&navigation_app, url);

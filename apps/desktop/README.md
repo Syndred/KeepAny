@@ -15,6 +15,17 @@
 
 桌面版提供应用内提醒、手工 URL 收录及本地备份。URL 收录需要手工核对标题和描述。可选 AI 连接使用系统 WebView 的网络能力，服务端需要允许对应来源。桌面版的 MCP 连接和关窗后提醒未开放。
 
+## 桌面开发与热更新
+
+安装下方的构建依赖，在仓库根目录运行：
+
+```sh
+pnpm install --frozen-lockfile
+pnpm desktop:dev
+```
+
+首次启动会编译 Tauri。打开「KeepAny · 开发预览」后，保存共享界面的组件或样式即可在当前桌面窗口查看改动；修改 Rust 原生代码时 Tauri 会重新编译并重启窗口。开发服务固定监听 `127.0.0.1:1420`，端口占用时报错。开发窗口使用独立资料空间，可通过内置示例体验。终端按 Ctrl+C 可以停止开发服务。
+
 ## 从源码打包
 
 Windows 构建需 Rust MSVC 工具链、C++ Build Tools 和 Windows SDK。macOS 构建需 Rust 和 Xcode 命令行工具。使用项目规定的 Node.js 和 pnpm 版本。

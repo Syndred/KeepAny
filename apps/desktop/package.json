@@ -3,6 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json -- --locked",
+    "dev:web": "vite",
     "build:web": "vite build",
     "bundle": "tauri build -- --locked"
   },
