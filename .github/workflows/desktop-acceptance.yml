@@ -1,0 +1,64 @@
+name: Verify KeepAny desktop installers
+
+on:
+  push:
+    branches: [codex/desktop-release-acceptance]
+  workflow_dispatch:
+    inputs:
+      build-run:
+        description: Successful Build KeepAny desktop workflow run ID
+        required: true
+        type: string
+      source-commit:
+        description: Expected full source commit of the installers
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  installed-window:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            target: x86_64-pc-windows-msvc
+          - runner: macos-15
+            target: aarch64-apple-darwin
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    env:
+      KEEPANY_EXPECTED_COMMIT: ${{ inputs.source-commit || '130a368f50bc1e069da1351b602c9c7e608e8862' }}
+      KEEPANY_DESKTOP_TARGET: ${{ matrix.target }}
+      KEEPANY_BUILD_RUN: ${{ inputs.build-run || '42346276575' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the producing workflow
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$KEEPANY_BUILD_RUN" =~ ^[0-9]+$ ]]
+          build=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$KEEPANY_BUILD_RUN" --jq '[.head_sha,.path,.conclusion] | join("|")')
+          test "$build" = "$KEEPANY_EXPECTED_COMMIT|.github/workflows/desktop.yml|success"
+      - uses: actions/download-artifact@v4
+        with:
+          name: KeepAny-desktop-${{ matrix.target }}
+          github-token: ${{ github.token }}
+          run-id: ${{ env.KEEPANY_BUILD_RUN }}
+          path: desktop-candidate
+      - name: Verify artifact identity and checksums
+        run: node scripts/verify-desktop-candidate.mjs desktop-candidate
+      - name: Install, open, reopen and uninstall on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/verify-desktop-windows.ps1 desktop-candidate
+      - name: Mount, open and reopen on macOS
+        if: runner.os == 'macOS'
+        shell: bash
+        run: bash scripts/verify-desktop-mac.sh desktop-candidate
