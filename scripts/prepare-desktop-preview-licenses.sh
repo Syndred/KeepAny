@@ -36,9 +36,8 @@ ignore-dev-dependencies = true
 private = { ignore = true }
 CONFIG
 
-mkdir "$tools_dir/template"
 (
-  cd "$tools_dir/template"
+  cd "${manifest%/*}"
   cargo about init
   cargo about generate --locked --fail -c "$tools_dir/about.toml" -m "$manifest" \
     -o "$license_dir/rust-third-party.html" about.hbs
