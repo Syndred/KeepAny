@@ -1,5 +1,15 @@
 # KeepAny Tauri 桌面验收
 
+## Mac 本机升级与迁移
+
+用户确认测试版可以转入安装版后，从当前「KeepAny · 开发预览」核对已验收的源码和资料入口。检查远端与本机 `main`，将验收分支合入 `main` 并保留两边历史。以干净的 `main` 生成安装包，记录源码提交与 SHA-256。本机安装与对外发布分别处理。
+
+1. Apple Silicon 使用项目锁定的 Node.js、pnpm、Rust 及 Xcode 命令行工具。先运行 `pnpm install --frozen-lockfile` 和 `pnpm typecheck`，在 `apps/desktop` 运行 `pnpm exec tauri build --ci --target aarch64-apple-darwin -- --locked`。本机将 `/usr/bin` 放在其他工具目录前，确保 Tauri 使用 macOS 自带的 `xattr`。回仓库根目录运行 `node scripts/collect-desktop-artifacts.mjs aarch64-apple-darwin`，挂载核对架构和签名。包、构建身份和校验值在 `dist/desktop/aarch64-apple-darwin/`。
+2. 在原 `1420` 开发预览的「备份与恢复」生成加密 `.ka1`，保存并核验记录、附件及 KDBX 密文。使用独立备份口令，备份和口令各自放在受限的本机目录。确认导出后源资料没有再编辑。开发预览资料作为来源保留。
+3. 确认原 `/Applications/KeepAny.app` 已退出。保存原应用和 `~/Library/WebKit/com.syndred.keepany.desktop` 到私有回退目录，再将验过的 DMG 中的应用装入 `/Applications`。如果用户指定以测试版为准，在空的正式版资料空间恢复。应用内的恢复会合并资料并检查冲突，直接向旧空间恢复无法保证与测试版一致。开发预览使用独立的 `.desktop.dev` 标识和 `1420` 来源。
+4. 在新版「备份与恢复」选择测试版备份，输入备份口令，核对预览后恢复。重新导出安装版备份，核对规范化后的记录及偏好、附件摘要、审核记录与 KDBX 密文摘要，再退出并重开检查。最后将安装版置前，停在账号入口。密码库仍用原主密码解锁。设备级钥匙串记住解锁与应用本地设置独立于 KA1，按实际需要重新设置。
+5. 恢复失败或核对不一致时，退出新版，将新版应用及资料移入待查目录，再成对恢复原应用与原 WebKit 资料。保留源备份。完成后在中文交接记录实际安装包、迁移验证和回退位置。临时校验副本和迁移口令用完即清理。
+
 以拉取后的 `98a03235` 为起点。验证使用打包产物和虚构资料。桌面壳复用现有界面，桌面窗口尺寸、系统文件选择器及两种语言需要实际检查。原有页面布局本轮无改动。
 
 | ID | 前置资料与用户入口 | 预期与验证方式 |
