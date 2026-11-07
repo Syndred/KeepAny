@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Fragment, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { writeClipboardText } from "../clipboard-access";
 import type { VaultImportCandidate } from "../vault-import-model";
 import { parseVaultImportLine } from "../vault-import-model";
 import {
@@ -201,7 +202,7 @@ export function VaultImportSourceExcerpt({
 												try {
 													if (value === undefined)
 														throw new Error("No source value");
-													await navigator.clipboard.writeText(value);
+										await writeClipboardText(value);
 													setCopiedLine(row.lineNumber);
 													setCopyError(false);
 												} catch {

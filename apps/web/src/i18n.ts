@@ -712,6 +712,10 @@ const copy: Record<string, [string, string]> = {
 		"恢复会合并资料并保留备份来源。同 ID 内容不同或来源不一致会停止恢复。请先在独立浏览器配置中核对备份。",
 		"Restore merges records and preserves the backup source. Conflicting IDs or a different source stop the restore. Check the backup in a separate browser profile first.",
 	],
+	desktopRestoreHint: [
+		"恢复会合并资料。同一条资料的内容冲突或备份来源不一致时会停止。请先核对预览，再确认恢复。",
+		"Restoring merges records. It stops if records conflict or the backup has a different source. Review the preview before confirming.",
+	],
 	chooseFile: ["选择文件", "Choose file"],
 	csv: ["CSV 表格", "CSV file"],
 	preview: ["预览", "Preview"],
@@ -750,6 +754,10 @@ const copy: Record<string, [string, string]> = {
 	restoreSourceIdentity: [
 		"备份来源与当前同步身份不一致，或没有来源标识，未恢复资料。请保留当前资料，在独立浏览器配置中核对备份。",
 		"The backup has a different or unknown sync identity. No records were restored. Keep current records and check the backup in a separate browser profile.",
+	],
+	desktopRestoreSourceIdentity: [
+		"无法确认备份与当前资料的来源一致。恢复已停止，请保留当前资料并核对备份来源。",
+		"The backup source could not be matched to this workspace. Restore stopped. Keep your current records and check where the backup came from.",
 	],
 	restoreRecoveryPending: [
 		"上次恢复尚未完成，当前资料可查看。请保留本机数据并寻求协助。",

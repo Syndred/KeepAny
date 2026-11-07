@@ -1,0 +1,10 @@
+{
+  "identifier": "main",
+  "description": "Local KeepAny window",
+  "windows": ["main"],
+  "permissions": [
+    "allow-save-export",
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text"
+  ]
+}

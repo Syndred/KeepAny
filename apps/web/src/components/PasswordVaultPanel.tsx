@@ -1,4 +1,5 @@
-import { deliverExportFile, fileDeliveryMessage, hasFileDeliveryHandler } from "../file-delivery";
+import { writeClipboardText } from "../clipboard-access";
+import { deliverExportFile, fileDeliveryFailedMessage, fileDeliveryMessage, fileDeliveryOpeningMessage, hasFileDeliveryHandler } from "../file-delivery";
 import { hasPlatformSettings } from "../platform-settings";
 import { Textarea } from "./ui/textarea";
 import { Input } from "./ui/input";
@@ -718,9 +719,13 @@ export function PasswordVaultPanel({
 		try {
 			const bytes = await session.exportKdbx();
       if (hasFileDeliveryHandler()) {
-        announce("exportFileOpening");
-        const result = await deliverExportFile({ name: t("pwVaultExportFilename"), mimeType: "application/octet-stream", bytes });
-        announce(fileDeliveryMessage(result));
+        announce(fileDeliveryOpeningMessage());
+        try {
+          const result = await deliverExportFile({ name: t("pwVaultExportFilename"), mimeType: "application/octet-stream", bytes });
+          announce(fileDeliveryMessage(result));
+        } catch {
+          announce(fileDeliveryFailedMessage());
+        }
         return;
       }
 			const url = URL.createObjectURL(
@@ -781,8 +786,7 @@ export function PasswordVaultPanel({
 			return false;
 		}
 		try {
-			if (!navigator.clipboard?.writeText) throw new Error("clipboard");
-			await navigator.clipboard.writeText(value);
+			await writeClipboardText(value);
 			if (
 				request !== copyGeneration.current ||
 				privateValue && session?.getSnapshot().status !== "unlocked"

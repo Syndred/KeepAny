@@ -1,6 +1,7 @@
 import { ExportFileLink } from "./components/ExportFileLink";
-import { hasFileDeliveryHandler } from "./file-delivery";
+import { fileDeliveryReadyMessage } from "./file-delivery";
 import { getDatasetAdapter } from "./native-datasets";
+import { hasPlatformSettings } from "./platform-settings";
 import { validateCaptureImage } from "./workflow-image";
 import { Textarea } from "./components/ui/textarea";
 import { Input } from "./components/ui/input";
@@ -194,7 +195,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 				url: address,
 				name: `keepany-${new Date().toISOString().slice(0, 10)}.ka1`,
 			});
-			setMessage(t(hasFileDeliveryHandler() ? "exportFileReady" : "backupReady"));
+			setMessage(t(fileDeliveryReadyMessage()));
 		} catch {
 			setMessage(t("error"));
 		} finally {
@@ -256,7 +257,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 				: error instanceof Error && error.message === "restore-conflict"
 				? "restoreConflict"
 				: error instanceof Error && error.message === "restore-source-identity"
-					? "restoreSourceIdentity"
+					? (hasPlatformSettings() ? "desktopRestoreSourceIdentity" : "restoreSourceIdentity")
 				: error instanceof Error && error.message === "restore-recovery-pending"
 					? "restoreRecoveryPending"
 					: "error";
@@ -589,7 +590,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 							</Button>
 						)}
 					</div>
-					<p className="intake-backup-status" role="status">{readyDownload ? t(hasFileDeliveryHandler() ? "exportFileReady" : "backupReady") : t("intakeBackupIdle")}</p>
+					<p className="intake-backup-status" role="status">{readyDownload ? t(fileDeliveryReadyMessage()) : t("intakeBackupIdle")}</p>
 					<RestoreRecoveryPanel />
 					<details className="intake-secondary">
 						<summary>{t("restoreBackup")}</summary>
@@ -608,7 +609,7 @@ export function IntakeTools({ onCsvStaged, section = "capture" }: { onCsvStaged:
 								}}
 							/>
 						</div>
-						<small>{t(getDatasetAdapter() ? "localDatasetRestoreHint" : "restoreHint")}</small>
+						<small>{t(getDatasetAdapter() ? "localDatasetRestoreHint" : hasPlatformSettings() ? "desktopRestoreHint" : "restoreHint")}</small>
 						{readyArchive && <p role="status">{t("restorePreviewSummary", { count: archiveCount, reviewCount: archiveReviewCount })}</p>}
 						{readyArchive && archiveHasVault && <p>{t("restoreContainsVault")}</p>}
 						<div className="actions">

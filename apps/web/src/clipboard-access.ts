@@ -1,4 +1,16 @@
 let nativeRead: { read: () => Promise<string>; revision: number } | undefined;
+let nativeWrite: ((value: string) => Promise<void>) | undefined;
+
+export function registerClipboardWriteHandler(handler: (value: string) => Promise<void>): () => void {
+  nativeWrite = handler;
+  return () => { if (nativeWrite === handler) nativeWrite = undefined; };
+}
+
+export async function writeClipboardText(value: string): Promise<void> {
+  if (nativeWrite) return nativeWrite(value);
+  if (!navigator.clipboard?.writeText) throw Error("clipboard");
+  return navigator.clipboard.writeText(value);
+}
 
 /** Register at native bootstrap; clipboard contents are read only on explicit use. */
 export function registerClipboardReadHandler(handler: () => Promise<string>): () => void {

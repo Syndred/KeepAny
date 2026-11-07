@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "KeepAny",
+  "mainBinaryName": "keepany",
+  "version": "0.1.0",
+  "identifier": "com.syndred.keepany.desktop",
+  "build": {
+    "beforeBuildCommand": "pnpm build:web",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "KeepAny",
+        "create": false,
+        "width": 1280,
+        "height": 820,
+        "minWidth": 400,
+        "minHeight": 520,
+        "dragDropEnabled": false,
+        "devtools": false
+      }
+    ],
+    "security": {
+      "capabilities": ["main"],
+      "csp": {
+        "default-src": "'self'",
+        "script-src": "'self' 'wasm-unsafe-eval'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data: blob:",
+        "font-src": "'self' data:",
+        "worker-src": "'self' blob:",
+        "connect-src": "'self' blob: ipc: http://ipc.localhost https://ipc.localhost https: http://localhost:* http://127.0.0.1:* http://[::1]:*",
+        "base-uri": "'none'",
+        "form-action": "'none'",
+        "frame-src": "'none'",
+        "object-src": "'none'"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "publisher": "Syndred",
+    "homepage": "https://github.com/Syndred/KeepAny",
+    "license": "AGPL-3.0-only",
+    "licenseFile": "../../../LICENSE",
+    "icon": ["icons/icon.ico", "icons/icon.icns", "icons/128x128.png"],
+    "resources": { "../dist/third-party-notices.md": "third-party-notices.md" }
+  }
+}
