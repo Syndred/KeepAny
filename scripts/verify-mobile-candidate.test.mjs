@@ -5,8 +5,8 @@ import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, symlinkSync
 import { tmpdir } from "node:os";
 import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import test from "node:test";
 import { zipSync } from "fflate";
+import { test } from "vitest";
 
 const cli = fileURLToPath(new URL("./verify-mobile-candidate.mjs", import.meta.url));
 const sha256 = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -17,7 +17,7 @@ const json = (path, value) => writeFileSync(path, `${JSON.stringify(value, null,
 // The acceptance records below are synthetic gate fixtures, never UI evidence.
 function fixture(t) {
   const directory = mkdtempSync(join(tmpdir(), "keepany-mobile-gate-"));
-  t.after(() => {
+  t.onTestFinished(() => {
     const actual = realpathSync(directory);
     assert(actual.startsWith(`${realpathSync(tmpdir())}${sep}`));
     rmSync(actual, { recursive: true, force: true });
