@@ -99,24 +99,34 @@ function fittedViewport(layout: AccountGraphLayout, width: number, height: numbe
 	return getViewportForBounds({ x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16 }, width, height, 0.01, 1, 0);
 }
 
-function GraphViewport({ layout, layoutKey, layoutSize, rootId, fitWholeGraph, restore, onSize, onReady }: {
-	layout: AccountGraphLayout | null; layoutKey: string; rootId: string; restore: Bookmark | null;
+function GraphViewport({ layout, nodes, layoutKey, layoutSize, rootId, fitWholeGraph, restore, onSize, onReady }: {
+	layout: AccountGraphLayout | null; nodes: AccountNode[]; layoutKey: string; rootId: string; restore: Bookmark | null;
 	fitWholeGraph: boolean;
 	layoutSize: { width: number; height: number };
 	onSize: (size: { width: number; height: number }) => void; onReady: (key: string) => void;
 }) {
-	const width = useStore((state) => state.width);
-	const height = useStore((state) => state.height);
-	const measured = useStore((state) => state.nodeLookup.size > 0 && [...state.nodeLookup.values()].every((node) => !!node.measured.width && !!node.measured.height && !!node.internals.handleBounds));
+	const width = useStore((state) => Math.round(state.width));
+	const height = useStore((state) => Math.round(state.height));
+	const viewportInitialized = useStore((state) => Boolean(state.panZoom));
+	const measured = useStore((state) => nodes.length > 0 && state.nodeLookup.size === nodes.length && nodes.every(({ id }) => {
+		const node = state.nodeLookup.get(id);
+		return Boolean(node?.measured.width && node.measured.height && node.internals.handleBounds);
+	}));
 	const updateNodeInternals = useUpdateNodeInternals();
 	const { setCenter, setViewport } = useReactFlow();
 	const pendingRestore = useRef(restore);
 	const appliedLayout = useRef("");
-	useEffect(() => { if (width && height) onSize({ width: Math.round(width), height: Math.round(height) }); }, [width, height, onSize]);
-	useEffect(() => { if (layout) updateNodeInternals([...layout.nodes.keys()]); }, [layout, updateNodeInternals]);
+	useEffect(() => { if (width && height) onSize({ width, height }); }, [width, height, onSize]);
 	useEffect(() => {
-		if (!layout || !measured || !width || !height || appliedLayout.current === layoutKey
-			|| Math.round(width) !== layoutSize.width || Math.round(height) !== layoutSize.height) return;
+		if (!nodes.length) return;
+		// React Flow commits controlled nodes after receiving the layout.
+		// Measure on the next frame so the replacement DOM nodes exist.
+		const frame = requestAnimationFrame(() => updateNodeInternals(nodes.map(({ id }) => id)));
+		return () => cancelAnimationFrame(frame);
+	}, [nodes, updateNodeInternals]);
+	useEffect(() => {
+		if (!layout || !measured || !viewportInitialized || !width || !height || appliedLayout.current === layoutKey
+			|| width !== layoutSize.width || height !== layoutSize.height) return;
 		let active = true;
 		const frame = requestAnimationFrame(() => {
 			const fitted = fittedViewport(layout, width, height, fitWholeGraph ? undefined : rootId);
@@ -125,10 +135,10 @@ function GraphViewport({ layout, layoutKey, layoutSize, rootId, fitWholeGraph, r
 			const operation = anchor && (bookmark || !fitWholeGraph && fitted.zoom < 11 / 12)
 				? setCenter(anchor.x + anchor.width / 2, anchor.y + anchor.height / 2, { zoom: bookmark?.zoom ?? 1 })
 				: setViewport(fitted);
-			void operation.then(() => { if (active) { appliedLayout.current = layoutKey; pendingRestore.current = null; onReady(layoutKey); } });
+			void operation.then((applied) => { if (active && applied) { appliedLayout.current = layoutKey; pendingRestore.current = null; onReady(layoutKey); } });
 		});
 		return () => { active = false; cancelAnimationFrame(frame); };
-	}, [layout, layoutKey, layoutSize.width, layoutSize.height, measured, width, height, rootId, fitWholeGraph, setCenter, setViewport, onReady]);
+	}, [layout, layoutKey, layoutSize.width, layoutSize.height, measured, viewportInitialized, width, height, rootId, fitWholeGraph, setCenter, setViewport, onReady]);
 	return null;
 }
 
@@ -181,11 +191,15 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 	const [result, setResult] = useState<{ key: string; layout: AccountGraphLayout | null; error: boolean }>({ key: "", layout: null, error: false });
 	const [readyKey, setReadyKey] = useState("");
 	const rootId = props.root?.id ?? "";
-	const labelKey = props.wrapLabels ? JSON.stringify(props.assets.map(asset => [asset.id, asset.name, asset.username])) : "";
+	const nodeLabelKey = JSON.stringify(props.assets.map(asset => [asset.id, asset.kind, asset.name, asset.username]));
+	const labelKey = props.wrapLabels ? nodeLabelKey : "";
+	const matchKey = JSON.stringify([...props.matches].sort());
 	const nodeSizes = useMemo(() => props.wrapLabels ? wrappedNodeSizes(props.assets, rootId) : undefined, [labelKey, props.wrapLabels, rootId]);
 	const inputKey = JSON.stringify([props.scope, rootId, props.assets.map((asset) => asset.id).sort(), props.relations.map((relation) => [relation.id, relation.from, relation.to, relation.deleted]).sort(), size.width, size.height, labelKey]);
 	const requestAssets = useRef(props.assets), requestRelations = useRef(props.relations);
+	const visit = useRef(props.onVisit);
 	requestAssets.current = props.assets; requestRelations.current = props.relations;
+	visit.current = props.onVisit;
 	useEffect(() => {
 		if (!size.width || !size.height) return;
 		let active = true;
@@ -211,15 +225,21 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 		all.set(pair, [...all.get(pair) ?? [], relation]); return all;
 	}, new Map<string, Relation[]>()).values());
 	const selected = groups.find((group) => group.some((relation) => relation.id === props.selectedEdgeId));
-	const nodes: AccountNode[] = layout ? [...layout.nodes].flatMap(([id, node]) => {
-		const asset = byId.get(id); if (!asset) return [];
-		return [{ id, type: "accountCard", position: { x: node.x, y: node.y }, width: node.width, height: node.height,
-			style: { width: node.width, height: node.height },
-			className: `${id === rootId ? "asset-graph-center" : "asset-graph-neighbor"}${props.matches.has(id) ? " asset-graph-match" : ""}`,
-			ariaLabel: accountLabel(asset).text,
-			domAttributes: { "data-node-width": node.width, "data-node-height": node.height } as NonNullable<AccountNode["domAttributes"]> & { "data-node-width": number; "data-node-height": number },
-			data: { asset, current: id === rootId, handles: node.handles, visit: props.onVisit } }];
-	}) : [];
+	// Keep controlled node identities when the surrounding detail refreshes.
+	const nodes = useMemo<AccountNode[]>(() => {
+		if (!layout) return [];
+		const assets = new Map(requestAssets.current.map(asset => [asset.id, asset]));
+		return [...layout.nodes].flatMap(([id, node]) => {
+			const asset = assets.get(id);
+			if (!asset) return [];
+			return [{ id, type: "accountCard", position: { x: node.x, y: node.y }, width: node.width, height: node.height,
+				style: { width: node.width, height: node.height },
+				className: `${id === rootId ? "asset-graph-center" : "asset-graph-neighbor"}${props.matches.has(id) ? " asset-graph-match" : ""}`,
+				ariaLabel: accountLabel(asset).text,
+				domAttributes: { "data-node-width": node.width, "data-node-height": node.height } as NonNullable<AccountNode["domAttributes"]> & { "data-node-width": number; "data-node-height": number },
+				data: { asset, current: id === rootId, handles: node.handles, visit: (target: Asset) => visit.current(target) } }];
+		});
+	}, [layout, rootId, nodeLabelKey, matchKey]);
 	const edges: Edge[] = layout ? groups.flatMap((group) => {
 		const route = layout.edges.get(JSON.stringify([group[0].from, group[0].to])); if (!route) return [];
 		const verified = group.every((relation) => !!relation.verifiedAt), mixed = group.some((relation) => !!relation.verifiedAt) && !verified;
@@ -246,7 +266,7 @@ function GraphContent({ props, expanded, restore, onExpand, onCollapse }: {
 				minZoom={0.01} maxZoom={2} defaultViewport={{ x: 0, y: 0, zoom: 1 }}
 				nodesFocusable={false} edgesFocusable onEdgesChange={changeEdges} onPaneClick={() => props.onSelectEdge(null)}
 				deleteKeyCode={null} multiSelectionKeyCode={null} selectionKeyCode={null} nodesDraggable={false} nodesConnectable={false}>
-				<GraphViewport layout={layout} layoutKey={inputKey} layoutSize={size} rootId={rootId} fitWholeGraph={props.fitAllOnOpen || props.scope === "all" || props.root?.kind !== "account"} restore={restore} onSize={setSize} onReady={setReadyKey} />
+				<GraphViewport layout={layout} nodes={nodes} layoutKey={inputKey} layoutSize={size} rootId={rootId} fitWholeGraph={props.fitAllOnOpen || props.scope === "all" || props.root?.kind !== "account"} restore={restore} onSize={setSize} onReady={setReadyKey} />
 				{navigationHost && createPortal(<><GraphControls layout={layout} rootId={rootId} expanded={expanded} onExpand={onExpand} onCollapse={onCollapse} />{props.assets.length > 12 && <GraphMiniMap rootId={rootId} />}</>, navigationHost)}
 				{selected && <Panel position="bottom-right" className="account-graph-selection-panel nodrag nopan"><section className="account-graph-connection-details" aria-label={t("accountGraphSelection")}>
 					<div className="account-graph-selection-header"><p className="account-graph-selection-title"><strong>{byId.get(selected[0].from)?.name}</strong><span aria-hidden="true"> → </span><strong>{byId.get(selected[0].to)?.name}</strong></p><Button className="account-graph-selection-close" aria-label={t("close")} onClick={() => props.onSelectEdge(null)}><X size={18} /></Button></div>

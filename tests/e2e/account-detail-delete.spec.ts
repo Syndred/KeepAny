@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { resources } from '../../apps/web/src/i18n';
 import { enterAccounts } from './helpers/vault-access';
+import { waitForAccountGraphSnapshot } from './helpers/account-graph';
 const master='SyntheticDetailDelete2026!',backupPassword='SyntheticDeleteBackup2026!';
 let directory='',backup='',privateCardId='';
 test.beforeAll(async()=>{
@@ -20,7 +21,9 @@ test.beforeAll(async()=>{
   const b={...newAsset('account'),id:'detail-delete-b',name:'Synthetic Delete B',username:'public-b'};
   const empty={...newAsset('account'),id:'detail-delete-empty',name:'Empty plain account',username:'empty-public'};
   const listEmpty={...newAsset('account'),id:'detail-delete-list-empty',name:'Empty list account',username:'empty-list-public'};
-  for(const asset of [a,b,empty,listEmpty])await repo.save('asset',asset);
+  const linked = { ...newAsset('item'), id: 'detail-delete-linked', name: 'Synthetic Default Connection' };
+  for(const asset of [a,b,empty,listEmpty,linked])await repo.save('asset',asset);
+  await repo.save('relation', { id: 'detail-delete-default-link', from: b.id, to: linked.id, label: 'Default connection', createdAt: new Date().toISOString() });
   const db=Kdbx.create(new Credentials(ProtectedValue.fromString(master)),'Synthetic detail deletion');db.setVersion(3);
   const ids:string[]=[];
   for(const row of [{title:a.name,username:'delete-a@example.test',links:[a.id],aliases:['keep-alias@example.test']},{title:'Synthetic Delete A second login',username:'second-a@example.test',links:[a.id],aliases:['second-a-alias@example.test']},{title:b.name,username:'keep-b@example.test',links:[b.id],aliases:[]},{title:'Synthetic Delete Private C',username:'private-delete@example.test',links:[],aliases:[]}]) {
@@ -40,6 +43,21 @@ for(const language of ['zh-CN','en'] as const)test(`${language} whole account de
  const t=(key:string)=>(resources[language].translation as Record<string,string>)[key]??key;
  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});
  await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);
+ await context.addInitScript(() => {
+  const NativeResizeObserver = window.ResizeObserver;
+  // Suppress automatic node measurements until the destination canvas is ready.
+  // Container measurements and other observers still run normally.
+  window.ResizeObserver = class extends NativeResizeObserver {
+   constructor(callback: ResizeObserverCallback) {
+    super((entries, observer) => {
+     const graph = document.querySelector('[data-delay-default-graph] .account-family-graph');
+     const ready = graph?.getAttribute('data-layout-ready') === 'true';
+     const deliver = entries.filter(({ target }) => ready || !graph || !graph.contains(target) || !target.matches('.react-flow__node'));
+     if (deliver.length) callback(deliver, observer);
+    });
+   }
+  };
+ });
  const page=await context.newPage(),cards=page.locator('.compact-account-card');
  try {
   await page.goto('/backup');await page.locator('#backup-password').fill(backupPassword);
@@ -78,10 +96,16 @@ for(const language of ['zh-CN','en'] as const)test(`${language} whole account de
   const original=page.url();await remove.click();await expect(page.getByRole('dialog')).toContainText('Synthetic Delete A');
   await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(original);
   // Whole-member removal must include both logins and every alias, not just the displayed identifier.
+  await page.evaluate(() => document.documentElement.setAttribute('data-delay-default-graph', ''));
   await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();
   await expect(page).toHaveURL(/\/assets\/account\/detail-delete-b(?:#.*)?$/);
   await expect(page.getByRole('heading',{name:'Synthetic Delete B',exact:true})).toBeVisible();
   await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('keep-b@example.test');
+  const defaultGraph = await waitForAccountGraphSnapshot(page, { nodes: 2, edges: 1 });
+  await page.evaluate(() => document.documentElement.removeAttribute('data-delay-default-graph'));
+  expect(defaultGraph.nodes).toEqual(['detail-delete-b', 'detail-delete-linked']);
+  await expect(page.locator('#account-relations').getByRole('link', { name: 'Synthetic Default Connection', exact: true })).toBeVisible();
+  await page.locator('#account-relations').screenshot({ path: info.outputPath('default-relations-after-delete.png') });
   await expect(page.locator('.account-related-link').filter({hasText:'Synthetic Delete A'})).toHaveCount(0);
   await page.getByRole('link',{name:t('accountBack'),exact:true}).click();
   const search=page.locator('#password-vault-search-input');
@@ -102,6 +126,8 @@ for(const language of ['zh-CN','en'] as const)test(`${language} whole account de
   await expect(page).toHaveURL(/\/accounts#login-detail-/);
   await expect(page.getByRole('heading',{name:'Synthetic Delete Private C',exact:true})).toBeVisible();
   await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('private-delete@example.test');
+  const privateGraph = await waitForAccountGraphSnapshot(page, { nodes: 1, edges: 0 });
+  expect(privateGraph.nodes).toEqual([privateCardId]);
   await expect(page.locator('[data-account-default]')).toBeDisabled();
   // Only the final platform member returns to the account list.
   const privateURL=page.url();await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(privateURL);
