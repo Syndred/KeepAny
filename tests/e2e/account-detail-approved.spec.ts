@@ -12,7 +12,22 @@ const output=resolve(process.env.KEEPANY_ACCOUNT_DETAIL_EVIDENCE??"test-results/
 const master="SyntheticAccountDetail2026!", rootName="Synthetic Douyin";
 type T=(key:string)=>string;
 const card=(page:Page,username:string)=>page.locator(".compact-account-card").filter({has:page.locator("[data-login-username]",{hasText:username})});
-async function save(page:Page,t:T){await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0)}
+// Preserve list fixtures only after asserting the real new-account destination.
+async function returnCreatedAccountToList(page:Page,t:T,title:string,username:string){
+ await expect(page).toHaveURL(/\/assets\/account\/[^/?#]+(?:#.*)?$/);
+ await expect(page.locator('.page-header h1')).toHaveText(title);
+ await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText(username);
+ await page.getByRole('link',{name:t('accountBack'),exact:true}).click();
+ await expect(page).toHaveURL(/\/accounts$/);
+ await expect(page.locator('.account-toolbar-actions')).toBeVisible();
+}
+async function save(page:Page,t:T){
+ const creating=await page.getByRole('dialog',{name:t('workspaceAddAccount'),exact:true}).count()>0;
+ const title=creating?await page.locator('#password-vault-entry-title').inputValue():'';
+ const username=creating?await page.locator('#password-vault-entry-username').inputValue():'';
+ await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click();await expect(page.getByRole("dialog")).toHaveCount(0);
+ if(creating)await returnCreatedAccountToList(page,t,title,username);
+}
 // Auxiliary deterministic resource-error fixture. Normal save/retry remain public UI actions.
 async function injectMemoryFailure(page:Page){await page.evaluate(()=>{const original=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(value,key){if(this.name==='passwordVault'){IDBObjectStore.prototype.put=original;throw Error('vault-memory')}return key===undefined?original.call(this,value):original.call(this,value,key)}})}
 async function create(page:Page,t:T,name:string,username:string,notes=""){

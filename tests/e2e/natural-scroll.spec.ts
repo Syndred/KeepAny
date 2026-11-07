@@ -21,6 +21,15 @@ async function receipt(info:TestInfo,ids:string[],shots:string[],extra:unknown={
  const file=join(out,info.title.replace(/[^a-zA-Z0-9-]/g,'_')+'.json');writeFileSync(file,JSON.stringify(value,null,2));await info.attach('contract-results.json',{path:file,contentType:'application/json'});
 }
 async function samples(page:Page,t:T){await page.goto('/');await page.getByRole('button',{name:t('overviewTrySample'),exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:t('loadSample'),exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);}
+// Preserve list fixtures only after asserting the real new-account destination.
+async function returnCreatedAccountToList(page:Page,t:T,title:string,username:string){
+ await expect(page).toHaveURL(/\/assets\/account\/[^/?#]+(?:#.*)?$/);
+ await expect(page.locator('.page-header h1')).toHaveText(title);
+ await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText(username);
+ await page.getByRole('link',{name:t('accountBack'),exact:true}).click();
+ await expect(page).toHaveURL(/\/accounts$/);
+ await expect(page.locator('.account-toolbar-actions')).toBeVisible();
+}
 async function save(page:Page,t:T){await page.getByRole('dialog').getByRole('button',{name:t('save'),exact:true}).click();await expect(page.getByRole('dialog')).toHaveCount(0);}
 async function natural(page:Page,selector:string){const values=await page.locator(selector).evaluate(e=>({client:e.clientHeight,scroll:e.scrollHeight,max:getComputedStyle(e).maxHeight,overflow:getComputedStyle(e).overflowY}));expect.soft(values.scroll-values.client).toBeLessThanOrEqual(1);expect.soft(values.max).toBe('none');return values;}
 
@@ -37,7 +46,7 @@ for(const language of ['zh-CN','en'] as const){const t:T=key=>(resources[languag
  });
  test(`${language} NF02 NF05 natural account reading and viewport dialog`,async({page},info)=>{
   const shots:string[]=[];await page.setViewportSize(sizes.at(-1)!);await page.goto('/accounts');await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();
-  await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();await page.locator('#password-vault-entry-title').fill('Synthetic reading account');await page.locator('#password-vault-entry-username').fill('reading@example.test');await page.locator('#password-vault-entry-url').fill('https://reading.example.test/');await save(page,t);
+  await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();await page.locator('#password-vault-entry-title').fill('Synthetic reading account');await page.locator('#password-vault-entry-username').fill('reading@example.test');await page.locator('#password-vault-entry-url').fill('https://reading.example.test/');await save(page,t);await returnCreatedAccountToList(page,t,'Synthetic reading account','reading@example.test');
   await page.getByRole('link',{name:'Synthetic reading account',exact:true}).click();await waitForAccountGraphLayout(page);const url=page.url();
   await page.locator('.page-header').getByRole('button',{name:t('edit'),exact:true}).click();await page.locator('#password-vault-entry-notes').fill('Cancelled synthetic notes');await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page.locator('.account-note-summary')).not.toContainText('Cancelled synthetic notes');
   await page.locator('.page-header').getByRole('button',{name:t('edit'),exact:true}).click();await page.locator('#password-vault-entry-notes').fill('Synthetic natural note / 虚构自然展开备注\n'.repeat(45)+'LAST SYNTHETIC LINE');await page.locator('#password-vault-entry-url').fill('https://reading.example.test/'+('long-path/'.repeat(60)));await save(page,t);
