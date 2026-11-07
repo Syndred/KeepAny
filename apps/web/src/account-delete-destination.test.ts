@@ -17,7 +17,7 @@ describe('post-delete platform destination',()=>{
   expect(next?.asset.id).toBe('c');
  });
  it('finds a private successor through copy provenance and excludes the deleted default',()=>{
-  const entry={id:'private-c',title:'C',username:'private-c',url:'',modifiedAt:new Date().toISOString(),linkedAssetIds:[],templateSourceId:'card:a'} as VaultEntrySummary;
+  const entry={id:'private-c',historyCount:0,title:'C',username:'private-c',url:'',modifiedAt:new Date().toISOString(),linkedAssetIds:[],templateSourceId:'card:a'} as VaultEntrySummary;
   const next=accountDeleteDestination(anchor,[],[entry],[],prefs([],['a','login-private-c']));
   expect(next?.virtual).toBe(true);expect(next?.entries[0].id).toBe('private-c');
  });
