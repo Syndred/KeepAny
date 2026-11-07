@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { AccountDefaultButton } from "./AccountPlatformSwitch";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,8 +27,9 @@ import { Select, SelectOption } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 import "../account-entry.css";
 
-export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFocusTo, template, linking = false, initialName = "", platformAccount }: { onClose: () => void; onSaved?: () => void; asset?: Asset; entryId?: string; template?: AccountTemplate; linking?: boolean; initialName?: string; returnFocusTo?: () => HTMLElement | null; platformAccount?: { id: string; position: number; total: number; onNext: () => void } }) {
+export function AccountEntryDialog({ onClose, asset, entryId, returnFocusTo, template, linking = false, initialName = "", platformAccount }: { onClose: () => void; asset?: Asset; entryId?: string; template?: AccountTemplate; linking?: boolean; initialName?: string; returnFocusTo?: () => HTMLElement | null; platformAccount?: { id: string; position: number; total: number; onNext: () => void } }) {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
 	const { data, notify } = useAppContext();
 	const { snapshot, session, generatePassword } = usePasswordVault();
 	const editing = !template && Boolean(asset || entryId);
@@ -172,8 +174,10 @@ export function AccountEntryDialog({ onClose, onSaved, asset, entryId, returnFoc
 			});
             }
 			onClose();
-			onSaved?.();
 			notify(t("accountEntrySaved"));
+			if (!editing && progress.current.account) {
+				void navigate({ to: "/assets/$kind/$id", params: { kind: "account", id: progress.current.account.id }, hash: "" });
+			}
 		} catch (failure) {
 			const reason = failure instanceof Error ? failure.message : "";
 			const partial = editing ? editProgress.current.accountChanged : Boolean(progress.current.account);
