@@ -4,9 +4,9 @@ import "./reminder-entry.css";
 import { Input } from "./components/ui/input";
 import { catalogCategories, catalogCategoryLabel } from './catalog-records';
 import { readCatalogRecordReturn } from './workspace-return';
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentPropsWithRef } from "react";
 import { createPortal } from "react-dom";
-import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createLink, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
 	ArrowLeft,
@@ -48,6 +48,17 @@ import { readWorkspaceReturn } from "./workspace-return";
 const SIDEBAR_IDS = workspaceNavIds;
 
 const normalizeHiddenNavIds = workspaceNavHidden;
+
+const TopbarBackLink = createLink(function TopbarBackAnchor({ children, ...anchorProps }: ComponentPropsWithRef<"a">) {
+	return (
+		<Button asChild variant="primary" className="topbar-back-link">
+			<a {...anchorProps}>
+				<ArrowLeft size={16} aria-hidden="true" />
+				{children}
+			</a>
+		</Button>
+	);
+});
 
 export function AppShell() {
 	const data = useData();
@@ -340,7 +351,36 @@ export function AppShell() {
 				<div className="main">
 					<div className="shell-toolbar">
 						<header className="topbar">
-							{unifiedDetailReturn ? <Link className="topbar-page-label topbar-back-link" {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Button asChild variant="primary" className="topbar-overview-link"><Link to="/"><ArrowLeft size={16}/>{t("backToOverview")}</Link></Button> : <strong className="topbar-page-label">{currentHeading}</strong>}
+							{unifiedDetailReturn ? (
+								<TopbarBackLink {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}>{t("back")}</TopbarBackLink>
+							) : catalogReturn ? (
+								<TopbarBackLink
+									to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"}
+									params={catalogReturn.categoryId ? { categoryId: catalogReturn.categoryId } : {}}
+								>{t("back")}</TopbarBackLink>
+							) : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? (
+								<TopbarBackLink to="/accounts" hash="">{t("accountBack")}</TopbarBackLink>
+							) : detailKind && workspaceReturn ? (
+								<TopbarBackLink
+									to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"}
+									params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}
+								>{t("back")}</TopbarBackLink>
+							) : detailKind ? (
+								<TopbarBackLink
+									to="/assets/$kind"
+									params={{ kind: detailReturnKind ?? detailKind }}
+									onClick={hasRelationReturn ? () => {
+										sessionStorage.removeItem("keepany-relation-return-id");
+										sessionStorage.removeItem("keepany-relation-return-kind");
+									} : undefined}
+								>{t("back")}</TopbarBackLink>
+							) : workflowProjectId ? (
+								<TopbarBackLink to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}>{t("workflowBackToProject")}</TopbarBackLink>
+							) : collectionDetailId ? (
+								<TopbarBackLink to="/collections">{t("collectionBack")}</TopbarBackLink>
+							) : pathname !== "/" ? (
+								<TopbarBackLink to="/" className="topbar-overview-link">{t("backToOverview")}</TopbarBackLink>
+							) : <strong className="topbar-page-label">{currentHeading}</strong>}
 							<div className="topbar-spacer"/>
 							<button ref={topSearchTriggerRef} className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 								<kbd>⌘ K</kbd>
