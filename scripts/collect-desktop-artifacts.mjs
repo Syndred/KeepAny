@@ -34,7 +34,7 @@ if (windows) {
   const mount = mkdtempSync(join(tmpdir(), "keepany-dmg-"));
   let mounted = false;
   try {
-    execFileSync("hdiutil", ["attach", installer, "-readonly", "-nobrowse", "-noautoopen", "-mountpoint", mount], { stdio: "inherit" });
+    execFileSync("hdiutil", ["attach", installer, "-readonly", "-nobrowse", "-noautoopen", "-mountpoint", mount], { stdio: ["ignore", "inherit", "inherit"], timeout: 120_000 });
     mounted = true;
     const app = resolve(mount, `${productName}.app`);
     execFileSync("lipo", ["-verify_arch", target.startsWith("aarch64") ? "arm64" : "x86_64", resolve(app, "Contents/MacOS", mainBinaryName)]);

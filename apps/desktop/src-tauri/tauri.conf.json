@@ -44,8 +44,10 @@
     "publisher": "Syndred",
     "homepage": "https://github.com/Syndred/KeepAny",
     "license": "AGPL-3.0-only",
-    "licenseFile": "../../../LICENSE",
     "icon": ["icons/icon.ico", "icons/icon.icns", "icons/128x128.png"],
-    "resources": { "../dist/third-party-notices.md": "third-party-notices.md" }
+    "resources": {
+      "../../../LICENSE": "LICENSE",
+      "../dist/third-party-notices.md": "third-party-notices.md"
+    }
   }
 }
