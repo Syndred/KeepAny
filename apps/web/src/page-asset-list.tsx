@@ -678,7 +678,25 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			{<>
 			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <><div className="asset-account-search">
 				<Search size={18} aria-hidden="true" />
-				<Input id={renderAccountDetails || renderAccountCard ? "password-vault-search-input" : undefined} ref={accountSearchRef} type="search" aria-label={t("accountListSearch")} placeholder={t("accountListSearchHint")} autoComplete="off" value={accountSearch} onChange={(event) => changeAccountSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); changeAccountSearch(""); } }} />
+				<Input
+					id={renderAccountDetails || renderAccountCard ? "password-vault-search-input" : undefined}
+					ref={accountSearchRef}
+					type="search"
+					aria-label={t("accountListSearch")}
+					placeholder={t("accountListSearchHint")}
+					autoComplete="off"
+					autoCorrect="off"
+					autoCapitalize="none"
+					spellCheck={false}
+					value={accountSearch}
+					onChange={(event) => changeAccountSearch(event.target.value)}
+					onKeyDown={(event) => {
+						if (event.key === "Escape") {
+							event.stopPropagation();
+							changeAccountSearch("");
+						}
+					}}
+				/>
 				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
 			</div>{renderAccountCard && tagFilter}</> : undefined} toolbarActions={toolbarActions} />
 			{kind !== "account" && kind !== "vault" ? <div className="asset-list-toolbar">

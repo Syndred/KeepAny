@@ -43,6 +43,17 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} account searc
   await importVisualKdbxEntries(page, t, [{ title: 'QQ private', username: 'private-c@example.test', password: 'SyntheticPrivatePassword!', templateSourceId: `card:${personalId}` }]);
   await expect(cards).toHaveCount(1); await expect(cards).toHaveAttribute('data-account-id', workId!);
   const search = page.locator('#password-vault-search-input');
+  const clearSearch = page.getByRole('button', { name: t('accountListClearSearch'), exact: true });
+  await expect(search).toHaveAttribute('autocorrect', 'off');
+  await expect(search).toHaveAttribute('autocapitalize', 'none');
+  await expect(search).toHaveAttribute('spellcheck', 'false');
+  await search.pressSequentially('fsdf');
+  await expect(search).toHaveValue('fsdf');
+  await expect(cards).toHaveCount(0);
+  await clearSearch.click();
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(cards).toHaveCount(1); await expect(cards).toHaveAttribute('data-account-id', workId!);
   await search.fill('personal-a');
   await expect(cards).toHaveCount(1); await expect(cards).toHaveAttribute('data-account-id', personalId!);
   await expect(cards.locator('[data-login-username]')).toHaveText('personal-a@example.test');
@@ -74,7 +85,6 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} account searc
   await expect(cards).toHaveCount(1); await expect(cards).toHaveAttribute('data-account-id', workId!);
   await expect(cards.locator('[data-login-username]')).toHaveText('work-b@example.test');
   await search.fill('QQ'); await expect(cards).toHaveCount(3);
-  const clearSearch = page.getByRole('button', { name: t('accountListClearSearch'), exact: true });
   const clearBounds = (await clearSearch.boundingBox())!;
   const centerY = clearBounds.y + clearBounds.height / 2;
   await page.mouse.move(clearBounds.x - 2, centerY);
