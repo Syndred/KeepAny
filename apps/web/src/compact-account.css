@@ -115,6 +115,19 @@
 }
 .unified-account-list > .account-list-toolbar { padding-inline: 0; }
 .account-batch-toggle { white-space: nowrap; }
+.account-merge-result {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 4px 8px 4px 12px;
+	border-radius: 10px;
+	background: var(--green-soft);
+	box-shadow: none;
+}
+.account-merge-result p { display: flex; align-items: center; gap: 8px; font-weight: 750; }
+.account-merge-result p svg { flex: none; color: var(--green); }
+.account-merge-result .button { min-width: 44px; min-height: 44px; }
 .account-batch-bar {
 	display: flex;
 	flex-wrap: wrap;

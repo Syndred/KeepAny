@@ -21,7 +21,7 @@ function memberLogin(member: AccountCardMember) {
 export function AccountBatchDialog({ review, onClose, onComplete, onAddMissing, returnFocusTo }: {
 	review: AccountBatchReview;
 	onClose: () => void;
-	onComplete: (kind: "merge" | "delete") => void;
+	onComplete: (kind: "merge" | "delete", count: number) => void;
 	onAddMissing: (members: readonly AccountCardMember[]) => void;
 	returnFocusTo: () => HTMLElement | null;
 }) {
@@ -54,7 +54,7 @@ export function AccountBatchDialog({ review, onClose, onComplete, onAddMissing, 
 		try {
 			if (review.kind === "delete") await recycleAccountCardBatch(session, review.target, progress.current);
 			else await mergeAccountCards(session, review.plan, defaultId);
-			onComplete(review.kind);
+			onComplete(review.kind, count);
 		} catch (failure) {
 			setError(failure instanceof Error && /stale|locked/.test(failure.message) ? "stale" : "error");
 		} finally {

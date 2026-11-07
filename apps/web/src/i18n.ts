@@ -82,7 +82,7 @@ const copy: Record<string, [string, string]> = {
  accountBatchMergeTitle: ["合并 {{count}} 套账号", "Merge {{count}} accounts"],
  accountBatchMergeHint: ["合并后显示一张卡片，可在卡片中切换账号。每套账号的登录、备注、关联和历史都会保留。", "The merged card lets you switch between accounts. Each keeps its logins, notes, connections, and history."],
  accountBatchMerging: ["正在合并…", "Merging…"],
- accountBatchMergeDone: ["账号已合并。", "Accounts merged."],
+ accountBatchMergeDone: ["已合并 {{count}} 套账号", "Merged {{count}} accounts"],
  accountBatchConfirmMerge: ["确认合并", "Confirm merge"],
  accountBatchMissingTitle: ["还有同组账号", "More accounts in these groups"],
  accountBatchMissingHint: ["合并前，请一起选择下面的同组账号。", "Select these accounts from the same groups before merging."],

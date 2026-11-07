@@ -232,6 +232,10 @@ for (const locale of ["zh-CN", "en"] as const) {
   await expect(count).toHaveText(t("accountBatchSelected", { count: 2 }));
 
   await stickyMatrix(page, t, info);
+  const mergeResult = page.locator(".account-list-toolbar .account-merge-result");
+  await merge.click();
+  await dialog(page).getByRole("button", { name: t("cancel"), exact: true }).click();
+  await expect(mergeResult).toHaveCount(0);
   await merge.click();
   await expect(dialog(page).getByRole("heading", { name: t("accountBatchMergeTitle", { count: 2 }), exact: true })).toBeVisible();
   const defaultTrigger = dialog(page).locator(".account-batch-default .themed-select-trigger");
@@ -243,6 +247,21 @@ for (const locale of ["zh-CN", "en"] as const) {
   await expect(select).toHaveText(t("accountBatchSelect"));
   await expect(card(page, names.work)).toHaveCount(0);
   await expect(card(page, names.personal).locator("[data-login-notes]")).toHaveText("Personal note");
+  await expect(mergeResult.getByRole("status")).toHaveText(t("accountBatchMergeDone", { count: 2 }));
+  // Regress the previous transient toast, which cleared at 4.5 seconds.
+  await page.waitForTimeout(4800);
+  for (const width of [390, 768, 1280, 1920]) {
+   await page.setViewportSize({ width, height: 520 });
+   await expect(mergeResult).toBeInViewport();
+   await expect(mergeResult.getByRole("button", { name: t("close"), exact: true })).toBeInViewport();
+   await screenshot(page, info, `AM05-merge-result-${width}`);
+  }
+  if (locale === "zh-CN") {
+   await mergeResult.getByRole("button", { name: t("close"), exact: true }).click();
+   await expect(select).toBeFocused();
+  } else await select.click();
+  await expect(mergeResult).toHaveCount(0);
+  await page.setViewportSize({ width: 1280, height: 800 });
 
   await page.reload();
   await enterAccounts(page, locale, master);
