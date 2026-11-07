@@ -152,7 +152,7 @@
  .page.asset-detail-account.account-relation-layout:has(>.reminder-task-context) > .asset-detail-secondary { grid-row:4; }
 }
 @media(max-width:700px) {
- .page.account-relation-layout > .page-header { grid-template-columns:minmax(0,1fr); gap:10px; }
+ .page.account-relation-layout > .page-header { grid-template-columns:minmax(0,1fr); gap:8px; }
  .account-relation-layout .page-header > .actions { grid-column:1; grid-row:2; justify-self:end; }
  .account-related-grid { grid-template-columns:minmax(0,1fr); }
  .account-related-link { align-items:center; }
