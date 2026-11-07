@@ -8,6 +8,15 @@ const output = resolve(process.env.KEEPANY_TOOLBAR_EVIDENCE ?? "test-results/too
 mkdirSync(output, { recursive: true });
 const master = "SyntheticToolbarMaster2026!";
 type T = (key: string) => string;
+// List fixtures still verify the new-account destination before returning through the UI.
+async function returnCreatedAccountToList(page: Page, t: (key: string) => string, title: string, username: string) {
+ await expect(page).toHaveURL(/\/assets\/account\/[^/#]+$/);
+ await expect(page.locator(".page-header h1")).toHaveText(title);
+ await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText(username);
+ await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
+ await expect(page).toHaveURL(/\/accounts$/);
+ await expect(page.locator(".account-toolbar-actions")).toBeVisible();
+}
 async function setup(page: Page, t: T) {
  await page.goto("/accounts"); await page.locator("#password-vault-master").fill(master); await page.locator("#password-vault-master-confirm").fill(master);
  await page.getByRole("button", {name:t("accountSetUp"),exact:true}).click(); await page.locator(".account-toolbar-actions").waitFor();
@@ -17,6 +26,7 @@ async function create(page: Page, t:T, title="Toolbar Mail", username="synthetic
  await page.locator("#password-vault-entry-title").fill(title); await page.locator("#password-vault-entry-username").fill(username); await page.locator("#password-vault-entry-password").fill("SyntheticOnlySecret2026!");
  await page.locator("#password-vault-entry-url").fill("https://example.test/"+"long-url/".repeat(20)); await selectChoice(page.locator("#account-entry-category"),{label:t("email")});
  await page.getByRole("dialog").getByRole("button",{name:t("save"),exact:true}).click(); await expect(page.getByRole("dialog")).toHaveCount(0);
+ await returnCreatedAccountToList(page,t,title,username);
 }
 async function trashLogin(page:Page,t:T,index=0) {
  await page.locator(".compact-account-card").nth(index).getByRole("button",{name:t("accountDeleteLogin"),exact:true}).click();

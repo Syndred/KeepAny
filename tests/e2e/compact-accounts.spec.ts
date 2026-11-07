@@ -12,6 +12,15 @@ const master = "SyntheticCompactMaster2026!", mainPassword = "Synthetic-Main!202
 const text = (language: "zh-CN" | "en") => (key: string) => (resources[language].translation as Record<string, string>)[key] ?? key;
 const account = (page: Page, name = "CC studio account") => page.locator(".compact-account-card").filter({ has: page.getByRole("link", { name: name === "CC studio account" ? /^(CC studio account|CC secondary login)$/ : name, exact: true }) });
 
+// List fixtures still verify the new-account destination before returning through the UI.
+async function returnCreatedAccountToList(page: Page, t: (key: string) => string, title: string, username: string) {
+ await expect(page).toHaveURL(/\/assets\/account\/[^/#]+$/);
+ await expect(page.locator(".page-header h1")).toHaveText(title);
+ await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText(username);
+ await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
+ await expect(page).toHaveURL(/\/accounts$/);
+ await expect(page.locator(".account-toolbar-actions")).toBeVisible();
+}
 async function save(dialog: Locator) {
 	await dialog.getByRole("button", { name: /^(保存|Save|保存条目|Save entry)$/ }).click();
 	await expect(dialog).toBeHidden();
@@ -28,6 +37,7 @@ async function createAccount(page: Page, t: (key: string) => string, name: strin
 		await dialog.locator(".pw-smart-identifier-row input").last().fill(alias);
 	}
 	await save(dialog);
+ await returnCreatedAccountToList(page, t, name, user);
 }
 async function addLogin(page: Page, t: (key: string) => string) {
  // Prepare an existing multi-login account; template creation now produces a new card.

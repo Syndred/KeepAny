@@ -23,6 +23,15 @@ test.beforeAll(async () => { await prepareCompletionArchive(legacyDirectory, mas
 const text = (language: "zh-CN" | "en") => (key: string) => (resources[language].translation as Record<string, string>)[key] ?? key;
 type T = (key: string) => string;
 const card = (page: Page, name: string) => page.locator(".compact-account-card").filter({ has: page.getByRole("link", { name, exact: true }) });
+// List fixtures still verify the new-account destination before returning through the UI.
+async function returnCreatedAccountToList(page: Page, t: (key: string) => string, title: string, username: string) {
+ await expect(page).toHaveURL(/\/assets\/account\/[^/#]+$/);
+ await expect(page.locator(".page-header h1")).toHaveText(title);
+ await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText(username);
+ await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
+ await expect(page).toHaveURL(/\/accounts$/);
+ await expect(page.locator(".account-toolbar-actions")).toBeVisible();
+}
 async function save(page: Page, t: T) { await page.getByRole("dialog").getByRole("button", { name: t("save"), exact: true }).click(); await expect(page.getByRole("dialog")).toHaveCount(0); }
 async function setup(page: Page, t: T) { await page.goto("/accounts"); await page.locator("#password-vault-master").fill(master); await page.locator("#password-vault-master-confirm").fill(master); await page.getByRole("button", { name: t("accountSetUp"), exact: true }).click(); await expect(page.locator(".account-toolbar-actions")).toBeVisible(); }
 async function create(page: Page, t: T, name: string, alias = false) {
@@ -37,6 +46,7 @@ async function create(page: Page, t: T, name: string, alias = false) {
  await expect(d.locator("textarea")).toHaveCount(1);
  await expect(d.locator("#account-entry-provider,#account-entry-contact,#account-entry-purpose,#account-entry-notes,.account-entry-profile,.password-vault-linked-picker")).toHaveCount(0);
  await save(page, t);
+ await returnCreatedAccountToList(page, t, name, "main@example.test");
 }
 async function unlock(page: Page, t: T) { await page.locator("#password-vault-unlock-master").fill(master); await page.getByRole("button", { name: t("accountUnlockAction"), exact: true }).click(); await expect(page.locator(".account-login-summary,.account-toolbar-actions").first()).toBeVisible(); expect(await page.getByText(t("pwVaultStatusUnlocked"), { exact: true }).count()).toBeLessThanOrEqual(1); }
 async function connect(page: Page, t: T, name: string) {
