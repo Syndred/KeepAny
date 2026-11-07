@@ -765,6 +765,37 @@ export class LocalRepository {
     return this.saveUnlocked('preference', next, expected ? rowFor('preference', expected).payload : null);
   }
 
+  /** Store account grouping and its default together after checking both stores. */
+  async saveAccountCardMergeIfCurrent(input: {
+    expectedAccounts: readonly Asset[];
+    expectedVaultRevision: string;
+    expectedLegacy: { id: string; value: unknown; deleted?: boolean } | null;
+    expectedMerge: { id: string; value: unknown; deleted?: boolean } | null;
+    value: unknown;
+  }): Promise<void> {
+    const mergeId = 'keepany-account-card-merges-v1', legacyId = 'keepany-account-card-groups-v1';
+    if (!input.expectedVaultRevision || (input.expectedMerge && input.expectedMerge.id !== mergeId) ||
+      (input.expectedLegacy && input.expectedLegacy.id !== legacyId)) throw Error('preference-stale');
+    return this.fileStore.transaction('rw', [this.fileStore.passwordVault, this.fileStore.categoryEditJournal], async scope => {
+      const repository = this.withStorage(scope);
+      if ((await scope.passwordVault.get('local'))?.revision !== input.expectedVaultRevision) throw Error('vault-stale');
+      if (await scope.categoryEditJournal.get('account')) throw Error('category-edit-pending');
+      return scope.waitFor(scope.outsideTransaction(async () => {
+        const assets = (await repository.list<Asset>('asset')).filter(asset => asset.kind === 'account' && !asset.purged);
+        const expected = new Map(input.expectedAccounts.map(asset => [asset.id, rowFor('asset', asset).payload]));
+        if (assets.length !== expected.size || assets.some(asset => rowFor('asset', asset).payload !== expected.get(asset.id)))
+          throw Error('asset-stale');
+        const legacy = await repository.get<{ id: string; value: unknown; deleted?: boolean }>('preference', legacyId);
+        const expectedLegacy = input.expectedLegacy && !input.expectedLegacy.deleted ? rowFor('preference', input.expectedLegacy).payload : null;
+        if ((legacy && !legacy.deleted ? rowFor('preference', legacy).payload : null) !== expectedLegacy) throw Error('preference-stale');
+        const next = { id: mergeId, value: input.value };
+        const current = await repository.get('preference', mergeId);
+        if (current && rowFor('preference', current).payload === rowFor('preference', next).payload) return;
+        await repository.saveEntityUnlocked('preference', next, input.expectedMerge ? rowFor('preference', input.expectedMerge).payload : null);
+      }));
+    });
+  }
+
   async saveReminderPreferenceIfCurrent(expected: { id: string; value: unknown } | null, next: { id: string; value: unknown }, expectedAsset?: Asset): Promise<RecordRow> {
     if (next.id !== 'reminder-settings' || (expected && expected.id !== next.id)) throw Error('preference-stale');
     return withCategoryMutationGate(this.records, this.fileStore, [], async (scopeGate4) => {
