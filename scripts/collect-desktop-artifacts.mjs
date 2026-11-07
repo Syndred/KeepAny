@@ -1,7 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { basename, resolve } from "node:path";
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmdirSync, statSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, resolve } from "node:path";
 
 const target = process.argv[2];
 const windows = target === "x86_64-pc-windows-msvc";
@@ -13,7 +14,7 @@ const dirty = execFileSync("git", ["status", "--porcelain"], { encoding: "utf8" 
 if (dirty) throw Error("Stage desktop artifacts from a clean source checkout");
 
 const tauri = resolve("apps/desktop/src-tauri");
-const { productName, version } = JSON.parse(readFileSync(resolve(tauri, "tauri.conf.json"), "utf8"));
+const { mainBinaryName, productName, version } = JSON.parse(readFileSync(resolve(tauri, "tauri.conf.json"), "utf8"));
 const build = resolve(process.env.CARGO_TARGET_DIR || resolve(tauri, "target"), target, "release");
 const bundle = resolve(build, "bundle", windows ? "nsis" : "dmg");
 const extension = windows ? "-setup.exe" : ".dmg";
@@ -23,22 +24,31 @@ if (installers.length !== 1) throw Error(`Expected one ${extension} installer fo
 const installer = resolve(bundle, installers[0]);
 const sources = [installer];
 if (windows) {
-  const executable = resolve(build, "keepany.exe");
+  const executable = resolve(build, `${mainBinaryName}.exe`);
   for (const path of [installer, executable]) {
     if (readFileSync(path).subarray(0, 2).toString() !== "MZ") throw Error(`Invalid Windows executable ${path}`);
   }
   sources.push(executable);
 } else {
   execFileSync("hdiutil", ["verify", installer], { stdio: "inherit" });
-  const app = resolve(build, "bundle/macos", `${productName}.app`);
-  execFileSync("lipo", ["-verify_arch", target.startsWith("aarch64") ? "arm64" : "x86_64", resolve(app, "Contents/MacOS/keepany")]);
-  execFileSync("codesign", ["--verify", "--deep", "--strict", app], { stdio: "inherit" });
+  const mount = mkdtempSync(join(tmpdir(), "keepany-dmg-"));
+  let mounted = false;
+  try {
+    execFileSync("hdiutil", ["attach", installer, "-readonly", "-nobrowse", "-noautoopen", "-mountpoint", mount], { stdio: "inherit" });
+    mounted = true;
+    const app = resolve(mount, `${productName}.app`);
+    execFileSync("lipo", ["-verify_arch", target.startsWith("aarch64") ? "arm64" : "x86_64", resolve(app, "Contents/MacOS", mainBinaryName)]);
+    execFileSync("codesign", ["--verify", "--deep", "--strict", app], { stdio: "inherit" });
+  } finally {
+    if (mounted) execFileSync("hdiutil", ["detach", mount], { stdio: "inherit" });
+    rmdirSync(mount);
+  }
 }
 
 const output = resolve("dist/desktop", target);
 mkdirSync(output, { recursive: true });
 const files = sources.map(source => {
-  const name = basename(source) === "keepany.exe" ? `${productName}_${version}_x64.exe` : basename(source);
+  const name = basename(source) === `${mainBinaryName}.exe` ? `${productName}_${version}_x64.exe` : basename(source);
   const path = resolve(output, name);
   copyFileSync(source, path);
   return { name, bytes: statSync(path).size, sha256: createHash("sha256").update(readFileSync(path)).digest("hex") };
