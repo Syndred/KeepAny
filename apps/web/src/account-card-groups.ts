@@ -7,7 +7,7 @@ export type AccountCardMember = { asset: Asset; entries: VaultEntrySummary[]; vi
 export function accountCardMembers(assets: readonly Asset[], grouped: { linked: ReadonlyMap<string, VaultEntrySummary[]>; unlinked: readonly VaultEntrySummary[] }): AccountCardMember[] {
  return [
   ...assets.filter(asset => !asset.deleted && !asset.purged && asset.kind === 'account').map(asset => ({ asset, entries: grouped.linked.get(asset.id) ?? [], virtual: false })),
-  ...grouped.unlinked.map(entry => ({ asset: { ...newAsset('account'), id: `login-${entry.id}`, name: entry.title, category: 'other', username: entry.username, url: entry.url, updatedAt: entry.modifiedAt }, entries: [entry], virtual: true })),
+  ...grouped.unlinked.map(entry => ({ asset: { ...newAsset('account'), id: `login-${entry.id}`, name: entry.title, category: 'other', username: entry.username, url: entry.url, createdAt: entry.createdAt ?? '', updatedAt: entry.modifiedAt }, entries: [entry], virtual: true })),
  ];
 }
 

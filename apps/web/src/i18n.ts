@@ -70,6 +70,7 @@ const copy: Record<string, [string, string]> = {
  accountBatchSelected: ["已选 {{count}} 套账号", "{{count}} accounts selected"],
  accountBatchSelectedOne: ["已选 1 套账号", "1 account selected"],
  accountBatchDuplicateIndex: ["第 {{index}} 套", "Account {{index}}"],
+ accountBatchGroupHint: ["同组账号逐套选择", "Select group members separately"],
  accountBatchHidden: ["{{count}} 套不在当前筛选中", "{{count}} outside this filter"],
  accountBatchMerge: ["合并", "Merge"],
  accountBatchDeleteTitle: ["删除 {{count}} 套账号？", "Delete {{count}} accounts?"],

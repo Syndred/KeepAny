@@ -133,11 +133,11 @@ test.beforeAll(async () => {
  fixture = mkdtempSync(join(tmpdir(), "keepany-account-batch-"));
  await prepareCompletionArchive(fixture, backupPassword, async repository => {
   const profiles = [
-   { ...newAsset("account"), name: names.work, username: duplicate, url: "https://work.example.test/" },
-   { ...newAsset("account"), name: names.personal, username: duplicate, url: "https://personal.example.test/" },
-   { ...newAsset("account"), name: names.unrelated, username: "unrelated@example.test" },
-   { ...newAsset("account"), name: names.long, username: "long@example.test", notes: "Fictional notes ".repeat(120) },
-   ...Array.from({ length: 30 }, (_, index) => ({ ...newAsset("account"), name: `Example filler ${index + 1}` })),
+   { ...newAsset("account"), name: names.work, createdAt: "2025-01-01T00:00:00.000Z", username: duplicate, url: "https://work.example.test/" },
+   { ...newAsset("account"), name: names.personal, createdAt: "2023-01-01T00:00:00.000Z", username: duplicate, url: "https://personal.example.test/" },
+   { ...newAsset("account"), name: names.unrelated, createdAt: "2024-01-01T00:00:00.000Z", username: "unrelated@example.test" },
+   { ...newAsset("account"), name: names.long, createdAt: "2022-01-01T00:00:00.000Z", username: "long@example.test", notes: "Fictional notes ".repeat(120) },
+   ...Array.from({ length: 30 }, (_, index) => ({ ...newAsset("account"), name: `Example filler ${index + 1}`, createdAt: "2020-01-01T00:00:00.000Z" })),
   ];
   for (const profile of profiles) await repository.save("asset", profile);
   const linked = { ...newAsset("project"), name: names.linked };
@@ -188,7 +188,7 @@ test("AM01 empty and single card via normal add, detail and select", async ({ pa
 });
 
 for (const locale of ["zh-CN", "en"] as const) {
- test(`${locale} AM01 AM02 AM03 AM04 AM05 AM06 account batch lifecycle`, async ({ page, context }, info) => {
+ test(`${locale} AM01–AM06 GO01–GO04 account batch lifecycle`, async ({ page, context }, info) => {
   const t = copy(locale);
   const dev = recordDevelopmentRequests(context);
   await start(page, locale, info);
@@ -207,6 +207,11 @@ for (const locale of ["zh-CN", "en"] as const) {
   const merge = bar.getByRole("button", { name: t("accountBatchMerge"), exact: true });
   const remove = bar.getByRole("button", { name: t("accountDetailDelete"), exact: true });
   const search = page.locator(".asset-account-search input");
+  const orderedTitles = page.locator(`${cards} .compact-account-title`);
+  await expect(orderedTitles.first()).toHaveText(names.private);
+  await expect(orderedTitles.nth(1)).toHaveText(names.work);
+  await expect(orderedTitles.nth(2)).toHaveText(names.unrelated);
+  await expect(orderedTitles.nth(3)).toHaveText(names.personal);
 
   await expect(select).toHaveText(t("accountBatchSelect"));
   await select.click();
@@ -241,9 +246,12 @@ for (const locale of ["zh-CN", "en"] as const) {
 
   await stickyMatrix(page, t, info);
   const mergeResult = page.locator(".account-list-toolbar .account-merge-result");
+  await search.fill("North Bay");
+  await expect(orderedTitles).toHaveText([names.work, names.personal]);
   await merge.click();
   await dialog(page).getByRole("button", { name: t("cancel"), exact: true }).click();
   await expect(mergeResult).toHaveCount(0);
+  await expect(search).toHaveValue("North Bay");
   await merge.click();
   await expect(dialog(page).getByRole("heading", { name: t("accountBatchMergeTitle", { count: 2 }), exact: true })).toBeVisible();
   const defaultTrigger = dialog(page).locator(".account-batch-default .themed-select-trigger");
@@ -253,7 +261,10 @@ for (const locale of ["zh-CN", "en"] as const) {
   await dialog(page).getByRole("button", { name: t("accountBatchConfirmMerge"), exact: true }).click();
   await expect(dialog(page)).toBeHidden();
   await expect(select).toHaveText(t("accountBatchSelect"));
+  await expect(search).toHaveValue("");
   await expect(card(page, names.work)).toHaveCount(0);
+  await expect(orderedTitles.nth(1)).toHaveText(names.personal);
+  await expect(orderedTitles.nth(2)).toHaveText(names.unrelated);
   await expect(card(page, names.personal).locator("[data-login-notes]")).toHaveText("Personal note");
   await expect(mergeResult.getByRole("status")).toHaveText(t("accountBatchMergeDone", { count: 2 }));
   // Regress the previous transient toast, which cleared at 4.5 seconds.
@@ -273,6 +284,10 @@ for (const locale of ["zh-CN", "en"] as const) {
 
   await page.reload();
   await enterAccounts(page, locale, master);
+  await expect(orderedTitles.nth(1)).toHaveText(names.personal);
+  await search.fill("North Bay");
+  await expect(orderedTitles).toHaveText([names.work, names.personal]);
+  await search.press("Escape");
   await expect(card(page, names.personal).locator("[data-login-username]")).toHaveText(duplicate);
   await card(page, names.personal).locator("[data-account-switch]").click();
   await expect(card(page, names.work).locator("[data-login-username]")).toHaveText(duplicate);
@@ -287,6 +302,15 @@ for (const locale of ["zh-CN", "en"] as const) {
   await select.click();
   await expect(card(page, names.work)).toBeVisible();
   await expect(card(page, names.personal)).toBeVisible();
+  const groupHint = bar.getByText(t("accountBatchGroupHint"), { exact: true });
+  await expect(count).toHaveText(t("accountBatchSelected", { count: 0 }));
+  for (const width of [390, 768, 1280, 1920]) {
+   await page.setViewportSize({ width, height: 650 });
+   await expect(groupHint).toBeInViewport();
+   await expect(merge).toBeInViewport();
+   await screenshot(page, info, `GO04-group-hint-${width}`);
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
   await selection(page, names.work).click();
   await selection(page, names.unrelated).click();
   await merge.click();

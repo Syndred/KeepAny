@@ -1,7 +1,7 @@
 import { AssetCardContent } from "./components/AssetSummaryCard";
 import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
-import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
@@ -26,6 +26,7 @@ import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCat
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { matchesAssetSearch } from "./asset-search";
+import { compareAccountCreationNewestFirst } from "./account-order";
 import "./asset-restoration.css";
 import {
 	Empty,
@@ -506,9 +507,10 @@ export function AssetList() {
 	return <AssetKindList key={kind} kind={kind === "vault" ? "account" : kind} />;
 }
 
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions, accountCardGroupIds, accountToolbarExtras }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions, accountCardGroupIds, accountToolbarExtras, resetAccountSearch }: {
 	toolbarActions?: ReactNode;
 	accountToolbarExtras?: (visibleAccounts: readonly Asset[]) => ReactNode;
+	resetAccountSearch?: boolean;
 	accountExtras?: Asset[]; filterAccountId?: string; accountCardGroupIds?: ReadonlyMap<string, string>;
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
@@ -524,6 +526,9 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, pri
 	const workspace = useWorkspaceSummary();
  const [assetView, setAssetView] = useAssetView();
 	const [accountSearch, setAccountSearch] = useState(() => sessionStorage.getItem("keepany-account-list-search") || "");
+	useLayoutEffect(() => {
+		if (resetAccountSearch) setAccountSearch("");
+	}, [resetAccountSearch]);
 	const accountSearchRef = useRef<HTMLInputElement>(null);
 	const wasPrivateSearch = useRef(privateSearch);
 	useEffect(() => {
@@ -616,6 +621,8 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, pri
 			(!tag || a.tags.includes(tag)) &&
 			[search, accountQuery].every((query) => matchesAssetSearch(a, query) || !!accountSearchExtras?.get(a.id)?.includes(query.trim().toLocaleLowerCase())),
 	);
+ // The first matching member determines the position of a collapsed card.
+ if (kind === "account") matchingAssets.sort(compareAccountCreationNewestFirst);
  const seenAccountGroups = new Set<string>();
  // Search results represent individual matching accounts, not platform summaries.
  const expandAccountSearch = kind === "account" && [search, accountQuery].some(query => query.trim());

@@ -1,4 +1,18 @@
+import type { Asset } from '../../../packages/domain/src';
 import type { AccountCardMember } from './account-card-groups';
+
+function creationTime(createdAt: string): number {
+ const time = Date.parse(createdAt);
+ return Number.isNaN(time) ? -Infinity : time;
+}
+
+export function compareAccountCreationNewestFirst(a: Pick<Asset, 'id' | 'createdAt'>, b: Pick<Asset, 'id' | 'createdAt'>): number {
+ const first = creationTime(a.createdAt);
+ const second = creationTime(b.createdAt);
+ if (first !== second) return second - first;
+ if (a.id === b.id) return 0;
+ return a.id < b.id ? -1 : 1;
+}
 
 export const ACCOUNT_ORDER_ID = 'keepany-account-order-v1';
 /** Store only a bounded list of opaque card IDs, never names or credential metadata. */

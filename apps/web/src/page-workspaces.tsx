@@ -71,7 +71,7 @@ const AccountCardEditDialog = lazy(() => import("./components/AccountCardEditDia
 const PrivateAccountDetail = lazy(() => import("./components/PrivateAccountDetail").then(module => ({ default: module.PrivateAccountDetail })));
 
 export function AccountsWorkspace() {
-	const { data, search, notify, registerFeedbackTarget, pendingAccountName, setPendingAccountName } = useAppContext();
+	const { data, search, setSearch, notify, registerFeedbackTarget, pendingAccountName, setPendingAccountName } = useAppContext();
 	const { t } = useTranslation();
 	const { snapshot, session } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
@@ -162,10 +162,14 @@ export function AccountsWorkspace() {
 		</>;
 		const visibleIds = new Set(visibleAccounts.map(asset => asset.id));
 		const hidden = selected.filter(member => !visibleIds.has(member.asset.id)).length;
+		const hasGroupedAccounts = visibleAccounts.some(asset => (cardGroups.groups.get(asset.id)?.length ?? 0) > 1);
 		return <>
 			<div className="account-batch-bar">
-				<p role="status">{t(selected.length === 1 ? "accountBatchSelectedOne" : "accountBatchSelected", { count: selected.length })}
-					{hidden > 0 && <span>{t("accountBatchHidden", { count: hidden })}</span>}
+				<p>
+					<span role="status">{t(selected.length === 1 ? "accountBatchSelectedOne" : "accountBatchSelected", { count: selected.length })}
+						{hidden > 0 && <span>{t("accountBatchHidden", { count: hidden })}</span>}
+					</span>
+					{hasGroupedAccounts && <span>{t("accountBatchGroupHint")}</span>}
 				</p>
 				<div className="actions">
 					<Button id={batchMergeId} disabled={selected.length < 2} onClick={reviewMerge}><Layers2 size={16}/>{t("accountBatchMerge")}</Button>
@@ -196,7 +200,7 @@ export function AccountsWorkspace() {
 					}}>{selecting ? <X size={16}/> : <Layers2 size={16}/>} {t(selecting ? "accountBatchExit" : "accountBatchSelect")}</Button>
 				</>}
 				renderAccounts={(tools, toolbarActions) => <AssetKindList kind="account" embedded hideTitle toolbarActions={toolbarActions} privateSearch={snapshot.status === "unlocked"}
-                    accountExtras={virtualAccounts} filterAccountId={filterAccountId} accountCardGroupIds={selecting ? undefined : cardGroups.ids} accountToolbarExtras={toolbarExtras}
+                    accountExtras={virtualAccounts} filterAccountId={filterAccountId} accountCardGroupIds={selecting ? undefined : cardGroups.ids} accountToolbarExtras={toolbarExtras} resetAccountSearch={mergedCount !== null}
                     beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
 					accountSearchExtras={searchExtras}
 					renderAccountCard={(asset, context) => <GroupedAccountCard key={selecting ? "batch" : "normal"} members={selecting || context.queries.some(query => query.trim()) ? [membersById.get(asset.id)!] : cardGroups.groups.get(asset.id)!}
@@ -209,8 +213,10 @@ export function AccountsWorkspace() {
 			onClose={() => setBatchReview(null)}
 			onComplete={(kind, count) => {
 				exitBatch();
-				if (kind === "merge") setMergedCount(count);
-				else notify(t("accountBatchDeleteDone"));
+				if (kind === "merge") {
+					setSearch("");
+					setMergedCount(count);
+				} else notify(t("accountBatchDeleteDone"));
 			}}
 			onAddMissing={(missing) => {
 				setSelectedIds(previous => previous && new Set([...previous, ...missing.map(member => member.asset.id)]));

@@ -140,7 +140,7 @@
 	background: var(--paper);
 }
 .account-batch-bar p { flex: 1 1 90px; margin: 0; font-size: 14px; font-weight: 750; }
-.account-batch-bar p span { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
+.account-batch-bar p span:not([role="status"]) { display: block; color: var(--muted); font-size: 12px; font-weight: 500; }
 .account-batch-bar .actions { gap: 8px; }
 .account-batch-bar .button, .account-batch-dialog .button { min-height: 44px; }
 .account-batch-dialog { width: min(calc(100vw - 32px), 520px); }

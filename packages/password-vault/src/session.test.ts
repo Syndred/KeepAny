@@ -1,7 +1,7 @@
 import { gzipSync } from 'fflate';
 import { Consts, Int64, Kdbx, ProtectedValue, VarDictionary, XmlUtils } from 'kdbxweb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { checkHeader, clearCredentials, clearDatabase, configureDatabase, credentials, VAULT_AI_KEY_BINDING_FIELD, VAULT_IMPORT_DRAFT_FIELD, VAULT_LINK_FIELD, VAULT_USERNAME_ALIASES_FIELD } from './engine';
+import { checkHeader, clearCredentials, clearDatabase, configureDatabase, credentials, summaryOf, VAULT_AI_KEY_BINDING_FIELD, VAULT_IMPORT_DRAFT_FIELD, VAULT_LINK_FIELD, VAULT_USERNAME_ALIASES_FIELD } from './engine';
 import { generatePassword, VAULT_IMPORT_DRAFT_MAX_BYTES, VAULT_IMPORT_MAX_ENTRIES, VAULT_MAX_BYTES, VaultSession } from './index';
 import type { VaultEntryDraft, VaultPersistence, VaultRecord } from './types';
 
@@ -557,10 +557,33 @@ describe('real encrypted local KDBX session', () => {
     expect(session.readEntry(id)).toEqual({ ...draft, id });
   }, 30_000);
 
-  it('edits and restores password history and recycle bin with stable UUIDs after reload', async () => {
+  it('keeps a vault summary creation date distinct from modification and omits invalid or missing dates', () => {
+    const db = Kdbx.create(credentials(master), 'Synthetic vault timestamps');
+    try {
+      const entry = db.createEntry(db.getDefaultGroup());
+      entry.times.creationTime = new Date('2020-06-01T12:00:00.789Z');
+      entry.times.lastModTime = new Date('2026-10-01T12:00:00.000Z');
+      expect(summaryOf(entry)).toMatchObject({
+        createdAt: '2020-06-01T12:00:00.000Z',
+        modifiedAt: '2026-10-01T12:00:00.000Z',
+      });
+      entry.times.creationTime = new Date(NaN);
+      expect(summaryOf(entry)).not.toHaveProperty('createdAt');
+      entry.times.creationTime = undefined;
+      expect(summaryOf(entry)).not.toHaveProperty('createdAt');
+    } finally {
+      clearDatabase(db);
+    }
+  });
+
+  it('edits and restores password history and recycle bin with stable UUIDs and creation dates after reload', async () => {
     const { storage, session } = await created();
     const id = await session.saveEntry({ ...draft, linkedAssetIds: [] });
+    const original = session.getSnapshot().entries[0];
+    expect(original.createdAt).toEqual(expect.any(String));
     await session.saveEntry({ ...draft, id, password: 'replacement-secret-02', title: 'Updated entry', linkedAssetIds: [] });
+    expect(session.getSnapshot().entries[0].createdAt).toBe(original.createdAt);
+    expect(session.getSnapshot().entries[0].modifiedAt).not.toBe(original.modifiedAt);
     expect(session.history(id)).toHaveLength(1);
     expect(session.history(id)[0].draft.password).toBe(draft.password);
     await session.restoreHistory(id, 0);
@@ -573,11 +596,12 @@ describe('real encrypted local KDBX session', () => {
     const reloaded = new VaultSession(storage);
     await reloaded.initialize();
     await reloaded.unlock(master);
-    expect(reloaded.getSnapshot().trash[0].id).toBe(id);
+    expect(reloaded.getSnapshot().trash[0]).toMatchObject({ id, createdAt: original.createdAt });
     await reloaded.restoreEntry(id);
     expect(reloaded.getSnapshot().trash).toEqual([]);
     expect(reloaded.readEntry(id).password).toBe(draft.password);
     expect(reloaded.history(id)).toHaveLength(2);
+    expect(reloaded.getSnapshot().entries[0].createdAt).toBe(original.createdAt);
   }, 30_000);
 
   it('imports an entire batch with one clone and one encrypted save while preserving password whitespace', async () => {

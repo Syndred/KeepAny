@@ -36,6 +36,7 @@ export type VaultEntrySummary = {
   isAiKey?: true;
   url: string;
   linkedAssetIds: string[];
+  createdAt?: string;
   modifiedAt: string;
   historyCount: number;
 };
