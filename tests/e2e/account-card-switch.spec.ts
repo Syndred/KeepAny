@@ -2,6 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { resources } from '../../apps/web/src/i18n';
 import { openVaultAccess } from './helpers/vault-access';
+import { importVisualKdbxEntries } from './fixtures/password-smart-import-visual';
 
 // Auxiliary CAS preparation: supply one outdated expected preference snapshot; never alter stored data.
 async function makePreferenceSnapshotStale(page: Page, preferenceId = "keepany-account-defaults-v1") {
@@ -290,5 +291,26 @@ for(const language of ['zh-CN','en'] as const) test(`${language} reordered platf
   await cards.locator('[data-account-switch]').click();await expect(cards.locator('[data-login-username]')).toHaveText(username(cycle[(position+1)%4]));await cards.getByRole('button',{name:t('edit'),exact:true}).click();
   for(let step=2;step<=4;step++){await page.locator('[data-account-editor-switch]').click();await expect(page.locator('#password-vault-entry-username')).toHaveValue(username(cycle[(position+step)%4]));}
   await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
+ }finally{await context.close();}
+});
+
+for (const language of ['zh-CN','en'] as const) for (const privateOnly of [false,true]) test(`${language} detail addition stays on ${privateOnly ? 'private' : 'ordinary'} account`,async({browser},info)=>{
+ const t=(key:string)=>(resources[language].translation as Record<string,string>)[key]??key;
+ const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});
+ await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);
+ const page=await context.newPage(),master='SyntheticDetailAdd2026!';
+ const save=async()=>{await page.getByRole('dialog').getByRole('button',{name:/^(保存|Save|保存条目|Save entry)$/}).click();await expect(page.getByRole('dialog')).toHaveCount(0);};
+ try{
+  await page.goto('/accounts');await openVaultAccess(page);await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();
+  if(privateOnly) await importVisualKdbxEntries(page,t,[{title:'Synthetic private platform',username:'source-login',password:'SyntheticSource!'}]);
+  else {await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();await page.locator('#password-vault-entry-title').fill('Synthetic ordinary platform');await page.locator('#password-vault-entry-username').fill('source-login');await page.locator('#password-vault-entry-password').fill('SyntheticSource!');await save();}
+  await page.locator('.compact-account-title-block').click();await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('source-login');
+  const detailURL=page.url();const add=page.locator('.page-header').getByRole('button',{name:t('add'),exact:true});
+  await add.click();await page.locator('#password-vault-entry-username').fill('cancelled-login');await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(detailURL);await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('source-login');
+  await add.click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('');await page.locator('#password-vault-entry-username').fill('new-login');await page.locator('#password-vault-entry-password').fill('SyntheticNew!');await save();
+  await expect(page).toHaveURL(detailURL);await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('source-login');
+  await expect(page.locator('.account-related-info')).toContainText('new-login');await page.screenshot({path:`${output}/${language}-detail-add-${privateOnly?'private':'ordinary'}.png`,fullPage:true});
+  await page.locator('[data-account-detail-switch]').click();await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('new-login');
+  await page.reload();await openVaultAccess(page);await page.locator('#password-vault-unlock-master').fill(master);await page.getByRole('button',{name:t('accountUnlockAction'),exact:true}).first().click();await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('new-login');
  }finally{await context.close();}
 });

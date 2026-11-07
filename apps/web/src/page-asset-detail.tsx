@@ -1370,7 +1370,7 @@ function LegacyAssetDetail({ projectId, domainId }: { projectId?: string; domain
 						</div>
 					}
 				>
-					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={accountAddingLogin ? undefined : asset} template={accountAddingLogin ? { name: currentLogin?.entry.title ?? asset.name, url: currentLogin?.entry.url || asset.url, category: asset.category, sourceEntryId: currentLogin?.entry.id } : undefined} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} onSaved={accountAddingLogin ? () => { void navigate({ to: "/accounts" }); } : undefined} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
+					{kind === "account" ? <AccountEntryDialog key={`${asset.id}:${accountAddingLogin ? "new" : currentLogin?.entry.id ?? "empty"}`} asset={accountAddingLogin ? undefined : asset} template={accountAddingLogin ? { name: currentLogin?.entry.title ?? asset.name, url: currentLogin?.entry.url || asset.url, category: asset.category, sourceEntryId: currentLogin?.entry.id } : undefined} entryId={accountAddingLogin ? undefined : currentLogin?.entry.id} onClose={() => { setEdit(false); setAccountAddingLogin(false); }} /> : <AssetEditor
 						kind={kind}
 						asset={asset}
 						categories={data.categories}
