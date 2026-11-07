@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowLeftRight, Check, ChevronRight, Copy, ExternalLink, Eye, EyeOff, LockKeyhole, Mail, Pencil, Plus, RefreshCw, Smartphone, Trash2, UserRound } from "lucide-react";
-import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type FocusEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { accountNotes } from "../account-entry-edit";
 import type { AccountTemplate } from "../account-entry-save";
@@ -17,6 +17,19 @@ type Props = { batchSelection?: { selected: boolean; toggle: () => void }; onNex
 
 function CompactIcon({ label, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode }) {
 	return <Button type="button" variant="ghost" size="icon" className="compact-account-icon" aria-label={label} title={label} {...props}>{children}</Button>;
+}
+
+function revealFocusedCard(event: FocusEvent<HTMLButtonElement>) {
+	const button = event.currentTarget;
+	if (!button.matches(":focus-visible")) return;
+	// A card taller than the space below the toolbar may still be centered by native Tab scrolling.
+	requestAnimationFrame(() => {
+		if (document.activeElement !== button) return;
+		const toolbar = document.querySelector(".shell-toolbar .account-list-toolbar");
+		if (!toolbar) return;
+		const overlap = toolbar.getBoundingClientRect().bottom + 8 - button.getBoundingClientRect().top;
+		if (overlap > 0) window.scrollBy({ top: -overlap, behavior: "instant" });
+	});
 }
 
 function Frame({ asset, connectionCount, onOpen, onEdit, onCreate, onDelete, url, children, entryId, createId, editId, busy, virtual, batchSelection, batchLogin, onNextAccount, accountPosition = 1, accountTotal = 1 }: Pick<Props, "asset" | "connectionCount" | "onOpen" | "virtual" | "batchSelection"> & { batchLogin?: string; onEdit: () => void; onCreate: () => void; onDelete: () => void; editId?: string; createId?: string; busy: boolean; onNextAccount?: () => void; accountPosition?: number; accountTotal?: number; url: string; children: ReactNode; entryId?: string }) {
@@ -36,7 +49,7 @@ function Frame({ asset, connectionCount, onOpen, onEdit, onCreate, onDelete, url
 	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id} data-private-only={virtual ? "true" : undefined} data-entry-id={entryId} data-batch-selected={batchSelection?.selected} aria-label={batchSelection ? undefined : asset.name} tabIndex={batchSelection ? undefined : -1}>
 		{batchSelection ? <>
 			<div inert>{content}</div>
-			<Button type="button" className="compact-account-select" variant="ghost" aria-pressed={batchSelection.selected} aria-label={[asset.name, batchLogin].filter(Boolean).join(" · ")} onClick={batchSelection.toggle} />
+			<Button type="button" className="compact-account-select" variant="ghost" aria-pressed={batchSelection.selected} aria-label={[asset.name, batchLogin].filter(Boolean).join(" · ")} onFocus={revealFocusedCard} onClick={batchSelection.toggle} />
 		</> : content}
 	</article>;
 }

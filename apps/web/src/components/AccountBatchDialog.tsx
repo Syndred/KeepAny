@@ -35,6 +35,16 @@ export function AccountBatchDialog({ review, onClose, onComplete, onAddMissing, 
 	const progress = useRef<AccountCardBatchDeleteProgress>({});
 	const defaultFieldId = useId();
 	const count = members.length;
+	const labels = new Map<string, number>();
+	const rows = members.map(member => {
+		const name = member.asset.name;
+		const login = memberLogin(member);
+		const label = [name, login].filter(Boolean).join(" · ");
+		labels.set(label, (labels.get(label) ?? 0) + 1);
+		return { id: member.asset.id, name, login, label };
+	});
+	const duplicateLabel = (label: string, index: number) => (labels.get(label) ?? 0) > 1
+		? ` · ${t("accountBatchDuplicateIndex", { index: index + 1 })}` : "";
 
 	async function apply() {
 		if (review.kind === "missing" || !session || running.current || snapshot.status !== "unlocked") return;
@@ -66,15 +76,15 @@ export function AccountBatchDialog({ review, onClose, onComplete, onAddMissing, 
 		{isMerge && <div className="account-batch-default">
 			<label htmlFor={defaultFieldId}>{t("accountDefaultAction")}</label>
 			<Select id={defaultFieldId} value={defaultId} onValueChange={setDefaultId} disabled={busy}>
-				{members.map(member => <SelectOption key={member.asset.id} value={member.asset.id}>
-					{[member.asset.name, memberLogin(member)].filter(Boolean).join(" · ")}
+				{rows.map(({ id, label }, index) => <SelectOption key={id} value={id}>
+					{label + duplicateLabel(label, index)}
 				</SelectOption>)}
 			</Select>
 		</div>}
 		<ul className="account-batch-preview">
-			{members.map(member => <li key={member.asset.id}>
-				<div><strong>{member.asset.name}</strong>{memberLogin(member) && <small>{memberLogin(member)}</small>}</div>
-				{isMerge && member.asset.id === defaultId && <Badge>{t("accountDefaultAction")}</Badge>}
+			{rows.map(({ id, name, login, label }, index) => <li key={id}>
+				<div><strong>{name + duplicateLabel(label, index)}</strong>{login && <small>{login}</small>}</div>
+				{isMerge && id === defaultId && <Badge>{t("accountDefaultAction")}</Badge>}
 			</li>)}
 		</ul>
 		{error && <div role="alert" className="field-error">
