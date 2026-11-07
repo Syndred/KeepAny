@@ -1,9 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { newAsset } from '../../../packages/domain/src';
 import type { VaultEntrySummary } from '../../../packages/password-vault/src';
-import { ACCOUNT_CARD_GROUPS_PREFERENCE_ID, parseAccountCardGroups, accountCardGroups, type AccountCardMember } from './account-card-groups';
+import { ACCOUNT_CARD_GROUPS_PREFERENCE_ID, parseAccountCardGroups, accountCardGroups, accountCardMembers, type AccountCardMember } from './account-card-groups';
 const entry = (id: string, source?: string): VaultEntrySummary => ({id, title:'Same platform',username:id,url:'https://same.test',linkedAssetIds:[id],modifiedAt:'2026-11-05T00:00:00Z',historyCount:0,...(source?{templateSourceId:source}:{})});
 const card = (id: string, source?: string): AccountCardMember => ({asset:{...newAsset('account'),id,name:'Same platform'},entries:[entry(id,source)],virtual:false});
+
+it('preserves ordinary creation dates and uses only the vault creation date for a private card', () => {
+ const ordinary = { ...card('ordinary').asset, createdAt: '2026-10-01T00:00:00Z' };
+ const dated = { ...entry('dated'), linkedAssetIds: [], createdAt: '2026-10-02T00:00:00Z' };
+ const undated = { ...entry('undated'), linkedAssetIds: [] };
+ const members = accountCardMembers([ordinary], { linked: new Map(), unlinked: [dated, undated] });
+
+ expect(members.map(({ asset }) => [asset.id, asset.createdAt, asset.updatedAt])).toEqual([
+  ['ordinary', ordinary.createdAt, ordinary.updatedAt],
+  ['login-dated', dated.createdAt, dated.modifiedAt],
+  ['login-undated', '', undated.modifiedAt],
+ ]);
+});
+
 describe('explicit account card copy groups',()=>{
  it('keeps matching platform names and URLs independent without a copy source',()=>{
   const a=card('a'),b=card('b');const {groups,ids}=accountCardGroups([a,b]);
