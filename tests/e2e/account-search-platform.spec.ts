@@ -74,7 +74,26 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} account searc
   await expect(cards).toHaveCount(1); await expect(cards).toHaveAttribute('data-account-id', workId!);
   await expect(cards.locator('[data-login-username]')).toHaveText('work-b@example.test');
   await search.fill('QQ'); await expect(cards).toHaveCount(3);
-  await page.getByRole('button', { name: t('accountListClearSearch'), exact: true }).click();
+  const clearSearch = page.getByRole('button', { name: t('accountListClearSearch'), exact: true });
+  const clearBounds = (await clearSearch.boundingBox())!;
+  const centerY = clearBounds.y + clearBounds.height / 2;
+  await page.mouse.move(clearBounds.x - 2, centerY);
+  await expect(clearSearch).toHaveCSS('background-color', 'rgb(255, 245, 223)');
+  await expect(clearSearch).toHaveCSS('transition-duration', '0s');
+  for (const offset of [1, clearBounds.width / 2, clearBounds.width - 1]) {
+   await page.mouse.move(clearBounds.x + offset, centerY);
+   await expect(clearSearch).toHaveCSS('background-color', 'rgb(255, 210, 76)');
+   expect(await clearSearch.boundingBox()).toEqual(clearBounds);
+  }
+  await page.mouse.down();
+  try {
+   expect(await clearSearch.boundingBox()).toEqual(clearBounds);
+  } finally {
+   await page.mouse.up();
+  }
+  await expect(search).toHaveValue('');
+  await expect(search).toBeFocused();
+  await expect(clearSearch).toHaveCount(0);
   await expect(cards).toHaveCount(1); await expect(cards).toHaveAttribute('data-account-id', workId!);
   await page.reload(); await enterAccounts(page, language, master);
   await expect(cards).toHaveCount(1); await expect(cards).toHaveAttribute('data-account-id', workId!);
