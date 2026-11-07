@@ -39,11 +39,6 @@
 .unified-accounts-page .asset-category-toolbar--search .asset-category-scroll { flex: 0 1 auto; padding-block: 4px; }
 .unified-accounts-page .asset-account-search { order: 0; flex: 1 1 150px; min-width: min(100%, 150px); height: 44px; min-height: 44px; border-width: 1.5px; border-radius: 10px; }
 .unified-accounts-page .asset-account-search input { min-height: 41px; height: 41px; }
-/* Keep the 44px clear target while painting its states inside the search frame. */
-.unified-accounts-page .asset-account-search > .button { padding: 3px; }
-.unified-accounts-page .asset-account-search > .button:hover:not(:disabled) { background-clip: content-box; }
-.unified-accounts-page .asset-account-search > .button:focus-visible { outline-offset: -5px; }
-.unified-accounts-page .asset-account-search > .button:active:not(:disabled) { box-shadow: none; }
 .unified-accounts-page .asset-category-toolbar .tabs button { min-height: 44px; padding-block: 8px; }
 .unified-accounts-page .asset-category-toolbar .asset-category-add { width: 44px; min-width: 44px; padding: 0; }
 .unified-accounts-page .asset-category-toolbar > .button,
