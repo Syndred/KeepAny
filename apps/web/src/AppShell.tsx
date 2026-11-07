@@ -63,6 +63,7 @@ export function AppShell() {
 	const [toast, setToast] = useState("");
 	const [remindersOpen, setRemindersOpen] = useState(false);
 	const [feedbackTarget, setFeedbackTarget] = useState<HTMLElement | null>(null);
+	const [accountToolbarTarget, setAccountToolbarTarget] = useState<HTMLDivElement | null>(null);
 	const [ai, setAi] = useState(false);
 	const [mobile, setMobile] = useState(false);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
@@ -71,6 +72,26 @@ export function AppShell() {
 	const hash = useRouterState({ select: (s) => s.location.hash });
 	const privateAccountDetail = ["/accounts", "/assets/account", "/assets/vault"].includes(pathname) && hash.startsWith("login-detail-");
 	const navigate = useNavigate();
+	useEffect(() => {
+		const toolbar = accountToolbarTarget?.parentElement;
+		const header = toolbar?.querySelector<HTMLElement>(".topbar");
+		if (!toolbar || !header) return;
+		const root = document.documentElement;
+		const update = () => {
+			const inset = Number.parseFloat(getComputedStyle(toolbar).top) || 0;
+			root.style.setProperty("--account-toolbar-offset", `${toolbar.offsetHeight + inset + 8}px`);
+			toolbar.style.setProperty("--account-nav-height", `${header.offsetHeight}px`);
+		};
+		const observer = new ResizeObserver(update);
+		observer.observe(toolbar);
+		observer.observe(header);
+		update();
+		return () => {
+			observer.disconnect();
+			root.style.removeProperty("--account-toolbar-offset");
+			toolbar.style.removeProperty("--account-nav-height");
+		};
+	}, [accountToolbarTarget]);
 	useEffect(() => {
 		if (pathname !== "/accounts") setPendingAccountName("");
 		if (pathname) { setSearchOpen(false); setSearch(""); setMobile(false); }
@@ -149,8 +170,8 @@ export function AppShell() {
 		if (hash) requestSearchLocation(hash);
 	}
 	const context = useMemo(
-		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget, pendingAccountName, setPendingAccountName }),
-		[data, search, pendingAccountName],
+		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget, accountToolbarTarget, pendingAccountName, setPendingAccountName }),
+		[data, search, accountToolbarTarget, pendingAccountName],
 	);
 	const navigation: SortableNavItem[] = [
 		{ id: "overview", to: "/", label: t("overview"), icon: LayoutDashboard },
@@ -319,7 +340,7 @@ export function AppShell() {
 				<div className="main">
 					<div className="shell-toolbar">
 						<header className="topbar">
-							{unifiedDetailReturn ? <Link className="topbar-page-label topbar-back-link" {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><span className="text-link"><ArrowLeft size={15}/>{t("backToOverview")}</span></Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+							{unifiedDetailReturn ? <Link className="topbar-page-label topbar-back-link" {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Button asChild variant="primary" className="topbar-overview-link"><Link to="/"><ArrowLeft size={16}/>{t("backToOverview")}</Link></Button> : <strong className="topbar-page-label">{currentHeading}</strong>}
 							<div className="topbar-spacer"/>
 							<button ref={topSearchTriggerRef} className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
 								<kbd>⌘ K</kbd>
@@ -336,6 +357,7 @@ export function AppShell() {
 							</DropdownMenuContent></DropdownMenu>
 							</div>
 						</header>
+						{pathname === "/accounts" && !privateAccountDetail && <div ref={setAccountToolbarTarget} hidden={data.loading} />}
 						{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef} onBlur={(event) => {
 							const target = event.relatedTarget;
 							if (target && !event.currentTarget.contains(target) && target !== topSearchTriggerRef.current) closeSearch();

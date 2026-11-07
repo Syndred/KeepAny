@@ -562,7 +562,7 @@ export class VaultSession {
   }
 
   /** Recycle every login of one reviewed account in one encrypted write, preserving shared owners. */
-  async trashAccountEntries(accountId: string, expectedContentRevision: string, liveAccountIds: readonly string[]): Promise<void> {
+  async trashAccountEntries(accountId: string, expectedContentRevision: string, liveAccountIds: readonly string[]): Promise<string> {
     if (!accountId || accountId.length > 96 || !expectedContentRevision || !liveAccountIds.includes(accountId)) fail('vault-invalid');
     // Non-account relations and deleted owners must not leave a password-only ghost.
     const owners = new Set(liveAccountIds);
@@ -574,7 +574,7 @@ export class VaultSession {
         const stored = await this.storage.read();
         this.checkGeneration(generation);
         if (stored?.revision !== this.record?.revision) fail('vault-stale');
-        return;
+        return expectedContentRevision;
       }
       if (ids.some(id => draftOf(findEntry(db, id)).aiKeyBinding)) fail('vault-invalid');
       await this.mutate(generation, candidate => {
@@ -596,11 +596,12 @@ export class VaultSession {
           candidate.remove(target); target.times.locationChanged = nextKdbxTime(previous);
         }
       });
+      return this.contentRevision(this.unlocked());
     });
   }
 
   /** A private account confirmation freezes its content revision, not just its entry ID. */
-  async trashEntryIfCurrent(id: string, expectedContentRevision: string): Promise<void> {
+  async trashEntryIfCurrent(id: string, expectedContentRevision: string): Promise<string> {
     if (!id || !expectedContentRevision) fail('vault-invalid');
     return this.run(async generation => {
       const db = this.unlocked();
@@ -613,6 +614,7 @@ export class VaultSession {
         const previous = entry.locationChanged;
         candidate.remove(entry); entry.times.locationChanged = nextKdbxTime(previous);
       });
+      return this.contentRevision(this.unlocked());
     });
   }
 

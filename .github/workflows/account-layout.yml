@@ -7,7 +7,7 @@ permissions:
 jobs:
   account-layout:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,6 +26,14 @@ jobs:
         timeout-minutes: 1
       - run: pnpm verify:preview
         timeout-minutes: 5
+      - name: Verify account batch operations against the compiled candidate
+        run: pnpm exec playwright test --config playwright.account-batch.config.ts
+        timeout-minutes: 6
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: account-batch-machine-evidence
+          path: test-results/account-batch
       - run: pnpm test:final:layout
         timeout-minutes: 22
       - uses: actions/upload-artifact@v4

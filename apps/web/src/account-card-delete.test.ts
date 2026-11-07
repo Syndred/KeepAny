@@ -3,7 +3,14 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { newAsset, type Asset } from '../../../packages/domain/src';
 import { openLocalRepository } from '../../../packages/local-db/src';
 import { VaultSession, type VaultPersistence, type VaultRecord } from '../../../packages/password-vault/src';
-import { prepareAccountCardDelete, recycleAccountCard, type AccountCardDeleteProgress } from './account-card-delete';
+import {
+ prepareAccountCardBatchDelete,
+ prepareAccountCardDelete,
+ recycleAccountCard,
+ recycleAccountCardBatch,
+ type AccountCardBatchDeleteProgress,
+ type AccountCardDeleteProgress,
+} from './account-card-delete';
 const disposals: (() => Promise<void>)[] = [];
 afterEach(async () => { for (const dispose of disposals.splice(0)) await dispose(); });
 const master = 'Synthetic account recycle 2026!';
@@ -122,5 +129,113 @@ describe('whole account card recycling', () => {
   const actual=f.repository.trashEmptyAccountIfCurrent.bind(f.repository);const spy=vi.spyOn(f.repository,'trashEmptyAccountIfCurrent').mockImplementationOnce(async(...args)=>{await actual(...args);throw Error('synthetic-lost-ack');});
   await expect(recycleAccountCard(f.session,target,progress,f.repository)).rejects.toThrow('synthetic-lost-ack');const writes=f.storage.writes;
   await recycleAccountCard(f.session,target,progress,f.repository);expect(progress.publicDone).toBe(true);expect(f.storage.writes).toBe(writes);spy.mockRestore();
+ });
+});
+
+describe('batch account recycling', () => {
+ it('recycles ordinary and private selections while retaining a shared login for the unselected owner', async () => {
+  const f = await fixture();
+  const privateId = await f.session.saveEntry({
+   title: 'Private example', username: 'private@example.test', password: 'Synthetic private',
+   notes: '', url: '', linkedAssetIds: [],
+  });
+  await f.session.saveEntry({ ...f.session.readEntry(f.primary), linkedAssetIds: [f.asset.id, f.sibling.id] });
+  const shared = f.session.readEntry(f.primary);
+  const target = prepareAccountCardBatchDelete(f.session, [{ asset: f.asset }, { entryId: privateId }]);
+  const progress: AccountCardBatchDeleteProgress = {};
+  const completed: number[] = [];
+
+  await recycleAccountCardBatch(f.session, target, progress, f.repository, count => completed.push(count));
+
+  expect(completed).toEqual([1, 2]);
+  expect(progress).toMatchObject({ completed: 2, partial: false });
+  expect(f.session.readEntry(f.primary)).toEqual({ ...shared, linkedAssetIds: [f.sibling.id] });
+  expect(f.session.getSnapshot().trash).toHaveLength(2);
+  expect(f.session.getSnapshot().trash).toContainEqual(expect.objectContaining({ id: privateId }));
+  const sharedCopy = f.session.getSnapshot().trash.find(entry => entry.linkedAssetIds.includes(f.asset.id))!;
+  expect(sharedCopy.id).not.toBe(f.primary);
+  expect(f.session.history(sharedCopy.id)).toHaveLength(1);
+  expect(await f.repository.get<Asset>('asset', f.sibling.id)).toEqual(f.sibling);
+  expect(await f.repository.get<Asset>('asset', f.asset.id)).toMatchObject({ deleted: true });
+ });
+
+ it('resumes a partial ordinary item without repeating a completed private recycle or writing encrypted copies again', async () => {
+  const f = await fixture();
+  const privateId = await f.session.saveEntry({
+   title: 'Private example', username: 'private@example.test', password: 'Synthetic private',
+   notes: '', url: '', linkedAssetIds: [],
+  });
+  const target = prepareAccountCardBatchDelete(f.session, [{ entryId: privateId }, { asset: f.asset }]);
+  const progress: AccountCardBatchDeleteProgress = {};
+  const fail = vi.spyOn(f.repository, 'trashEmptyAccountIfCurrent').mockRejectedValueOnce(Error('synthetic-tombstone-failure'));
+  const completed: number[] = [];
+  const run = () => recycleAccountCardBatch(f.session, target, progress, f.repository, count => completed.push(count));
+
+  await expect(run()).rejects.toThrow('synthetic-tombstone-failure');
+
+  expect(completed).toEqual([1]);
+  expect(progress).toMatchObject({ completed: 1, partial: true });
+  expect(await f.repository.get<Asset>('asset', f.asset.id)).toMatchObject({ deleted: false });
+  const writes = f.storage.writes;
+  const trash = f.session.getSnapshot().trash;
+  await run();
+  await run();
+  expect(completed).toEqual([1, 2]);
+  expect(progress).toMatchObject({ completed: 2, partial: false });
+  expect(f.storage.writes).toBe(writes);
+  expect(f.session.getSnapshot().trash).toEqual(trash);
+  expect(await f.repository.get<Asset>('asset', f.asset.id)).toMatchObject({ deleted: true });
+  expect(fail).toHaveBeenCalledTimes(2);
+  fail.mockRestore();
+ });
+
+ it('rejects a batch before moving anything if a later selected card has changed', async () => {
+  const f = await fixture();
+  const target = prepareAccountCardBatchDelete(f.session, [{ asset: f.asset }, { asset: f.sibling }]);
+  await f.repository.saveAssetIfCurrent(f.sibling, { ...f.sibling, name: 'Edited after confirmation' });
+  const writes = f.storage.writes;
+
+  await expect(recycleAccountCardBatch(f.session, target, {}, f.repository)).rejects.toThrow('asset-stale');
+
+  expect(f.storage.writes).toBe(writes);
+  expect(f.session.getSnapshot().trash).toHaveLength(0);
+  expect(await f.repository.get<Asset>('asset', f.asset.id)).toMatchObject({ deleted: false });
+ });
+
+ it('stops after the completed item when a later login changes during the batch', async () => {
+  const f = await fixture();
+  const target = prepareAccountCardBatchDelete(f.session, [{ asset: f.asset }, { asset: f.sibling }]);
+  const progress: AccountCardBatchDeleteProgress = {};
+  const trash = f.repository.trashEmptyAccountIfCurrent.bind(f.repository);
+  const interleave = vi.spyOn(f.repository, 'trashEmptyAccountIfCurrent').mockImplementationOnce(async (...args) => {
+   const result = await trash(...args);
+   await f.session.saveEntry({ ...f.session.readEntry(f.siblingEntry), notes: 'Concurrent update' });
+   return result;
+  });
+
+  await expect(recycleAccountCardBatch(f.session, target, progress, f.repository)).rejects.toThrow('vault-stale');
+
+  expect(progress).toMatchObject({ completed: 1, partial: false });
+  expect(await f.repository.get<Asset>('asset', f.asset.id)).toMatchObject({ deleted: true });
+  expect(await f.repository.get<Asset>('asset', f.sibling.id)).toMatchObject({ deleted: false });
+  expect(f.session.readEntry(f.siblingEntry).notes).toBe('Concurrent update');
+  const writes = f.storage.writes;
+  await expect(recycleAccountCardBatch(f.session, target, progress, f.repository)).rejects.toThrow('vault-stale');
+  expect(f.storage.writes).toBe(writes);
+  interleave.mockRestore();
+ });
+
+ it('rejects duplicate targets and does not reuse a progress record for a different confirmation', async () => {
+  const f = await fixture();
+  const inputs = [{ asset: f.asset }];
+  expect(() => prepareAccountCardBatchDelete(f.session, [...inputs, ...inputs])).toThrow('asset-stale');
+  const target = prepareAccountCardBatchDelete(f.session, inputs);
+  const progress: AccountCardBatchDeleteProgress = {};
+  await recycleAccountCardBatch(f.session, target, progress, f.repository);
+  const next = prepareAccountCardBatchDelete(f.session, [{ asset: f.sibling }]);
+
+  await expect(recycleAccountCardBatch(f.session, next, progress, f.repository)).rejects.toThrow('asset-stale');
+
+  expect(await f.repository.get<Asset>('asset', f.sibling.id)).toMatchObject({ deleted: false });
  });
 });

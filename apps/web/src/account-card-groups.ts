@@ -101,9 +101,14 @@ export function accountCardGroups(members: readonly AccountCardMember[], archive
  }
  const groups = new Map<string, AccountCardMember[]>();
  const ids = new Map<string, string>();
- for (const bucket of buckets.values()) for (const member of bucket) {
-  groups.set(member.asset.id, bucket);
-  ids.set(member.asset.id, bucket[0].asset.id);
+ const explicitGroupFor = new Map<string, readonly string[]>();
+ for (const [key, bucket] of buckets) {
+  const label = explicitLabels.get(key);
+  for (const member of bucket) {
+   groups.set(member.asset.id, bucket);
+   ids.set(member.asset.id, bucket[0].asset.id);
+   if (label !== undefined) explicitGroupFor.set(member.asset.id, validExplicitGroups[label]);
+  }
  }
- return { groups, ids };
+ return { groups, ids, explicitGroupFor };
 }

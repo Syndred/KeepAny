@@ -2,6 +2,7 @@ import { AssetCardContent } from "./components/AssetSummaryCard";
 import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
 import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
@@ -113,12 +114,14 @@ function CategoryStrip({
 	choose,
 	searchControl,
 	toolbarActions,
+	wrapToolbar,
 }: {
 	kind: AssetKind;
 	chosen: string;
 	choose: (x: string, id?: string) => void;
 	searchControl?: ReactNode;
 	toolbarActions?: ReactNode;
+	wrapToolbar?: (toolbar: ReactNode) => ReactNode;
 }) {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -340,9 +343,8 @@ function CategoryStrip({
 			setCategoryBusy(false);
 		}
 	}
-	return (
-		<>
-			<div className={`asset-category-toolbar${searchControl ? " asset-category-toolbar--search" : ""}`}>
+	const toolbar = (
+		<div className={`asset-category-toolbar${searchControl ? " asset-category-toolbar--search" : ""}`}>
 			<div className="asset-category-scroll tabs">
 				<button
 					type="button"
@@ -363,7 +365,11 @@ function CategoryStrip({
 			{searchControl}
 			<Button size="small" className="asset-category-manage" disabled={categoryBusy} onClick={openManager}>{t("manage")}</Button>
 			{toolbarActions}
-			</div>
+		</div>
+	);
+	return (
+		<>
+			{wrapToolbar ? wrapToolbar(toolbar) : toolbar}
 			{data.categoryEditsError && <p className="field-error" role="alert">{t("error")}</p>}
 			{pending && <section className="card asset-category-recovery" aria-label={t("categoryEditRecovery")}>
 				<p role="status">{t(pending.phase === "rolling-back" ? "categoryEditCancelling" : "categoryEditPending")}</p>
@@ -500,8 +506,9 @@ export function AssetList() {
 	return <AssetKindList key={kind} kind={kind === "vault" ? "account" : kind} />;
 }
 
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions, accountCardGroupIds }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions, accountCardGroupIds, accountToolbarExtras }: {
 	toolbarActions?: ReactNode;
+	accountToolbarExtras?: (visibleAccounts: readonly Asset[]) => ReactNode;
 	accountExtras?: Asset[]; filterAccountId?: string; accountCardGroupIds?: ReadonlyMap<string, string>;
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
@@ -513,7 +520,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, pri
 	renderAccountCard?: (asset: Asset, context: { connectionCount: number; queries: string[]; onOpen: () => void }) => ReactNode;
 }) {
 	const Container = embedded ? "section" : "main";
-	const { data, search } = useAppContext();
+	const { data, search, accountToolbarTarget } = useAppContext();
 	const workspace = useWorkspaceSummary();
  const [assetView, setAssetView] = useAssetView();
 	const [accountSearch, setAccountSearch] = useState(() => sessionStorage.getItem("keepany-account-list-search") || "");
@@ -687,14 +694,17 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, pri
 					value={accountSearch}
 					onChange={(event) => changeAccountSearch(event.target.value)}
 					onKeyDown={(event) => {
-						if (event.key === "Escape") {
+						if (event.key === "Escape" && accountSearch) {
 							event.stopPropagation();
 							changeAccountSearch("");
 						}
 					}}
 				/>
 				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
-			</div> : undefined} toolbarActions={toolbarActions} />
+			</div> : undefined} toolbarActions={toolbarActions} wrapToolbar={kind === "account" && renderAccountCard ? (toolbar) => {
+				const content = <div className="account-list-toolbar">{toolbar}{accountToolbarExtras?.(assets)}</div>;
+				return accountToolbarTarget ? createPortal(content, accountToolbarTarget) : content;
+			} : undefined} />
 			{kind !== "account" && kind !== "vault" ? <div className="asset-list-toolbar">
 				{tagFilter}
 				<AssetViewToggle value={assetView} onChange={setAssetView} />
