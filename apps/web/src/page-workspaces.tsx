@@ -182,7 +182,7 @@ export function AccountsWorkspace() {
 					<Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { exitBatch(); clearMessage(); setEditAccount({}); }}><Plus size={17} />{t("add")}</Button>
 					<Button id={batchToggleId} className="account-batch-toggle" variant={selecting ? "primary" : "default"} disabled={busy || !selecting && !members.length} onClick={() => {
 						if (selecting) exitBatch();
-						else { clearMessage(); setSelectedIds(new Set()); }
+						else { clearMessage(); notify(""); setSelectedIds(new Set()); }
 					}}>{selecting ? <X size={16}/> : <Layers2 size={16}/>} {t(selecting ? "accountBatchExit" : "accountBatchSelect")}</Button>
 				</>}
 				renderAccounts={(tools, toolbarActions) => <AssetKindList kind="account" embedded hideTitle toolbarActions={toolbarActions} privateSearch={snapshot.status === "unlocked"}

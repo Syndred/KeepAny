@@ -97,7 +97,7 @@ export function AccountBatchDialog({ review, onClose, onComplete, onAddMissing, 
 			{review.kind === "missing"
 				? <Button variant="primary" onClick={() => onAddMissing(members)}>{t("accountBatchSelectMissing")}</Button>
 				: <Button variant={isDelete ? "danger" : "primary"} disabled={busy || error === "stale"} onClick={() => void apply()}>
-					{t(busy ? "loading" : error ? "retry" : isDelete ? "accountBatchTrash" : "accountBatchConfirmMerge")}
+					{t(busy ? (isDelete ? "accountBatchDeleting" : "accountBatchMerging") : error ? "retry" : isDelete ? "accountBatchTrash" : "accountBatchConfirmMerge")}
 				</Button>}
 		</div>
 	</Dialog>;
