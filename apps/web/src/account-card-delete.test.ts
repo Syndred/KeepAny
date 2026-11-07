@@ -1,8 +1,10 @@
 import 'fake-indexeddb/auto';
+import { Int64, Kdbx, VarDictionary } from 'kdbxweb';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { newAsset, type Asset } from '../../../packages/domain/src';
 import { openLocalRepository } from '../../../packages/local-db/src';
 import { VaultSession, type VaultPersistence, type VaultRecord } from '../../../packages/password-vault/src';
+import { clearDatabase, configureDatabase, credentials } from '../../../packages/password-vault/src/engine';
 import {
  prepareAccountCardBatchDelete,
  prepareAccountCardDelete,
@@ -17,8 +19,18 @@ const master = 'Synthetic account recycle 2026!';
 async function fixture() {
  const repository = await openLocalRepository(`account-recycle-${crypto.randomUUID().slice(0,8)}`);
  const storage: VaultPersistence & { fail: boolean; writes: number } = { fail: false, writes: 0, read: () => repository.readPasswordVault(), async write(bytes: Uint8Array, expected: string | null): Promise<VaultRecord> { if (this.fail) throw Error('synthetic-storage-failure'); this.writes++; return repository.savePasswordVault(bytes, expected); } };
- const session = new VaultSession(storage); await session.initialize(); await session.create(master);
+ const session = new VaultSession(storage);
  disposals.push(async () => { session.lock(); await repository.close(); });
+ const database = Kdbx.create(credentials(master), 'Synthetic account recycle');
+ configureDatabase(database);
+ // Use a low-cost encrypted fixture. Vault tests cover the production KDF separately.
+ const parameters = database.header.kdfParameters!;
+ parameters.set('M', VarDictionary.ValueType.UInt64, Int64.from(1024 * 1024));
+ parameters.set('I', VarDictionary.ValueType.UInt64, Int64.from(1));
+ try { await storage.write(new Uint8Array(await database.save()), null); }
+ finally { clearDatabase(database); }
+ await session.initialize();
+ await session.unlock(master);
  const asset = { ...newAsset('account'), name: 'Synthetic A', username: 'a@example.test' };
  const sibling = { ...newAsset('account'), name: 'Synthetic B', username: 'b@example.test' };
  await repository.save('asset', asset); await repository.save('asset', sibling);
