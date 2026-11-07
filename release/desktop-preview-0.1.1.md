@@ -37,3 +37,5 @@ Use the x64 setup EXE on Windows or the DMG for your Mac (Apple Silicon or Intel
 下载校验值见 `SHA256SUMS.txt`，许可材料见 `KeepAny-desktop-licenses.zip`。对应源码及构建说明见提交 [`d2da82c1`](https://github.com/Syndred/KeepAny/tree/d2da82c15f474f487b08a1362b3e141154a283d6)。
 
 See `SHA256SUMS.txt` for the downloads and `KeepAny-desktop-licenses.zip` for license materials. Build instructions and dependency lockfiles are in the [corresponding source](https://github.com/Syndred/KeepAny/tree/d2da82c15f474f487b08a1362b3e141154a283d6).
+
+[Desktop build](https://github.com/Syndred/KeepAny/actions/runs/42374872785) · [Native installer checks](https://github.com/Syndred/KeepAny/actions/runs/42375685663)

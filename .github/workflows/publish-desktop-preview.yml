@@ -18,9 +18,9 @@ concurrency:
 
 env:
   KEEPANY_EXPECTED_COMMIT: d2da82c15f474f487b08a1362b3e141154a283d6
-  KEEPANY_BUILD_RUN: 'REPLACE_BUILD_RUN'
-  KEEPANY_ACCEPTANCE_RUN: 'REPLACE_ACCEPTANCE_RUN'
-  KEEPANY_ACCEPTANCE_COMMIT: REPLACE_ACCEPTANCE_COMMIT
+  KEEPANY_BUILD_RUN: '42374872785'
+  KEEPANY_ACCEPTANCE_RUN: '42375685663'
+  KEEPANY_ACCEPTANCE_COMMIT: e1d4b1d68751509754c613c3d87e680917394e70
   KEEPANY_TAG: v0.1.1-desktop-preview.20261107
 
 jobs:
@@ -68,10 +68,10 @@ jobs:
           done
           cd release-assets
           sha256sum -c <<'SUMS'
-          REPLACE_WINDOWS_INSTALLER_SHA256  KeepAny_0.1.1_x64-setup.exe
-          REPLACE_WINDOWS_PORTABLE_SHA256  KeepAny_0.1.1_x64.exe
-          REPLACE_APPLE_SILICON_SHA256  KeepAny_0.1.1_aarch64.dmg
-          REPLACE_MAC_INTEL_SHA256  KeepAny_0.1.1_x64.dmg
+          bfd93f3a6faec26648ed01154163a6f516eefb72021bd48432562fdf3e6fa5c1  KeepAny_0.1.1_x64-setup.exe
+          ab79febaa1407d1c28786808fdaa177e813aaf76e735ee75dc463ae4be91cfc8  KeepAny_0.1.1_x64.exe
+          3d39d70989074ea5722ab37dbd18aabd6c41ff0a96a90f4b417b2a5cd2831a36  KeepAny_0.1.1_aarch64.dmg
+          0466844e6824960a337dc38c4bd9871d73b94be072b0942e341543d4dce842d3  KeepAny_0.1.1_x64.dmg
           SUMS
       - name: Verify and gather third-party license materials
         run: bash scripts/prepare-desktop-preview-licenses.sh
