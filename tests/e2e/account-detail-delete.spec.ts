@@ -113,7 +113,8 @@ for(const language of ['zh-CN','en'] as const)test(`${language} whole account de
   await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(1);
   await cards.getByRole('button',{name:t('accountDeleteAccountTitle'),exact:true}).click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();
   await expect(page).toHaveURL(/\/accounts$/);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(0);
-  await page.reload();await enterAccounts(page,language,master);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(0);
+  // Private account search is intentionally not persisted across lock/reload.
+  await page.reload();await enterAccounts(page,language,master);await search.fill('Empty list account');await expect(cards).toHaveCount(0);
   await search.fill('Empty plain account');await cards.locator('.compact-account-title-block').click();await expect(page.locator('.account-login-summary [data-login-password]')).toHaveText(t('pwVaultNoPassword'));
   await remove.click();await expect(page.getByRole('dialog')).toContainText('Empty plain account');await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(/detail-delete-empty/);
   await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);
