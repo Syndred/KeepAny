@@ -1,23 +1,19 @@
 import { ACCOUNT_ORDER_ID, orderedAccountMembers, parseAccountOrder } from "./account-order";
 import { ACCOUNT_DEFAULTS_ID, defaultAccountId, parseAccountDefaults } from "./account-defaults";
 import { useMemo } from "react";
-import { newAsset } from "../../../packages/domain/src";
 import { useAppContext } from "./view-shared";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
 import { partitionAccountPasswords } from "./workspace-summary";
-import { ACCOUNT_CARD_GROUPS_PREFERENCE_ID, accountCardGroups, parseAccountCardGroups } from "./account-card-groups";
+import { ACCOUNT_CARD_GROUPS_PREFERENCE_ID, accountCardGroups, accountCardMembers, parseAccountCardGroups } from "./account-card-groups";
 
 /** The list and both detail routes consume the same live, explicit membership. */
 export function useAccountCardGroups() {
  const { data } = useAppContext();
  const { snapshot } = usePasswordVault();
  const grouped = useMemo(() => partitionAccountPasswords(snapshot.status === "unlocked" ? snapshot.entries : [], data.assets), [snapshot.status, snapshot.entries, data.assets]);
- const virtualAccounts = useMemo(() => grouped.unlinked.map(entry => ({ ...newAsset("account"), id: `login-${entry.id}`, name: entry.title, category: "other", username: entry.username, url: entry.url, updatedAt: entry.modifiedAt })), [grouped.unlinked]);
- const virtualEntries = useMemo(() => new Map(grouped.unlinked.map(entry => [`login-${entry.id}`, entry])), [grouped.unlinked]);
- const members = useMemo(() => [
-  ...data.assets.filter(asset => !asset.deleted && !asset.purged && asset.kind === "account").map(asset => ({ asset, entries: grouped.linked.get(asset.id) ?? [], virtual: false })),
-  ...virtualAccounts.map(asset => ({ asset, entries: [virtualEntries.get(asset.id)!], virtual: true })),
- ], [data.assets, grouped.linked, virtualAccounts, virtualEntries]);
+ const members = useMemo(() => accountCardMembers(data.assets, grouped), [data.assets, grouped]);
+ const virtualAccounts = useMemo(() => members.filter(member => member.virtual).map(member => member.asset), [members]);
+ const virtualEntries = useMemo(() => new Map(members.filter(member => member.virtual).map(member => [member.asset.id, member.entries[0]])), [members]);
  const value = data.preferences.find(preference => preference.id === ACCOUNT_CARD_GROUPS_PREFERENCE_ID && !("deleted" in preference && preference.deleted === true))?.value;
  const explicitGroups = useMemo(() => parseAccountCardGroups(value), [value]);
  const baseGroups = useMemo(() => accountCardGroups(members, snapshot.status === "unlocked" ? snapshot.trash : [], explicitGroups), [members, snapshot.status, snapshot.trash, explicitGroups]);
@@ -36,5 +32,5 @@ export function useAccountCardGroups() {
  const defaultPreference = data.preferences.find(preference => preference.id === ACCOUNT_DEFAULTS_ID);
  const defaults = useMemo(() => parseAccountDefaults(defaultPreference && "deleted" in defaultPreference && defaultPreference.deleted === true ? undefined : defaultPreference?.value), [defaultPreference]);
  const defaultFor = (id: string) => defaultAccountId(baseGroups.groups.get(id) ?? [], defaults);
- return { grouped, virtualAccounts, virtualEntries, cardGroups, defaultPreference, defaults, defaultFor, orderPreference, order };
+ return { grouped, virtualAccounts, virtualEntries, baseGroups, cardGroups, defaultPreference, defaults, defaultFor, orderPreference, order };
 }

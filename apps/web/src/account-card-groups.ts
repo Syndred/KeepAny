@@ -1,7 +1,16 @@
-import type { Asset } from '../../../packages/domain/src';
+import { newAsset, type Asset } from '../../../packages/domain/src';
 import type { VaultEntrySummary } from '../../../packages/password-vault/src';
 
 export type AccountCardMember = { asset: Asset; entries: VaultEntrySummary[]; virtual: boolean };
+
+/** Shared materialization for list display and post-delete navigation. */
+export function accountCardMembers(assets: readonly Asset[], grouped: { linked: ReadonlyMap<string, VaultEntrySummary[]>; unlinked: readonly VaultEntrySummary[] }): AccountCardMember[] {
+ return [
+  ...assets.filter(asset => !asset.deleted && !asset.purged && asset.kind === 'account').map(asset => ({ asset, entries: grouped.linked.get(asset.id) ?? [], virtual: false })),
+  ...grouped.unlinked.map(entry => ({ asset: { ...newAsset('account'), id: `login-${entry.id}`, name: entry.title, category: 'other', username: entry.username, url: entry.url, updatedAt: entry.modifiedAt }, entries: [entry], virtual: true })),
+ ];
+}
+
 
 export const ACCOUNT_CARD_GROUPS_PREFERENCE_ID = 'keepany-account-card-groups-v1';
 const MAX_EXPLICIT_GROUPS = 100;

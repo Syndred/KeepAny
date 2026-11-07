@@ -24,11 +24,12 @@ import { Empty, liveAssets, PageTitle, useAppContext } from "./view-shared";
 import "./workspaces.css";
 import { catalogAssets, catalogScope, isManagedAsset, type CatalogScope, type CatalogSort } from "./catalog-view";
 import { readWorkspaceReturn, workspaceReturnKey } from "./workspace-return";
-import { localRepository } from "../../../packages/local-db/src";
 import type { AccountTemplate } from "./account-entry-save";
 import { CompactAccountCard } from "./components/CompactAccountCard";
 import type { AccountCardMember } from "./account-card-groups";
 import { useAccountCardGroups } from "./use-account-card-groups";
+import { prepareAccountCardDelete, type AccountCardDeleteTarget } from "./account-card-delete";
+import { AccountDeleteDialog } from "./components/AccountDeleteDialog";
 
 type CompactAccountProps = Parameters<typeof CompactAccountCard>[0];
 function GroupedAccountCard({ members, initialAssetId, defaultAssetId, connectionCountFor, ...props }: Omit<CompactAccountProps, "asset" | "entries" | "virtual" | "connectionCount"> & { members: AccountCardMember[]; initialAssetId: string; defaultAssetId?: string; connectionCountFor: (member: AccountCardMember) => number }) {
@@ -73,13 +74,12 @@ export function AccountsWorkspace() {
 	const { snapshot, session } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const [editAccount, setEditAccount] = useState<{ asset?: Asset; entryId?: string; triggerId?: string; template?: AccountTemplate; initialName?: string } | null>(null);
-    const [deleteAccount, setDeleteAccount] = useState<{ asset: Asset; vaultRevision: string } | null>(null);
-    const [deleteBusy, setDeleteBusy] = useState(false), [deleteError, setDeleteError] = useState("");
+    const [deleteAccount, setDeleteAccount] = useState<{ target: AccountCardDeleteTarget; name: string } | null>(null);
     const navigate = useNavigate();
     const creationConsumed = useRef(false);
     useEffect(() => { if (hash === "vault-trash") void navigate({ to: "/trash", hash: "", replace: true }); }, [hash, navigate]);
     useEffect(() => { if (hash !== "new-account") { creationConsumed.current = false; return; } if (snapshot.status === "unlocked" && !creationConsumed.current) { creationConsumed.current = true; setEditAccount({ initialName: pendingAccountName ?? "" }); setPendingAccountName?.(""); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate, pendingAccountName, setPendingAccountName]);
-    useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); setDeleteError(""); } }, [snapshot.status]);
+    useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); } }, [snapshot.status]);
 	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
 	const sampleAccounts = data.assets.filter((asset) => !asset.deleted && asset.kind === "account" && sampleIds.includes(asset.id));
@@ -93,15 +93,12 @@ export function AccountsWorkspace() {
         : new Set(data.relations.filter(relation => !relation.deleted && relation.from !== relation.to && (relation.from === member.asset.id || relation.to === member.asset.id) && [relation.from,relation.to].every(id => data.assets.some(asset => asset.id === id && !asset.deleted && !asset.purged))).map(relation => relation.from === member.asset.id ? relation.to : relation.from)).size;
     const filterAccountId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
     const privateDetail = hash.startsWith("login-detail-") && snapshot.status === "unlocked" ? snapshot.entries.find(entry => entry.id === hash.slice(13)) : undefined;
-    async function removeOrdinaryAccount() {
-        if (!deleteAccount || deleteBusy) return;
-        setDeleteBusy(true); setDeleteError("");
+    function confirmAccountDelete(asset: Asset) {
+        if (!session || session.getSnapshot().status !== "unlocked") return;
         try {
-            const current = session?.getSnapshot();
-            if (current?.status !== "unlocked" || current.revision !== deleteAccount.vaultRevision || current.entries.some(entry => entry.linkedAssetIds.includes(deleteAccount.asset.id))) throw Error("asset-stale");
-            const repo = await localRepository();
-            await repo.trashEmptyAccountIfCurrent(deleteAccount.asset, deleteAccount.vaultRevision); setDeleteAccount(null); notify(t("pwVaultSaved"));
-        } catch (error) { setDeleteError(t(error instanceof Error && ["asset-stale", "vault-stale"].includes(error.message) ? "assetStale" : "error")); } finally { setDeleteBusy(false); }
+            const privateEntry = virtualEntries.get(asset.id);
+            setDeleteAccount({ target: prepareAccountCardDelete(session, privateEntry ? { entryId: privateEntry.id } : { asset }), name: asset.name });
+        } catch { notify(t("assetStale")); }
     }
     if (privateDetail) return <Suspense fallback={<p role="status">{t("loading")}</p>}><PrivateAccountDetail key={privateDetail.id} entry={privateDetail} /></Suspense>;
 	return <main className="page unified-accounts-page">
@@ -114,11 +111,11 @@ export function AccountsWorkspace() {
                     accountExtras={virtualAccounts} filterAccountId={filterAccountId} accountCardGroupIds={cardGroups.ids}
                     beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
 					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
-					renderAccountCard={(asset, context) => <GroupedAccountCard members={context.queries.some(query => query.trim()) ? cardGroups.groups.get(asset.id)!.filter(member => member.asset.id === asset.id) : cardGroups.groups.get(asset.id)!} initialAssetId={asset.id} defaultAssetId={defaultFor(asset.id)} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={asset => { const current = session?.getSnapshot(); if (current?.status !== "unlocked" || !current.revision || current.entries.some(entry => entry.linkedAssetIds.includes(asset.id))) return; setDeleteError(""); setDeleteAccount({ asset, vaultRevision: current.revision }); }} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
+					renderAccountCard={(asset, context) => <GroupedAccountCard members={context.queries.some(query => query.trim()) ? cardGroups.groups.get(asset.id)!.filter(member => member.asset.id === asset.id) : cardGroups.groups.get(asset.id)!} initialAssetId={asset.id} defaultAssetId={defaultFor(asset.id)} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={confirmAccountDelete} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
 		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}>{editAccount.asset || editAccount.entryId ? <AccountCardEditDialog {...editAccount} returnFocusTo={() => (editAccount.triggerId ? document.getElementById(editAccount.triggerId) : null) ?? document.querySelector<HTMLElement>(".asset-category-toolbar button")} onClose={() => setEditAccount(null)}/> : <AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".account-toolbar-actions button")} onClose={() => setEditAccount(null)} />}</Suspense>}
-        {snapshot.status === "unlocked" && deleteAccount && <Dialog title={t("pwVaultDeleteEntry")} onClose={() => { if (!deleteBusy) setDeleteAccount(null); }} closeDisabled={deleteBusy}><p>{deleteAccount.asset.name}</p>{deleteError && <p role="alert" className="field-error">{deleteError}</p>}<div className="actions"><Button disabled={deleteBusy} onClick={() => setDeleteAccount(null)}>{t("cancel")}</Button><Button variant="danger" disabled={deleteBusy} onClick={() => void removeOrdinaryAccount()}>{t("pwVaultDeleteEntry")}</Button></div></Dialog>}
+        {snapshot.status === "unlocked" && deleteAccount && <AccountDeleteDialog target={deleteAccount.target} name={deleteAccount.name} onClose={() => setDeleteAccount(null)} onDeleted={() => {}}/>}
 	</main>;
 }
 

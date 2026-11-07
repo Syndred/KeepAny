@@ -40,7 +40,6 @@ type PasswordVaultPanelProps = {
 	notify?: (message: string) => void;
 	focusAssetId?: string;
 	onReady?: () => void;
-	onLoginDeleted?: () => void;
 	embedded?: boolean;
 	headerAction?: ReactNode | ((state: { busy: boolean; clearMessage: () => void }) => ReactNode);
 	headerFeedback?: ReactNode;
@@ -131,7 +130,6 @@ export function PasswordVaultPanel({
 	notify,
 	focusAssetId,
 	onReady,
-	onLoginDeleted,
 	embedded = false,
 	headerAction,
 	headerFeedback,
@@ -561,13 +559,11 @@ export function PasswordVaultPanel({
 		entryActionRunning.current = true;
 		setBusy(true);
 		clearMessage();
-        let deleted = false;
 		try {
 			if (deleteTarget?.expectedDraft && deleteTarget.loginIdentifier !== undefined) await removeAccountLogin(session, deleteTarget.expectedDraft, deleteTarget.loginIdentifier, deleteTarget.accountId);
             else await session.trashEntry(entry.id);
 			setDeleteTarget(null);
 			announce("pwVaultSaved");
-            deleted = true;
 		} catch (error) {
 			setEntryActionError(
 				errorCode(error) === "vault-password"
@@ -578,8 +574,6 @@ export function PasswordVaultPanel({
 			entryActionRunning.current = false;
 			setBusy(false);
 		}
-        // Navigation is a consumer concern after successful persistence, never a deletion error.
-        if (deleted) onLoginDeleted?.();
 	}
 	async function purgeEntries() {
 		if (!purgeTarget || busy || entryActionRunning.current || !session) return;
