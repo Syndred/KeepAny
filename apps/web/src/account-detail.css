@@ -105,8 +105,11 @@
 @media(min-width:1001px) and (min-height:720px) {
  .account-history-card:not(.is-empty) { min-height:150px; }
  .account-history-list { contain:size; }
- .page.asset-detail-account.account-relation-layout { height:auto; min-height:calc(100dvh - var(--account-page-top,68px) - 2px); grid-template-rows:auto minmax(min-content,1fr); }
- .page.asset-detail-account.account-relation-layout:has(.account-existing-attachments[open],>.reminder-task-context) { height:auto; min-height:calc(100dvh - var(--account-page-top,68px) - 2px); }
+ .page.asset-detail-account.account-relation-layout {
+  height:auto;
+  min-height:calc(100dvh - var(--account-page-top,68px) - var(--desktop-frame-edge,var(--app-frame-border-width)));
+  grid-template-rows:auto minmax(min-content,1fr);
+ }
  .account-relation-layout:has(>.reminder-task-context) .graph.account-family-graph:not(.account-family-graph--expanded) { flex:none; height:clamp(320px,42vh,520px); }
 }
 .page.account-relation-layout:has(>.reminder-task-context) { grid-template-rows:auto auto auto; }

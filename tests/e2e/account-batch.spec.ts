@@ -166,6 +166,14 @@ test("AM01 empty and single card via normal add, detail and select", async ({ pa
  await dialog(page).locator("#password-vault-entry-title").fill("Solo example");
  await dialog(page).getByRole("button", { name: t("save"), exact: true }).click();
  await expect(page).toHaveURL(/\/assets\/account\//);
+ await expect(page.locator(".account-relation-layout")).toBeVisible();
+ for (const height of [720, 800]) {
+  await page.setViewportSize({ width: 1280, height });
+  await expect.poll(() => page.evaluate(() => {
+   const viewport = document.documentElement;
+   return viewport.scrollHeight - viewport.clientHeight;
+  })).toBe(0);
+ }
  await topNav(page).getByRole("link", { name: t("accountBack"), exact: true }).click();
  await expect(card(page, "Solo example").getByRole("link", { name: "Solo example", exact: true })).toBeVisible();
  await select.click();
