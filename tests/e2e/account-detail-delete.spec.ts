@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { resources } from '../../apps/web/src/i18n';
 import { enterAccounts } from './helpers/vault-access';
 const master='SyntheticDetailDelete2026!',backupPassword='SyntheticDeleteBackup2026!';
-let directory='',backup='';
+let directory='',backup='',privateCardId='';
 test.beforeAll(async()=>{
  // Isolated synthetic preparation only; every product mutation below uses the normal UI.
  const require=createRequire(join(process.cwd(),'package.json'));require('fake-indexeddb/auto');
@@ -19,22 +19,24 @@ test.beforeAll(async()=>{
   const a={...newAsset('account'),id:'detail-delete-a',name:'Synthetic Delete A',username:'public-a'};
   const b={...newAsset('account'),id:'detail-delete-b',name:'Synthetic Delete B',username:'public-b'};
   const empty={...newAsset('account'),id:'detail-delete-empty',name:'Empty plain account',username:'empty-public'};
-  for(const asset of [a,b,empty])await repo.save('asset',asset);
+  const listEmpty={...newAsset('account'),id:'detail-delete-list-empty',name:'Empty list account',username:'empty-list-public'};
+  for(const asset of [a,b,empty,listEmpty])await repo.save('asset',asset);
   const db=Kdbx.create(new Credentials(ProtectedValue.fromString(master)),'Synthetic detail deletion');db.setVersion(3);
   const ids:string[]=[];
-  for(const row of [{title:a.name,username:'delete-a@example.test',links:[a.id],aliases:['keep-alias@example.test']},{title:b.name,username:'keep-b@example.test',links:[b.id],aliases:[]},{title:'Synthetic Delete Private C',username:'private-delete@example.test',links:[],aliases:[]}]) {
+  for(const row of [{title:a.name,username:'delete-a@example.test',links:[a.id],aliases:['keep-alias@example.test']},{title:'Synthetic Delete A second login',username:'second-a@example.test',links:[a.id],aliases:['second-a-alias@example.test']},{title:b.name,username:'keep-b@example.test',links:[b.id],aliases:[]},{title:'Synthetic Delete Private C',username:'private-delete@example.test',links:[],aliases:[]}]) {
    const entry=db.createEntry(db.getDefaultGroup());
    for(const [key,value] of Object.entries({Title:row.title,UserName:row.username,Password:'SyntheticOnlySecret!',URL:'https://example.test/',Notes:'Synthetic note','KeepAny.LinkedAssetIds':JSON.stringify(row.links),'KeepAny.UsernameAliases':JSON.stringify(row.aliases)}))entry.fields.set(key,ProtectedValue.fromString(value));
    ids.push(entry.uuid.id);
   }
   await repo.savePasswordVault(new Uint8Array(await db.save()),null);
-  await repo.save('preference',{id:'keepany-account-card-groups-v1',value:[[a.id,b.id,`login-${ids[2]}`]]});
+  privateCardId=`login-${ids.at(-1)}`;
+  await repo.save('preference',{id:'keepany-account-card-groups-v1',value:[[a.id,b.id,privateCardId]]});
   directory=mkdtempSync(join(tmpdir(),'keepany-detail-delete-'));backup=join(directory,'synthetic.ka1');
   writeFileSync(backup,await encryptBackup(await repo.exportArchive(),backupPassword));
  } finally {await repo.close();}
 });
 test.afterAll(()=>{if(directory)rmSync(directory,{recursive:true,force:true});});
-for(const language of ['zh-CN','en'] as const)test(`${language} detail deletion reuses current-login and empty-account confirmation`,async({browser},info)=>{
+for(const language of ['zh-CN','en'] as const)test(`${language} whole account deletion opens the remaining platform default without ghost cards`,async({browser},info)=>{
  const t=(key:string)=>(resources[language].translation as Record<string,string>)[key]??key;
  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});
  await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);
@@ -45,6 +47,13 @@ for(const language of ['zh-CN','en'] as const)test(`${language} detail deletion 
   await page.getByRole('button',{name:t('preview'),exact:true}).click();await page.getByRole('button',{name:new RegExp(`^${t('confirm')} ·`)}).click();await expect(page.getByRole('button',{name:new RegExp(`^${t('confirm')} ·`)})).toHaveCount(0);
   await page.getByRole('link',{name:t('accountsWorkspace'),exact:true}).click();await enterAccounts(page,language,master);
   await cards.getByRole('link',{name:'Synthetic Delete A',exact:true}).click();
+  // Choose B as the platform default through the ordinary detail control, then return to A.
+  await page.locator('[data-account-detail-switch]').click();
+  await expect(page.getByRole('heading',{name:'Synthetic Delete B',exact:true})).toBeVisible();
+  const setDefault=page.locator('[data-account-default]');if(await setDefault.isEnabled())await setDefault.click();
+  await expect(setDefault).toHaveAttribute('aria-pressed','true');await expect(setDefault).toBeDisabled();
+  await page.locator('[data-account-detail-switch]').click();await expect(page.getByRole('heading',{name:'Synthetic Delete Private C',exact:true})).toBeVisible();await page.locator('[data-account-detail-switch]').click();
+  await expect(page.getByRole('heading',{name:'Synthetic Delete A',exact:true})).toBeVisible();
   const remove=page.locator('[data-account-detail-delete]');await expect(remove).toBeEnabled();
   for(const width of [390,768,1280,1920]) {
    await page.setViewportSize({width,height:900});
@@ -66,17 +75,50 @@ for(const language of ['zh-CN','en'] as const)test(`${language} detail deletion 
    for(let i=1;i<controls.length;i++)if(Math.abs(controls[i].y-controls[i-1].y)<1)expect(controls[i].x-controls[i-1].right).toBeGreaterThanOrEqual(7.5);
    await page.locator('.page-header').screenshot({path:info.outputPath(`header-${width}.png`)});
   }
-  const original=page.url();await remove.click();await expect(page.getByRole('dialog')).toHaveAccessibleName(t('accountDeleteLogin'));
+  const original=page.url();await remove.click();await expect(page.getByRole('dialog')).toContainText('Synthetic Delete A');
   await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(original);
-  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDeleteLogin'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);
-  await expect(cards.filter({hasText:'Synthetic Delete A'}).locator('[data-login-username]')).toHaveText('keep-alias@example.test');
-  const search=page.locator('#password-vault-search-input');await search.fill('keep-b');await expect(cards.locator('[data-login-username]')).toHaveText('keep-b@example.test');
-  await search.fill('private-delete');await cards.locator('.compact-account-title-block').click();await expect(page).toHaveURL(/#login-detail-/);
-  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(/#login-detail-/);
-  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDeleteLogin'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);
+  // Whole-member removal must include both logins and every alias, not just the displayed identifier.
+  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();
+  await expect(page).toHaveURL(/\/assets\/account\/detail-delete-b(?:#.*)?$/);
+  await expect(page.getByRole('heading',{name:'Synthetic Delete B',exact:true})).toBeVisible();
+  await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('keep-b@example.test');
+  await expect(page.locator('.account-related-link').filter({hasText:'Synthetic Delete A'})).toHaveCount(0);
+  await page.getByRole('link',{name:t('accountBack'),exact:true}).click();
+  const search=page.locator('#password-vault-search-input');
+  for(const query of ['Synthetic Delete A','delete-a@example.test','keep-alias@example.test','second-a@example.test','second-a-alias@example.test']){await search.fill(query);await expect(cards).toHaveCount(0);}
+  await search.fill('');
+  const platformCard=cards.filter({has:page.locator('[data-account-switch]:not(:disabled)')});
+  const survivingMembers:string[]=[];
+  for(let index=0;index<2;index++){
+   await expect(platformCard).toHaveCount(1);survivingMembers.push((await platformCard.getAttribute('data-account-id'))!);
+   await platformCard.locator('[data-account-switch]').click();
+  }
+  expect(survivingMembers.sort()).toEqual(['detail-delete-b',privateCardId].sort());
+  await page.reload();await enterAccounts(page,language,master);
+  await expect(cards.getByRole('link',{name:'Synthetic Delete A',exact:true})).toHaveCount(0);
+  await cards.getByRole('link',{name:'Synthetic Delete B',exact:true}).click();
+  const bURL=page.url();await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(bURL);
+  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();
+  await expect(page).toHaveURL(/\/accounts#login-detail-/);
+  await expect(page.getByRole('heading',{name:'Synthetic Delete Private C',exact:true})).toBeVisible();
+  await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('private-delete@example.test');
+  await expect(page.locator('[data-account-default]')).toBeDisabled();
+  // Only the final platform member returns to the account list.
+  const privateURL=page.url();await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(privateURL);
+  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);
+  for(const query of ['Synthetic Delete A','keep-b@example.test','private-delete@example.test']){await search.fill(query);await expect(cards).toHaveCount(0);}
+  // A list deletion remains in the list and retains the user's query.
+  await search.fill('Empty list account');await expect(cards).toHaveCount(1);
+  await cards.locator('.compact-account-actions button').nth(2).click();await expect(page.getByRole('dialog')).toContainText('Empty list account');
+  await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(1);
+  await cards.locator('.compact-account-actions button').nth(2).click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();
+  await expect(page).toHaveURL(/\/accounts$/);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(0);
+  await page.reload();await enterAccounts(page,language,master);await expect(search).toHaveValue('Empty list account');await expect(cards).toHaveCount(0);
   await search.fill('Empty plain account');await cards.locator('.compact-account-title-block').click();await expect(page.locator('.account-login-summary [data-login-password]')).toHaveText(t('pwVaultNoPassword'));
-  await remove.click();await expect(page.getByRole('dialog')).toHaveAccessibleName(t('pwVaultDeleteEntry'));await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(/detail-delete-empty/);
-  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('pwVaultDeleteEntry'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);
-  await search.fill('keep-b');await expect(cards.locator('[data-login-username]')).toHaveText('keep-b@example.test');
+  await remove.click();await expect(page.getByRole('dialog')).toContainText('Empty plain account');await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(/detail-delete-empty/);
+  await remove.click();await page.getByRole('dialog').getByRole('button',{name:t('accountDetailDelete'),exact:true}).click();await expect(page).toHaveURL(/\/accounts$/);
+  await search.fill('');await expect(cards).toHaveCount(0);
+  await page.reload();await enterAccounts(page,language,master);await expect(cards).toHaveCount(0);
+
  } finally {await context.close();}
 });
