@@ -18,15 +18,15 @@ Navigation groups records into **Accounts** and **Assets**. Open Accounts to set
 
 ## Download and try
 
-**Desktop Preview 0.1.0** runs in its own window and requires no Node.js installation.
+**Desktop Preview 0.1.1** runs in its own window and requires no Node.js installation.
 
 | System | Direct download |
 |---|---|
-| Windows x64 | [Download installer (EXE)](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64-setup.exe) |
-| macOS 14+ · Apple Silicon (M series) | [Download installer (DMG)](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_aarch64.dmg) |
-| macOS 14+ · Intel | [Download installer (DMG)](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64.dmg) |
+| Windows x64 | [Download installer (EXE)](https://github.com/Syndred/KeepAny/releases/download/v0.1.1-desktop-preview.20261107/KeepAny_0.1.1_x64-setup.exe) |
+| macOS 14+ · Apple Silicon (M series) | [Download installer (DMG)](https://github.com/Syndred/KeepAny/releases/download/v0.1.1-desktop-preview.20261107/KeepAny_0.1.1_aarch64.dmg) |
+| macOS 14+ · Intel | [Download installer (DMG)](https://github.com/Syndred/KeepAny/releases/download/v0.1.1-desktop-preview.20261107/KeepAny_0.1.1_x64.dmg) |
 
-The Mac preview is not notarized. If macOS blocks the first launch, you may need to choose **Open Anyway** in System Settings → Privacy & Security. The Windows installer is unsigned and downloads WebView2 if it is missing. See installation notes, checksums, and the corresponding source on the [desktop preview release page](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-desktop-preview.20261107).
+The Mac preview is not notarized. If macOS blocks the first launch, you may need to choose **Open Anyway** in System Settings → Privacy & Security. The Windows installer is unsigned and downloads WebView2 if it is missing. See installation notes, checksums, and the corresponding source on the [desktop preview release page](https://github.com/Syndred/KeepAny/releases/tag/v0.1.1-desktop-preview.20261107).
 
 To move existing KeepAny records, export an encrypted `.ka1` from **Backup & restore**, then preview and restore it in the desktop app. Use your original master password to unlock the restored vault.
 

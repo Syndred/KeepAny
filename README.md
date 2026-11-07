@@ -16,15 +16,15 @@
 
 ## 下载与试用
 
-**桌面预览版 0.1.0** 在独立窗口运行，无需安装 Node.js。
+**桌面预览版 0.1.1** 在独立窗口运行，无需安装 Node.js。
 
 | 系统 | 直接下载 |
 |---|---|
-| Windows x64 | [下载安装包（EXE）](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64-setup.exe) |
-| macOS 14+ · Apple Silicon（M 系列） | [下载安装包（DMG）](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_aarch64.dmg) |
-| macOS 14+ · Intel | [下载安装包（DMG）](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64.dmg) |
+| Windows x64 | [下载安装包（EXE）](https://github.com/Syndred/KeepAny/releases/download/v0.1.1-desktop-preview.20261107/KeepAny_0.1.1_x64-setup.exe) |
+| macOS 14+ · Apple Silicon（M 系列） | [下载安装包（DMG）](https://github.com/Syndred/KeepAny/releases/download/v0.1.1-desktop-preview.20261107/KeepAny_0.1.1_aarch64.dmg) |
+| macOS 14+ · Intel | [下载安装包（DMG）](https://github.com/Syndred/KeepAny/releases/download/v0.1.1-desktop-preview.20261107/KeepAny_0.1.1_x64.dmg) |
 
-Mac 版尚未公证，首次可能需要在「系统设置 → 隐私与安全性」选择「仍要打开」。Windows 安装器未签名，缺少 WebView2 时会联网补装。安装说明、校验值和对应源码见 [桌面预览版发布页](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-desktop-preview.20261107)。
+Mac 版尚未公证，首次可能需要在「系统设置 → 隐私与安全性」选择「仍要打开」。Windows 安装器未签名，缺少 WebView2 时会联网补装。安装说明、校验值和对应源码见 [桌面预览版发布页](https://github.com/Syndred/KeepAny/releases/tag/v0.1.1-desktop-preview.20261107)。
 
 已有 KeepAny 资料可以通过「备份与恢复」导出加密 `.ka1`，在桌面版预览并恢复。密码库继续用原主密码解锁。
 
