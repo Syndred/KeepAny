@@ -1,6 +1,9 @@
 name: Publish public documentation
 
 on:
+  push:
+    branches: [main]
+    paths: ['apps/public-site/desktop-preview.json']
   workflow_dispatch:
     inputs:
       verified_release_commit:
@@ -27,12 +30,52 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Require successful product checks and verify documentation-only changes
+      - name: Verify the published desktop downloads or require successful full release checks
         uses: actions/github-script@v7
         env:
           VERIFIED_RELEASE_COMMIT: ${{ inputs.verified_release_commit }}
         with:
           script: |
+            if (context.eventName === 'push') {
+              const { owner, repo } = context.repo;
+              const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead({
+                owner, repo, basehead: `${context.payload.before}...${context.sha}`
+              });
+              const allowed = new Set([
+                'README.md', 'README.en.md', 'docs/08-项目进度交接.md', 'docs/试用指南.md',
+                'apps/public-site/desktop-preview.json', 'apps/public-site/page.tsx',
+                'apps/public-site/page.test.ts', 'scripts/build-public-site.mjs',
+                '.github/workflows/public-site.yml'
+              ]);
+              const manifestPath = 'apps/public-site/desktop-preview.json';
+              if (context.payload.forced || comparison.status !== 'ahead' ||
+                  !Array.isArray(comparison.files) || comparison.files.length >= 300 ||
+                  !comparison.files.some(file => file.filename === manifestPath && ['added', 'modified'].includes(file.status)) ||
+                  comparison.files.some(file => !allowed.has(file.filename) || file.previous_filename)) {
+                throw new Error('Published desktop download updates must contain only the scoped public documentation changes.');
+              }
+              const fs = require('node:fs');
+              const preview = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+              const { data: release } = await github.rest.repos.getReleaseByTag({ owner, repo, tag: preview.tag });
+              if (release.draft || !release.prerelease || !release.published_at || release.tag_name !== preview.tag) {
+                throw new Error('The desktop preview must be a public GitHub prerelease.');
+              }
+              const [windows, appleSilicon, intel] = [preview.assets.windows, preview.assets.macAppleSilicon, preview.assets.macIntel];
+              if (!windows.endsWith('-setup.exe') || !appleSilicon.endsWith('_aarch64.dmg') ||
+                  !intel.endsWith('_x64.dmg') || new Set([windows, appleSilicon, intel]).size !== 3) {
+                throw new Error('Expected Windows x64, Apple Silicon and Intel installers.');
+              }
+              const base = `https://github.com/${owner}/${repo}/releases/download/${preview.tag}/`;
+              for (const name of [windows, appleSilicon, intel]) {
+                const asset = release.assets.find(item => item.name === name && item.state === 'uploaded');
+                if (!asset || asset.browser_download_url !== base + name || asset.size <= 0 ||
+                    !/^sha256:[a-f0-9]{64}$/.test(asset.digest ?? '')) {
+                  throw new Error(`Desktop installer unavailable or missing a published checksum: ${name}`);
+                }
+              }
+              core.info(`Verified the three public installer assets for ${preview.tag}; publishing documentation only.`);
+              return;
+            }
             const verifiedSha = process.env.VERIFIED_RELEASE_COMMIT || context.sha;
             if (!/^[a-f0-9]{40}$/.test(verifiedSha)) {
               throw new Error('The verified release must be a full commit SHA.');

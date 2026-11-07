@@ -2,6 +2,7 @@ import { ArrowUpRight, Download, FolderKanban, KeyRound, Link2, ListChecks } fro
 import { renderToStaticMarkup } from "react-dom/server";
 import { Button } from "../web/src/components/ui/button";
 import { TextLink } from "../web/src/components/ui/text-link";
+import desktopPreview from "./desktop-preview.json";
 
 export type PublicLocale = "en" | "zh-CN";
 
@@ -25,9 +26,11 @@ const copy = {
 		eyebrow: "Local first · Open source",
 		hero: "Your projects have connections. Keep them together.",
 		lead: "KeepAny, previously published as StackPerch, is a local digital asset workspace for independent developers. Find the accounts, domains, subscriptions, and maintenance behind each project. Older StackPerch GitHub links still redirect to KeepAny.",
-		download: "View preview releases",
+		download: "Download",
 		source: "Browse the source",
-		preview: "Early preview · Node.js 22+ · No registration",
+		preview: "Desktop Preview",
+		desktopRequirements: "No Node.js installation or registration",
+		macNotice: "Mac: First launch may require approval.",
 		screenshotAlt: "KeepAny overview with fictional project, email account, subscription, and maintenance records",
 		screenshotCaption: "The actual app, shown with fictional sample records.",
 		problemTitle: "What still depends on that account?",
@@ -40,16 +43,18 @@ const copy = {
 			{ title: "A separate password vault", text: "Keep login details in an encrypted KDBX vault with import and export. Passwords stay outside ordinary assets, search, and MCP." },
 		],
 		tryTitle: "Try one project from start to restore",
-		tryLead: "Download the current KeepAny portable preview from the Releases page. It needs Node.js 22 or newer, with no Git, pnpm, or build step. Read that release's verified environments and limits.",
+		tryLead: "The Mac preview requires macOS 14 or later and is not notarized. If the first launch is blocked, macOS may require Open Anyway in System Settings → Privacy & Security. The Windows installer is unsigned and can download WebView2 if needed.",
+		releaseNotes: "Installation notes and checksums",
+		otherReleases: "All releases, including the portable preview",
 		steps: [
-			"Extract the package. Run start.command on macOS, start.sh on Linux, or start.bat on Windows.",
-			"Open http://127.0.0.1:4180/. Choose Start with sample records in an empty Overview, then Add sample records in Settings, or create a fictional project.",
+			"On Windows, run the installer. On Mac, open the DMG for your chip and drag KeepAny to Applications.",
+			"Open KeepAny and start with sample records, or preview and restore an encrypted .ka1 backup from your existing KeepAny app.",
 			"Connect an account, record a subscription, and create a maintenance task.",
-			"Create and save an encrypted .ka1 backup. Restore it in a clean browser profile and check your records.",
+			"Create and save an encrypted .ka1 backup. Keep your backup password and the vault's original master password.",
 		],
-		guide: "Read the trial guide",
+		guide: "Portable preview guide",
 		dataTitle: "Local storage, with a way to take your data out",
-		data: "Keep using the same browser profile and address to continue using your KeepAny or StackPerch records. Existing .ka1 backups and .kdbx vaults remain usable with their original passwords. Records belong to the current browser profile and address. A different browser or port opens a different store; clearing site data can remove it. Download backups regularly and verify that they restore. The local core works without an official account or paid service.",
+		data: "The desktop preview keeps its own local app data. Move existing KeepAny or StackPerch records with an encrypted .ka1 backup and unlock the restored .kdbx vault with its original master password. Portable preview records are tied to their browser profile and site address. Download backups regularly and verify that they restore. The local core works without an official account or paid service.",
 		ai: "AI is optional. Ordinary Q&A sends only limited fields from records you select. The vault's full-text AI import can send the current list, including passwords and notes, after you review the model, destination, and scope. It does not send your existing vault or master password. Review candidates before saving.",
 		limitsTitle: "An early preview with clear limits",
 		limits: "Local features have automated and browser verification, but defects may remain. Physical phones, every OS and browser, low-storage conditions, and sudden shutdowns have not all been verified. PDF intake, remote backups, and sync are not provided. Password autofill, cross-device password sync, background email, and closed-page push are also unavailable.",
@@ -74,9 +79,11 @@ const copy = {
 		eyebrow: "本地优先 · 开源",
 		hero: "项目背后的账号与订阅，一起理清。",
 		lead: "KeepAny（曾以 StackPerch 名称发布）是独立开发者的本地数字资产工作台。把项目、域名、账号、订阅和维护事项连起来，找到下一步该处理的事。旧 StackPerch GitHub 链接仍转到 KeepAny。",
-		download: "查看测试版发布",
+		download: "下载",
 		source: "查看源码",
-		preview: "早期测试版 · Node.js 22+ · 无需注册",
+		preview: "桌面预览版",
+		desktopRequirements: "无需安装 Node.js 或注册",
+		macNotice: "Mac 首次打开可能需要手动放行。",
 		screenshotAlt: "KeepAny 概览，展示虚构的项目、邮箱账号、订阅和维护资料",
 		screenshotCaption: "真实应用界面，内容为虚构的示例资料。",
 		problemTitle: "换个邮箱，会影响哪些服务？",
@@ -89,16 +96,18 @@ const copy = {
 			{ title: "独立密码库", text: "登录资料保存在加密 KDBX，支持导入与导出。密码不进入普通资产、搜索或 MCP。" },
 		],
 		tryTitle: "用一个项目，试到备份恢复",
-		tryLead: "从 Releases 下载当前 KeepAny 便携测试包。需要 Node.js 22 或更新版本，无需 Git、pnpm 或编译。实际验证的系统与限制以对应发布说明为准。",
+		tryLead: "Mac 版需要 macOS 14 或更新版本，目前未公证。首次打开如果被拦截，可能需要在「系统设置 → 隐私与安全性」选择「仍要打开」。Windows 安装器未签名，缺少 WebView2 时可联网补装。",
+		releaseNotes: "安装说明与校验值",
+		otherReleases: "全部发布版本（含便携版）",
 		steps: [
-			"解压便携包。macOS 用 start.command，Linux 用 start.sh，Windows 用 start.bat。",
-			"打开 http://127.0.0.1:4180/，空白概览点「用示例资料开始」，到设置点「加入示例资料」，或建立虚构项目。",
+			"Windows 运行安装器。Mac 打开对应芯片的 DMG，把 KeepAny 拖到「应用程序」。",
+			"打开 KeepAny，从示例资料开始，或预览并恢复旧 KeepAny 导出的加密 .ka1 备份。",
 			"关联账号、记录订阅，再建立一项维护待办。",
-			"创建并下载加密 .ka1 备份，在干净浏览器配置中恢复并核对资料。",
+			"创建并保存加密 .ka1 备份，妥善保存备份密码和密码库原主密码。",
 		],
-		guide: "阅读试用指南",
+		guide: "便携版试用指南",
 		dataTitle: "资料在本机，也能完整带走",
-		data: "使用原浏览器配置、原地址即可继续使用 KeepAny 或 StackPerch 已有资料，旧 .ka1 备份和 .kdbx 密码库可用原密码恢复。资料属于当前浏览器配置和地址。换浏览器或端口会打开另一份资料，清除站点数据可能删除它。定期下载备份并验证恢复。本地核心无需官方账号，也不以付费为条件。",
+		data: "桌面版有自己的本机资料库。已有 KeepAny 或 StackPerch 资料可通过加密 .ka1 备份迁入，恢复后的 .kdbx 密码库仍用原主密码解锁。便携版资料随浏览器配置和站点地址保存。定期下载备份并验证恢复。本地核心无需官方账号，也不以付费为条件。",
 		ai: "AI 是可选的。普通问答仅发送你选择的有限资料字段；独立密码库的全文 AI 导入，在核对模型、地址和范围后，会发送本次清单，包括其中的密码和备注。它不发送已有全库或主密码。识别结果核对后才保存。",
 		limitsTitle: "早期测试版，范围说清楚",
 		limits: "本地功能已有自动化和浏览器验证，仍可能有缺陷。真实手机、所有系统与浏览器、低存储及突然断电等条件未全部验证。当前不提供 PDF 收录、远端备份或同步；密码自动填充、跨设备密码同步、后台邮件与关页推送也尚未提供。",
@@ -114,6 +123,7 @@ const copy = {
 } as const;
 
 const featureIcons = [FolderKanban, ListChecks, Link2, KeyRound];
+const desktopLabels = { windows: "Windows x64", macAppleSilicon: "Mac · Apple Silicon", macIntel: "Mac · Intel" };
 
 export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig) {
 	const c = copy[locale];
@@ -122,6 +132,11 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 	const canonical = `${config.siteUrl}${isEnglish ? "" : "zh/"}`;
 	const screenshot = `overview-${isEnglish ? "en" : "zh"}.png`;
 	const readme = `${config.repositoryUrl}/blob/main/${isEnglish ? "README.en.md" : "README.md"}`;
+	const releaseUrl = `${config.repositoryUrl}/releases/tag/${desktopPreview.tag}`;
+	const desktopDownloads = Object.entries(desktopPreview.assets).map(([platform, file]) => ({
+		label: desktopLabels[platform as keyof typeof desktopPreview.assets],
+		url: `${config.repositoryUrl}/releases/download/${desktopPreview.tag}/${file}`,
+	}));
 	const structuredData = {
 		"@context": "https://schema.org",
 		"@type": "SoftwareApplication",
@@ -130,7 +145,7 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 		url: canonical,
 		description: c.description,
 		applicationCategory: "UtilitiesApplication",
-		operatingSystem: "Web browser with a local Node.js 22+ server",
+		operatingSystem: "Windows x64, macOS 14+ (Apple Silicon and Intel), web browser with a local Node.js 22+ server for the portable preview",
 		inLanguage: ["en", "zh-CN"],
 		license: `${config.repositoryUrl}/blob/main/LICENSE`,
 		sameAs: config.repositoryUrl,
@@ -185,10 +200,12 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 								<h1 id="hero-title">{c.hero}</h1>
 								<p className="public-lead">{c.lead}</p>
 								<div className="public-actions">
-									<Button asChild variant="primary"><a href={config.downloadUrl}><Download aria-hidden="true" />{c.download}</a></Button>
-									<Button asChild><a href={config.repositoryUrl}>{c.source}<ArrowUpRight aria-hidden="true" /></a></Button>
+									{desktopDownloads.map(({ label, url }) => (
+										<Button asChild key={url}><a href={url} aria-label={`${c.download} ${label}`}><Download aria-hidden="true" />{label}</a></Button>
+									))}
+									<TextLink href={config.repositoryUrl}>{c.source}<ArrowUpRight aria-hidden="true" /></TextLink>
 								</div>
-								<p className="public-preview">{c.preview}</p>
+								<p className="public-preview">{c.preview} {desktopPreview.version} · {c.desktopRequirements} · <TextLink href="#try">{c.macNotice}</TextLink></p>
 							</div>
 							<figure className="public-screen">
 								<img src={`${assets}${screenshot}`} width={config.screenshotSize.width} height={config.screenshotSize.height} alt={c.screenshotAlt} />
@@ -208,7 +225,14 @@ export function renderPublicPage(locale: PublicLocale, config: PublicSiteConfig)
 							</div>
 						</section>
 						<section id="try" className="public-section public-try" aria-labelledby="try-title">
-							<div><h2 id="try-title">{c.tryTitle}</h2><p>{c.tryLead}</p><TextLink href={`${config.repositoryUrl}/blob/main/docs/试用指南.md${isEnglish ? "#english" : ""}`}>{c.guide}<ArrowUpRight aria-hidden="true" /></TextLink></div>
+							<div>
+								<h2 id="try-title">{c.tryTitle}</h2><p>{c.tryLead}</p>
+								<div className="public-actions">
+									<TextLink href={releaseUrl}>{c.releaseNotes}<ArrowUpRight aria-hidden="true" /></TextLink>
+									<TextLink href={config.downloadUrl}>{c.otherReleases}</TextLink>
+									<TextLink href={`${config.repositoryUrl}/blob/main/docs/试用指南.md${isEnglish ? "#english" : ""}`}>{c.guide}</TextLink>
+								</div>
+							</div>
 							<ol>{c.steps.map(step => <li key={step}>{step}</li>)}</ol>
 						</section>
 						<section className="public-section public-data" aria-labelledby="data-title">

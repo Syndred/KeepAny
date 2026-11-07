@@ -2,7 +2,7 @@
 
 **独立开发者的本地数字资产工作台。把项目、域名、账号、订阅和维护事项连起来。**
 
-[English](README.en.md) · [官网](https://syndred.github.io/KeepAny/zh/) · [试用指南](docs/试用指南.md) · [发布记录](https://github.com/Syndred/KeepAny/releases) · [反馈问题](https://github.com/Syndred/KeepAny/issues)
+[English](README.en.md) · [官网](https://syndred.github.io/KeepAny/zh/) · [下载桌面版](#下载与试用) · [试用指南](docs/试用指南.md) · [发布记录](https://github.com/Syndred/KeepAny/releases) · [反馈问题](https://github.com/Syndred/KeepAny/issues)
 
 项目统一使用 KeepAny，曾以 StackPerch 名称发布。旧 StackPerch GitHub 链接仍转到同一仓库；官网请使用上方的 KeepAny 地址。
 
@@ -16,7 +16,21 @@
 
 ## 下载与试用
 
-**当前为早期测试版。** 请从 [GitHub Releases](https://github.com/Syndred/KeepAny/releases) 获取标注 `Pre-release` 的 `KeepAny-…-portable.zip`。发布页仅提供当前测试版，并列出对应源码版本、校验值和已知限制。不要把 GitHub 的源码 ZIP 当成便携应用包。
+**桌面预览版 0.1.0** 在独立窗口运行，无需安装 Node.js。
+
+| 系统 | 直接下载 |
+|---|---|
+| Windows x64 | [下载安装包（EXE）](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64-setup.exe) |
+| macOS 14+ · Apple Silicon（M 系列） | [下载安装包（DMG）](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_aarch64.dmg) |
+| macOS 14+ · Intel | [下载安装包（DMG）](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64.dmg) |
+
+Mac 版尚未公证，首次可能需要在「系统设置 → 隐私与安全性」选择「仍要打开」。Windows 安装器未签名，缺少 WebView2 时会联网补装。安装说明、校验值和对应源码见 [桌面预览版发布页](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-desktop-preview.20261107)。
+
+已有 KeepAny 资料可以通过「备份与恢复」导出加密 `.ka1`，在桌面版预览并恢复。密码库继续用原主密码解锁。
+
+### 便携版
+
+也可以下载 [旧版便携预览 ZIP](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-preview.20261027)，支持 Windows、Mac 和 Linux。
 
 便携包需要 **[Node.js 22 或更新版本](https://nodejs.org/)**，无需 Git、pnpm 或编译源码。解压到一个固定文件夹后启动：
 
@@ -63,7 +77,7 @@
 
 ## 数据与 AI
 
-- 资料默认保存在**当前浏览器、配置文件和站点地址**的本机存储中。换浏览器、改端口或使用 `localhost` 会打开另一份资料；换电脑请先备份和恢复。清除站点数据可能删除本地资料。
+- 桌面版使用独立的本机应用资料库。便携版资料保存在**当前浏览器、配置文件和站点地址**的本机存储中。换浏览器、改端口或使用 `localhost` 会打开另一份资料；换电脑请先备份和恢复。清除站点数据可能删除便携版资料。
 - 本地核心可独立使用。定期下载 `.ka1`，保留密码，并实际检查恢复结果。
 - 密码和长期模型密钥保存在独立 KDBX，不写入普通资产、全局搜索或 MCP。`.ka1` 携带的是密码库密文，恢复后仍需密码库主密码；主密码没有后台重置入口。
 - AI 是可选的，需要你配置提供商或兼容服务。普通问答只发送你明确选择的有限资料字段；密码库智能导入的**全文 AI 识别**会在主动确认模型、地址和发送范围后，将本次清单全文（可能含账号、密码和备注）发给所选服务。它不读取或发送已有全库及主密码。结果核对后才写入。密码库「关联账号」另行只分析主动勾选的账号资料与经检查的关联线索；密码字段不会发给 AI。详见 [密码库说明](docs/密码库使用说明.md) 与 [AI 数据边界](docs/AI功能与验收合同.md)。

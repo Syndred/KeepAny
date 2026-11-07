@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { renderPublicPage, type PublicLocale } from "./page";
+import desktopPreview from "./desktop-preview.json";
 
 const config = {
 	siteUrl: "https://syndred.github.io/KeepAny/",
@@ -47,6 +48,19 @@ describe.each<PublicLocale>(["en", "zh-CN"])("public page in %s", (locale) => {
 		expect(html.match(/<script\b/g)).toHaveLength(1);
 		expect(html).not.toContain('type="module"');
 		expect(html).not.toContain("service-worker");
+	});
+
+	it("links directly to the published Windows and both Mac installers", () => {
+		const html = renderPublicPage(locale, config);
+		const prefix = `${config.repositoryUrl}/releases/download/${desktopPreview.tag}`;
+		const labels = ["Windows x64", "Mac · Apple Silicon", "Mac · Intel"];
+		const names = [desktopPreview.assets.windows, desktopPreview.assets.macAppleSilicon, desktopPreview.assets.macIntel];
+		for (const [index, label] of labels.entries()) {
+			const action = locale === "en" ? "Download" : "下载";
+			expect(html).toContain(`href="${prefix}/${names[index]}" aria-label="${action} ${label}"`);
+		}
+		expect(html).toContain(`${config.repositoryUrl}/releases/tag/${desktopPreview.tag}`);
+		expect(html).toContain(locale === "en" ? "Open Anyway" : "仍要打开");
 	});
 
 	it("keeps retired remote and PDF capabilities out of current feature claims", () => {
