@@ -37,7 +37,10 @@ if (windows) {
     execFileSync("hdiutil", ["attach", installer, "-readonly", "-nobrowse", "-noautoopen", "-mountpoint", mount], { stdio: ["ignore", "inherit", "inherit"], timeout: 120_000 });
     mounted = true;
     const app = resolve(mount, `${productName}.app`);
-    execFileSync("lipo", ["-verify_arch", target.startsWith("aarch64") ? "arm64" : "x86_64", resolve(app, "Contents/MacOS", mainBinaryName)]);
+    const executable = resolve(app, "Contents/MacOS", mainBinaryName);
+    const expected = target === "aarch64-apple-darwin" ? "arm64" : "x86_64";
+    const architecture = execFileSync("lipo", ["-archs", executable], { encoding: "utf8" }).trim();
+    if (architecture !== expected) throw Error(`Expected ${expected} in ${executable}, found ${architecture}`);
     execFileSync("codesign", ["--verify", "--deep", "--strict", app], { stdio: "inherit" });
   } finally {
     if (mounted) execFileSync("hdiutil", ["detach", mount], { stdio: "inherit" });
@@ -53,5 +56,7 @@ const files = sources.map(source => {
   copyFileSync(source, path);
   return { name, bytes: statSync(path).size, sha256: createHash("sha256").update(readFileSync(path)).digest("hex") };
 });
-writeFileSync(resolve(output, "SHA256SUMS.txt"), files.map(file => `${file.sha256}  ${file.name}\n`).join(""));
+const checksums = files.map(file => `${file.sha256}  ${file.name}\n`).join("");
+writeFileSync(resolve(output, "SHA256SUMS.txt"), checksums);
 writeFileSync(resolve(output, "build.json"), JSON.stringify({ commit, version, target, files }, null, 2) + "\n");
+process.stdout.write(checksums);
