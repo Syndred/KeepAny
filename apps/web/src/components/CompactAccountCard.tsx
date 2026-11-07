@@ -13,25 +13,31 @@ import { usePasswordVault, type PasswordVaultEntrySummary } from "./PasswordVaul
 import { Button } from "./ui/button";
 import "../compact-account.css";
 
-type Props = { onNextAccount?: () => void; accountPosition?: number; accountTotal?: number; asset: Asset; entries: PasswordVaultEntrySummary[]; connectionCount: number; queries: string[]; focusEntryId?: string; tools: AccountVaultTools; onOpen: () => void; onCreate: (template: AccountTemplate, triggerId: string) => void; onEdit: (asset: Asset, entryId?: string, triggerId?: string) => void; onDeleteAccount: (asset: Asset) => void; virtual?: boolean };
+type Props = { batchSelection?: { selected: boolean; toggle: () => void }; onNextAccount?: () => void; accountPosition?: number; accountTotal?: number; asset: Asset; entries: PasswordVaultEntrySummary[]; connectionCount: number; queries: string[]; focusEntryId?: string; tools: AccountVaultTools; onOpen: () => void; onCreate: (template: AccountTemplate, triggerId: string) => void; onEdit: (asset: Asset, entryId?: string, triggerId?: string) => void; onDeleteAccount: (asset: Asset) => void; virtual?: boolean };
 
 function CompactIcon({ label, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; children: ReactNode }) {
 	return <Button type="button" variant="ghost" size="icon" className="compact-account-icon" aria-label={label} title={label} {...props}>{children}</Button>;
 }
 
-function Frame({ asset, connectionCount, onOpen, onEdit, onCreate, onDelete, url, children, entryId, createId, editId, busy, virtual, onNextAccount, accountPosition = 1, accountTotal = 1 }: Pick<Props, "asset" | "connectionCount" | "onOpen" | "virtual"> & { onEdit: () => void; onCreate: () => void; onDelete: () => void; editId?: string; createId?: string; busy: boolean; onNextAccount?: () => void; accountPosition?: number; accountTotal?: number; url: string; children: ReactNode; entryId?: string }) {
+function Frame({ asset, connectionCount, onOpen, onEdit, onCreate, onDelete, url, children, entryId, createId, editId, busy, virtual, batchSelection, batchLogin, onNextAccount, accountPosition = 1, accountTotal = 1 }: Pick<Props, "asset" | "connectionCount" | "onOpen" | "virtual" | "batchSelection"> & { batchLogin?: string; onEdit: () => void; onCreate: () => void; onDelete: () => void; editId?: string; createId?: string; busy: boolean; onNextAccount?: () => void; accountPosition?: number; accountTotal?: number; url: string; children: ReactNode; entryId?: string }) {
 	const { t } = useTranslation();
 	const Icon = asset.category === "email" ? Mail : asset.category === "phone" ? Smartphone : UserRound;
 	const details = virtual
         ? { to: "/accounts" as const, hash: `login-detail-${entryId}`, onClick: onOpen }
         : { to: "/assets/$kind/$id" as const, params: { kind: asset.kind, id: asset.id }, hash: entryId ? `password-${entryId}` : undefined, onClick: onOpen };
-	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id} data-private-only={virtual ? "true" : undefined} data-entry-id={entryId} aria-label={asset.name} tabIndex={-1}>
+	const content = <>
 		<header className="compact-account-heading"><span className="compact-account-avatar"><Icon size={18} /></span>
 			<Link {...details} className="compact-account-title-block" aria-label={asset.name} title={asset.name}><span className="compact-account-title">{asset.name}</span><span className="compact-account-associations" aria-hidden="true">{t("accountConnectionCount", { count: connectionCount })}<ChevronRight size={11} /></span></Link>
 			{url && <a className="compact-account-icon compact-account-url" href={url} target="_blank" rel="noreferrer" aria-label={t("compactAccountOpenUrl")} title={`${t("compactAccountOpenUrl")} · ${url}`}><ExternalLink size={16} /></a>}
 		</header>
 		{children}
         <footer className="compact-account-footer"><span className="compact-account-meta" title={[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}>{[niceCategory(asset.category || "other", t), ...asset.tags].join(" · ")}</span><span className="compact-account-actions"><CompactIcon id={createId} label={t("add")} disabled={busy} onClick={onCreate}><Plus size={16} /></CompactIcon><CompactIcon id={editId} label={t("edit")} disabled={busy} onClick={onEdit}><Pencil size={16} /></CompactIcon><CompactIcon label={t("accountDeleteAccountTitle")} disabled={busy} onClick={onDelete}><Trash2 size={16} /></CompactIcon><CompactIcon data-account-switch label={t("compactAccountNextAccount", { index: accountPosition, total: accountTotal })} disabled={busy || accountTotal < 2 || !onNextAccount} onClick={onNextAccount}><RefreshCw size={16} /></CompactIcon></span></footer>
+	</>;
+	return <article className={`unified-account asset-account-card compact-account-card asset-account-${asset.category}`} data-account-id={asset.id} data-private-only={virtual ? "true" : undefined} data-entry-id={entryId} data-batch-selected={batchSelection?.selected} aria-label={batchSelection ? undefined : asset.name} tabIndex={batchSelection ? undefined : -1}>
+		{batchSelection ? <>
+			<div inert>{content}</div>
+			<Button type="button" className="compact-account-select" variant="ghost" aria-pressed={batchSelection.selected} aria-label={[asset.name, batchLogin].filter(Boolean).join(" · ")} onClick={batchSelection.toggle} />
+		</> : content}
 	</article>;
 }
 
@@ -51,7 +57,7 @@ function LockedCard({ asset, connectionCount, onOpen, tools, onEdit, onDeleteAcc
 	</Frame>;
 }
 
-function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries, focusEntryId, onCreate, onEdit, onDeleteAccount, virtual, onNextAccount, accountPosition, accountTotal }: Props) {
+function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries, focusEntryId, onCreate, onEdit, onDeleteAccount, virtual, batchSelection, onNextAccount, accountPosition, accountTotal }: Props) {
 	const { t } = useTranslation();
 	const createId = useId(), editId = useId();
 	const { session, snapshot } = usePasswordVault();
@@ -71,7 +77,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 	const rawNotes = accountNotes(asset, draft?.notes);
 	const notes = rawNotes.trim() ? rawNotes : "";
 	const hasPassword = Boolean(draft?.password);
-	const reveal = Boolean(scope && revealedKey === scope);
+	const reveal = Boolean(!batchSelection && scope && revealedKey === scope);
 	const position = Math.max(0, choices.findIndex((choice) => choice.key === current?.key)) + 1;
 
 	async function copy(label: string, value: string, field: string, privateValue = true) {
@@ -87,7 +93,7 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 		setSelection({ key: nextAccountLogin(choices, current.key)?.key ?? "", queryKey });
 	}
 	const copiedIcon = (field: string) => copied === `${scope}:${field}` ? <Check size={16} /> : <Copy size={16} />;
-	return <Frame asset={{ ...asset, name: current?.entry.title ?? asset.name }} connectionCount={connectionCount} onOpen={onOpen} onCreate={() => onCreate({ ...asset, name: current?.entry.title ?? asset.name, url: current?.entry.url || asset.url, sourceEntryId: current?.entry.id, ...(!virtual ? { sourceCardId: asset.id } : {}) }, createId)} onEdit={() => onEdit(asset, current?.entry.id, editId)} onDelete={() => onDeleteAccount(asset)} busy={tools.busy} virtual={virtual} url={url} entryId={current?.entry.id} createId={createId} editId={editId} onNextAccount={onNextAccount} accountPosition={accountPosition} accountTotal={accountTotal}>
+	return <Frame asset={batchSelection ? asset : { ...asset, name: current?.entry.title ?? asset.name }} batchSelection={batchSelection} batchLogin={username} connectionCount={connectionCount} onOpen={onOpen} onCreate={() => onCreate({ ...asset, name: current?.entry.title ?? asset.name, url: current?.entry.url || asset.url, sourceEntryId: current?.entry.id, ...(!virtual ? { sourceCardId: asset.id } : {}) }, createId)} onEdit={() => onEdit(asset, current?.entry.id, editId)} onDelete={() => onDeleteAccount(asset)} busy={tools.busy} virtual={virtual} url={url} entryId={current?.entry.id} createId={createId} editId={editId} onNextAccount={onNextAccount} accountPosition={accountPosition} accountTotal={accountTotal}>
 		<ValueRow label={t("pwVaultAccountShort")} actions={<>
 			{choices.length > 1 && <CompactIcon label={t("compactAccountNextLogin", { index: position, total: choices.length })} disabled={tools.busy} onClick={advance} className="compact-account-icon compact-account-switch"><ArrowLeftRight size={16} /><small aria-hidden="true">{position}/{choices.length}</small></CompactIcon>}
 			<CompactIcon label={t("pwVaultCopyUsername")} disabled={tools.busy || !username} onClick={() => void copy("pwVaultUsernameField", username, "username", Boolean(current))}>{copiedIcon("username")}</CompactIcon>

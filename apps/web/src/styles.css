@@ -139,7 +139,7 @@ button, a, input, .themed-select-trigger, textarea, summary { -webkit-tap-highli
 .nav .nav-order-actions button:disabled { opacity: .35; cursor: not-allowed; }
 
 .main { min-width: 0; background: radial-gradient(#e7d7bd 1px, transparent 1px) 0 0 / 22px 22px, var(--canvas); }
-.topbar { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 65px; padding: 10px clamp(16px, 2.5vw, 32px); background: var(--paper); border-bottom: 3px solid var(--line); }
+.topbar { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 65px; padding: 10px var(--space-4); background: var(--paper); border-bottom: 3px solid var(--line); }
 .topbar > * { min-width: 0; }
 .topbar .actions { justify-content: flex-end; }
 .page { width: 100%; min-width: 0; margin: 0; padding: var(--space-4) var(--space-4) var(--space-6); }
