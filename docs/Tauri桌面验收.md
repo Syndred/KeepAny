@@ -54,3 +54,11 @@ Windows 11 x64，已安装 WebView2。主控用最终候选和独立 WebView 资
 - 在签名 Mac 的终端运行 `xcrun notarytool store-credentials KeepAny-notary`，按提示在本机提供 Apple Account、Team ID 与专用密码。公证账户凭据和签名私钥保存在钥匙串或授权的 CI 密钥库。
 - 有效签名身份及公证授权就绪后，从冻结源码为两个架构生成发布 DMG，启用 Hardened Runtime 并用 Developer ID Application 签名，提交 Apple 公证、附上公证票据。用 `codesign`、`stapler validate` 和 Gatekeeper 核对最终字节，再完成从公开下载到正常打开的路径检查。
 - 当前候选为临时签名构建。托管测试环境成功打开候选只证明该环境中的运行行为。对外安装状态必须分别记录。
+
+## 2026-11-07 同批候选补验结果
+
+- 构建 `42346276575`，候选提交 `130a368f50bc1e069da1351b602c9c7e608e8862`。补验代码 `10ccf040`，[最终补验](https://github.com/Syndred/KeepAny/actions/runs/42349295899) 三项通过。每个测试机从原构建取包并核对来源工作流、提交、架构、文件清单及摘要。
+- DT01-CI 通过。Windows Server 2025 x64 托管机用当批 NSIS 安装器安装，两次启动都出现 KeepAny 窗口，卸载程序返回成功，安装目录不再有主程序。Windows 11 安装向导、缺失 WebView2 后的补装及最新包上的完整资料操作仍分别记录。
+- DT02-CI 通过。macOS 15 Intel、Apple Silicon 托管机均挂载各自 DMG、核对应用架构与签名完整性，连续两次启动都观测到可见窗口。两份 DMG 使用临时签名，Gatekeeper 对外下载放行及公证尚未完成。本机 Apple Silicon 虚构资料交互与导入重开结果已另行记录。Intel 人工交互仍待验。
+- [首次补验](https://github.com/Syndred/KeepAny/actions/runs/42349169058) 的两项 Mac 窗口探测超时，但作业回收时均发现 KeepAny 进程。将测试目录换成解析后的物理路径后用同样候选重放通过。保留首次失败，定位为测试进程匹配问题，未更改应用或放宽窗口条件。
+- 仓库现有第三方材料严格门禁通过。桌面 Rust 依赖的附带许可材料仍待独立核对。未提交 Apple 公证，未创建或发布 GitHub Release。
