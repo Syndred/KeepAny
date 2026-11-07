@@ -91,13 +91,12 @@ function UnlockedCard({ asset, entries, connectionCount, onOpen, tools, queries,
 		<ValueRow label={t("pwVaultAccountShort")} actions={<>
 			{choices.length > 1 && <CompactIcon label={t("compactAccountNextLogin", { index: position, total: choices.length })} disabled={tools.busy} onClick={advance} className="compact-account-icon compact-account-switch"><ArrowLeftRight size={16} /><small aria-hidden="true">{position}/{choices.length}</small></CompactIcon>}
 			<CompactIcon label={t("pwVaultCopyUsername")} disabled={tools.busy || !username} onClick={() => void copy("pwVaultUsernameField", username, "username", Boolean(current))}>{copiedIcon("username")}</CompactIcon>
-		</>}><span title={username} data-login-username>{username || t("pwVaultValueEmpty")}</span></ValueRow>
+		</>}><span title={username} aria-live={choices.length > 1 ? "polite" : undefined} data-login-username>{username || t("pwVaultValueEmpty")}</span></ValueRow>
 		<ValueRow label={t("pwVaultPasswordField")} actions={hasPassword ? <>
 			<CompactIcon label={t(reveal ? "pwVaultHidePasswordValue" : "pwVaultRevealPassword")} aria-pressed={reveal} disabled={tools.busy} onClick={() => setRevealedKey(reveal ? "" : scope)}>{reveal ? <EyeOff size={16} /> : <Eye size={16} />}</CompactIcon>
 			<CompactIcon label={t("pwVaultCopyPassword")} disabled={tools.busy} onClick={() => { if (current && session?.getSnapshot().status === "unlocked") void copy("pwVaultPasswordField", session.readEntry(current.entry.id).password, "password"); }}>{copiedIcon("password")}</CompactIcon>
 		</> : <CompactIcon label={t("compactAccountAddPassword")} disabled={tools.busy} onClick={() => onEdit(asset, current?.entry.id, editId)}><Plus size={16} /></CompactIcon>}><span className={hasPassword ? "compact-account-secret" : "compact-account-muted"} data-login-password>{hasPassword ? reveal ? draft?.password : "••••••••••" : t("pwVaultNoPassword")}</span></ValueRow>
 		<ValueRow label={t("pwVaultNotesField")} actions={<CompactIcon label={t("compactAccountCopyNotes")} disabled={tools.busy || !notes} onClick={() => void copy("pwVaultNotesField", notes, "notes")}>{copiedIcon("notes")}</CompactIcon>}><span title={notes || undefined} className={notes ? undefined : "compact-account-muted"} data-login-notes>{notes || t("compactAccountNoNotes")}</span></ValueRow>
-		<span className="sr-only" role="status">{current && choices.length > 1 ? t("compactAccountLoginPosition", { index: position, total: choices.length, username }) : ""}</span>
 	</Frame>;
 }
 

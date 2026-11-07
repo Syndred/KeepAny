@@ -651,8 +651,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		return () => cancelAnimationFrame(frame);
 	}, [kind, category, tag, listSearch, data.loading, assets.length]);
 	const tagFilter = (kind === "account" || availableTags.length > 0 || tag) ? <div className="list-filters">
-		<label className="sr-only" htmlFor={`asset-tag-filter-${kind}`}>{t("filterTag")}</label>
-		<Select id={`asset-tag-filter-${kind}`} value={tag} onValueChange={chooseTag}>
+		<Select id={`asset-tag-filter-${kind}`} aria-label={t("filterTag")} value={tag} onValueChange={chooseTag}>
 			<SelectOption value="">{t("allTags")}</SelectOption>
 			{tag && !availableTags.includes(tag) && <SelectOption value={tag}>{tag}</SelectOption>}
 			{availableTags.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}

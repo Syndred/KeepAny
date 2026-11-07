@@ -118,7 +118,6 @@ const copy: Record<string, [string, string]> = {
 	compactAccountCreate: ["创建", "Create"],
 	compactAccountUnlock: ["解锁", "Unlock"],
 	compactAccountNextLogin: ["切换登录账号（{{index}}/{{total}}）", "Next login ({{index}}/{{total}})"],
-	compactAccountLoginPosition: ["登录 {{index}}/{{total}}：{{username}}", "Login {{index}} of {{total}}: {{username}}"],
 	itemLoanHistory: ["借还", "Lending"],
 	itemMaintenanceHistory: ["维护", "Maintenance"],
 	relationGraphCurrent: ["当前资料", "Current record"],
