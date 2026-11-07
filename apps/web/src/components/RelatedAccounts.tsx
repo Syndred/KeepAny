@@ -66,7 +66,7 @@ export function RelatedAccounts({ asset, entry }: { asset: Asset; entry?: Passwo
   <ScrollArea.Viewport ref={viewport} className="account-other-viewport" aria-labelledby="account-related-title">
    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={event => void finishDrag(event)} accessibility={{ screenReaderInstructions: { draggable: t("navDndInstructions") }, announcements: {
     onDragStart: ({ active }) => t("navPickedUp", { name: rowName(active.id) }),
-    onDragOver: ({ active, over }) => over ? t("navMoved", { name: rowName(active.id), position: peerIds.indexOf(String(over.id)) + 1 }) : undefined,
+    onDragOver: ({ active, over }) => over ? t("accountOrderMoved", { name: rowName(active.id), position: peerIds.indexOf(String(over.id)) + 1 }) : undefined,
     onDragEnd: ({ active, over }) => over ? t("navDropped", { name: rowName(active.id), position: peerIds.indexOf(String(over.id)) + 1 }) : t("navCancelled"),
     onDragCancel: () => t("navCancelled"),
    } }}><SortableContext items={peerIds} strategy={horizontalListSortingStrategy}><ScrollArea.Content className="account-other-track">

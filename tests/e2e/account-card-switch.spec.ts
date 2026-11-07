@@ -261,7 +261,9 @@ for(const language of ['zh-CN','en'] as const) test(`${language} reordered platf
   const expected=[before[1],before[0],before[2]],cycle=[...expected];cycle.splice(position,0,'Order A');
   const first=handles.first();
   await first.press('Space',{delay:50});await expect(page.locator('.account-other-item.is-dragging')).toHaveCount(1);
-  await page.keyboard.press('ArrowRight');await page.keyboard.press('Space');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByRole('status').filter({hasText:language==='zh-CN'?'移到第 2 位':'to position 2'})).toHaveCount(1);
+  await page.keyboard.press('Space');
   await expect(page.locator('.account-related-info > strong')).toHaveText(expected);
   await expect(page.locator('[data-account-default]')).toBeDisabled();
   const username=(name:string)=>`order-${name.slice(-1).toLowerCase()}`;

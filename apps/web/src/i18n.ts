@@ -48,6 +48,7 @@ const copy: Record<string, [string, string]> = {
  accountHistoryTitle: ["历史记录", "History"],
  accountHistoryRestoreAction: ["恢复", "Restore"],
  accountHistoryRestoreConfirm: ["恢复 {{date}} 的登录资料？当前登录资料会保留为历史版本。", "Restore the login details saved on {{date}}? The current login details will be kept in history."],
+ accountOrderMoved: ["已将 {{name}} 移到第 {{position}} 位", "Moved {{name}} to position {{position}}"],
  accountOrderHandle: ["调整{{name}}顺序", "Reorder {{name}}"],
  accountOrderSaved: ["顺序已保存", "Order saved"],
  accountOrderError: ["顺序未保存，请重试", "Order was not saved. Try again"],
