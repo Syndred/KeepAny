@@ -9,7 +9,13 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} account searc
  await context.addInitScript(lang => localStorage.setItem('keepany-language', lang), language);
  const page = await context.newPage(), master = 'SyntheticPlatformSearch2026!';
  const cards = page.locator('.compact-account-card');
- const save = async () => { await page.getByRole('dialog').getByRole('button', { name: /^(保存|Save|保存条目|Save entry)$/ }).click(); await expect(page.getByRole('dialog')).toHaveCount(0); };
+ const save = async () => {
+  const username = await page.locator('#password-vault-entry-username').inputValue();
+  await page.getByRole('dialog').getByRole('button', { name: /^(保存|Save|保存条目|Save entry)$/ }).click(); await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/assets\/account\/[^/?#]+(?:#.*)?$/);
+  await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText(username);
+  await page.getByRole('link', { name: t('accountBack'), exact: true }).click();
+ };
  try {
   await page.goto('/accounts'); await enterAccounts(page, language, master);
   await page.locator('.asset-category-toolbar').getByRole('button', { name: t('add'), exact: true }).click();

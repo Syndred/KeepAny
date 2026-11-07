@@ -25,6 +25,21 @@ async function clearPreferenceConflict(page:Page) {
  await page.evaluate(()=>dispatchEvent(new Event('keepany-test-clear-fault')));
 }
 
+// List fixture preparation still returns to the list, after verifying the shared create navigation.
+async function saveAccount(page: Page, t: (key: string) => string) {
+ const before = new URL(page.url());
+ const fromList = before.pathname === "/accounts" && !before.hash.startsWith("#login-detail-");
+ const creating = await page.getByRole("dialog", { name: t("workspaceAddAccount"), exact: true }).count() > 0;
+ const username = await page.locator("#password-vault-entry-username").inputValue();
+ await page.getByRole("dialog").getByRole("button", { name: /^(保存|Save|保存条目|Save entry)$/ }).click();
+ await expect(page.getByRole("dialog")).toHaveCount(0);
+ if (fromList && creating) {
+  await expect(page).toHaveURL(/\/assets\/account\/[^/?#]+(?:#.*)?$/);
+  await expect(page.locator(".account-login-summary [data-login-username]")).toHaveText(username);
+  await page.getByRole("link", { name: t("accountBack"), exact: true }).click();
+ }
+}
+
 const output = 'test-results/account-card-switch/evidence';
 mkdirSync(output, { recursive: true });
 for (const language of ['zh-CN', 'en'] as const) test(`${language} notes and independent whole-account switch`, async ({ browser }, info) => {
@@ -35,7 +50,7 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} notes and ind
  const notes = 'Long synthetic note '.repeat(40) + '\nLast line';
  const master = 'SyntheticCardSwitchMaster2026!';
  const cards = page.locator('.compact-account-card');
- const save = async () => { await page.getByRole('dialog').getByRole('button', { name: /^(保存|Save|保存条目|Save entry)$/ }).click(); await expect(page.getByRole('dialog')).toHaveCount(0); };
+ const save = () => saveAccount(page, t);
  try {
   await page.goto('/accounts'); await openVaultAccess(page);
   await page.locator('#password-vault-master').fill(master); await page.locator('#password-vault-master-confirm').fill(master);
@@ -101,7 +116,7 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
  const context = await browser.newContext({ baseURL: info.project.use.baseURL, permissions: ['clipboard-read', 'clipboard-write'], viewport: { width: 1280, height: 900 } });
  await context.addInitScript(lang => localStorage.setItem('keepany-language', lang), language);
  const page = await context.newPage(), master = 'SyntheticDetailSwitch2026!';
- const save = async () => { await page.getByRole('dialog').getByRole('button', { name: /^(保存|Save|保存条目|Save entry)$/ }).click(); await expect(page.getByRole('dialog')).toHaveCount(0); };
+ const save = () => saveAccount(page, t);
  try {
   await page.goto('/accounts'); await openVaultAccess(page);
   await page.locator('#password-vault-master').fill(master); await page.locator('#password-vault-master-confirm').fill(master);
@@ -198,7 +213,7 @@ for (const language of ['zh-CN','en'] as const) test(`${language} list edit moda
  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});
  await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);
  const page=await context.newPage(),master='SyntheticEditorSwitch2026!';
- const save=async()=>{await page.getByRole('dialog').getByRole('button',{name:/^(保存|Save|保存条目|Save entry)$/}).click();await expect(page.getByRole('dialog')).toHaveCount(0);};
+ const save=()=>saveAccount(page,t);
  try {
   await page.goto('/accounts');await openVaultAccess(page);await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();
   await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();
@@ -252,7 +267,7 @@ for (const language of ['zh-CN','en'] as const) test(`${language} list edit moda
 for(const language of ['zh-CN','en'] as const) test(`${language} reordered platform cycle is shared by cards details and editor`,async({browser},info)=>{
  const t=(key:string)=>(resources[language].translation as Record<string,string>)[key]??key;
  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);const page=await context.newPage(),master='SyntheticOrderCycle2026!';
- const save=async()=>{await page.getByRole('dialog').getByRole('button',{name:/^(保存|Save|保存条目|Save entry)$/}).click();await expect(page.getByRole('dialog')).toHaveCount(0);};
+ const save=()=>saveAccount(page,t);
  try{
   await page.goto('/accounts');await openVaultAccess(page);await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();
   const cards=page.locator('.compact-account-card');
@@ -294,23 +309,27 @@ for(const language of ['zh-CN','en'] as const) test(`${language} reordered platf
  }finally{await context.close();}
 });
 
-for (const language of ['zh-CN','en'] as const) for (const privateOnly of [false,true]) test(`${language} detail addition stays on ${privateOnly ? 'private' : 'ordinary'} account`,async({browser},info)=>{
+for (const language of ['zh-CN','en'] as const) for (const privateOnly of [false,true]) test(`${language} detail addition opens the new account from ${privateOnly ? 'private' : 'ordinary'} source`,async({browser},info)=>{
  const t=(key:string)=>(resources[language].translation as Record<string,string>)[key]??key;
  const context=await browser.newContext({baseURL:info.project.use.baseURL,viewport:{width:1280,height:900}});
  await context.addInitScript(lang=>localStorage.setItem('keepany-language',lang),language);
  const page=await context.newPage(),master='SyntheticDetailAdd2026!';
- const save=async()=>{await page.getByRole('dialog').getByRole('button',{name:/^(保存|Save|保存条目|Save entry)$/}).click();await expect(page.getByRole('dialog')).toHaveCount(0);};
+ const save=()=>saveAccount(page,t);
  try{
   await page.goto('/accounts');await openVaultAccess(page);await page.locator('#password-vault-master').fill(master);await page.locator('#password-vault-master-confirm').fill(master);await page.getByRole('button',{name:t('accountSetUp'),exact:true}).click();
-  if(privateOnly) await importVisualKdbxEntries(page,t,[{title:'Synthetic private platform',username:'source-login',password:'SyntheticSource!'}]);
-  else {await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();await page.locator('#password-vault-entry-title').fill('Synthetic ordinary platform');await page.locator('#password-vault-entry-username').fill('source-login');await page.locator('#password-vault-entry-password').fill('SyntheticSource!');await save();}
+  if(privateOnly) await importVisualKdbxEntries(page,t,[{title:'Synthetic private platform',username:'source-login',password:'SyntheticSource!',notes:'Source note'}]);
+  else {await page.locator('.asset-category-toolbar').getByRole('button',{name:t('add'),exact:true}).click();await page.locator('#password-vault-entry-title').fill('Synthetic ordinary platform');await page.locator('#password-vault-entry-username').fill('source-login');await page.locator('#password-vault-entry-password').fill('SyntheticSource!');await page.locator('#password-vault-entry-notes').fill('Source note');await save();}
   await page.locator('.compact-account-title-block').click();await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('source-login');
   const detailURL=page.url();const add=page.locator('.page-header').getByRole('button',{name:t('add'),exact:true});
   await add.click();await page.locator('#password-vault-entry-username').fill('cancelled-login');await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();await expect(page).toHaveURL(detailURL);await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('source-login');
-  await add.click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('');await page.locator('#password-vault-entry-username').fill('new-login');await page.locator('#password-vault-entry-password').fill('SyntheticNew!');await save();
-  await expect(page).toHaveURL(detailURL);await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('source-login');
-  await expect(page.locator('.account-related-info')).toContainText('new-login');await page.screenshot({path:`${output}/${language}-detail-add-${privateOnly?'private':'ordinary'}.png`,fullPage:true});
-  await page.locator('[data-account-detail-switch]').click();await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('new-login');
+  await add.click();await expect(page.locator('#password-vault-entry-username')).toHaveValue('');await page.locator('#password-vault-entry-username').fill('new-login');await page.locator('#password-vault-entry-password').fill('SyntheticNew!');await page.locator('#password-vault-entry-notes').fill('New note');await save();
+  await expect(page).not.toHaveURL(detailURL);await expect(page).toHaveURL(/\/assets\/account\/[^/?#]+(?:#.*)?$/);await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('new-login');
+  const newURL=page.url();await expect(page.locator('.account-note-summary')).toContainText('New note');
+  await page.locator('.page-header').getByRole('button',{name:t('edit'),exact:true}).click();await page.locator('#password-vault-entry-notes').fill('Updated new note');await save();
+  await expect(page).toHaveURL(newURL);await expect(page.locator('.account-note-summary')).toContainText('Updated new note');
+  await page.locator('[data-account-detail-switch]').click();await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('source-login');await expect(page.locator('.account-note-summary')).toContainText('Source note');
+  await page.locator('[data-account-detail-switch]').click();await expect(page).toHaveURL(newURL);await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('new-login');
+  await page.screenshot({path:`${output}/${language}-detail-add-${privateOnly?'private':'ordinary'}.png`,fullPage:true});
   await page.reload();await openVaultAccess(page);await page.locator('#password-vault-unlock-master').fill(master);await page.getByRole('button',{name:t('accountUnlockAction'),exact:true}).first().click();await expect(page.locator('.account-login-summary [data-login-username]')).toHaveText('new-login');
  }finally{await context.close();}
 });
