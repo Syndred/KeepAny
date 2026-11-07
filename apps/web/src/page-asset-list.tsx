@@ -613,7 +613,10 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			[search, accountQuery].every((query) => matchesAssetSearch(a, query) || !!accountSearchExtras?.get(a.id)?.includes(query.trim().toLocaleLowerCase())),
 	);
  const seenAccountGroups = new Set<string>();
+ // Search results represent individual matching accounts, not platform summaries.
+ const expandAccountSearch = kind === "account" && [search, accountQuery].some(query => query.trim());
  const assets = matchingAssets.filter(asset => {
+  if (expandAccountSearch) return true;
   const group = kind === "account" ? accountCardGroupIds?.get(asset.id) : undefined;
   if (!group) return true;
   if (seenAccountGroups.has(group)) return false;
