@@ -1,6 +1,7 @@
 @layer theme, base, components, utilities;
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
+@source inline("sr-only");
 @theme inline {
  --color-background: var(--paper);
  --color-foreground: var(--ink);
