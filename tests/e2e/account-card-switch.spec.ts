@@ -1,7 +1,28 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { resources } from '../../apps/web/src/i18n';
 import { openVaultAccess } from './helpers/vault-access';
+
+// Controlled fault preparation only: abort synthetic write transactions, keep reads intact.
+async function failStorageWrites(page: Page, preferenceId = "keepany-account-defaults-v1") {
+ await page.evaluate(id => {
+  const descriptor=Object.getOwnPropertyDescriptor(IDBRequest.prototype,'onsuccess')!;
+  (window as unknown as {faultHits:number}).faultHits=0;
+  Object.defineProperty(IDBRequest.prototype,'onsuccess',{...descriptor,set(listener) {
+   descriptor.set!.call(this,function(this:IDBRequest,event:Event){
+    const transaction=this.transaction;
+    if(transaction?.mode==='readwrite' && typeof this.result==='string' && this.result.endsWith(id)) { (window as unknown as {faultHits:number}).faultHits++; transaction.abort(); }
+    if(typeof listener==='function') return listener.call(this,event);
+   });
+  }});
+  addEventListener('keepany-test-clear-fault',()=>{Object.defineProperty(IDBRequest.prototype,'onsuccess',descriptor);},{once:true});
+ },preferenceId);
+}
+async function clearStorageFailure(page:Page) {
+ await expect.poll(()=>page.evaluate(()=>(window as unknown as {faultHits:number}).faultHits)).toBeGreaterThan(0);
+ await page.evaluate(()=>dispatchEvent(new Event('keepany-test-clear-fault')));
+}
+
 const output = 'test-results/account-card-switch/evidence';
 mkdirSync(output, { recursive: true });
 for (const language of ['zh-CN', 'en'] as const) test(`${language} notes and independent whole-account switch`, async ({ browser }, info) => {
@@ -108,21 +129,14 @@ for (const language of ['zh-CN', 'en'] as const) test(`${language} platform deta
   await whole.click();
   await expect(page.locator('[data-login-username]')).toHaveText('second-login');
   await expect(page.locator('[data-account-default]')).toBeEnabled();
-  // Synthetic storage outage: the existing persistence adapter must reject this preference write.
-  await page.evaluate(() => {
-   const put = IDBObjectStore.prototype.put, add = IDBObjectStore.prototype.add, update = IDBCursor.prototype.update;
-   const fail = (_value: unknown) => { throw new DOMException('Synthetic isolated storage outage', 'QuotaExceededError'); };
-   IDBCursor.prototype.update = function(value) { fail(value); return update.call(this,value); };
-   IDBObjectStore.prototype.put = function(value, key) { fail(value); return key === undefined ? put.call(this,value) : put.call(this,value,key); };
-   IDBObjectStore.prototype.add = function(value, key) { fail(value); return key === undefined ? add.call(this,value) : add.call(this,value,key); };
-   addEventListener('keepany-test-clear-fault', () => { IDBObjectStore.prototype.put=put; IDBObjectStore.prototype.add=add; IDBCursor.prototype.update=update; }, {once:true});
-  });
+  await failStorageWrites(page);
   await page.locator('[data-account-default]').click();
+  await expect.poll(()=>page.evaluate(()=>(window as unknown as {faultHits:number}).faultHits)).toBeGreaterThan(0);
   await expect(page.getByRole('status').filter({hasText:t('error')})).toBeVisible();
   await expect(page.locator('[data-account-default]')).toBeEnabled();
   await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','false');
   await page.screenshot({path:`${output}/${language}-default-save-error.png`,fullPage:true});
-  await page.evaluate(() => dispatchEvent(new Event('keepany-test-clear-fault')));
+  await clearStorageFailure(page);
   await page.locator('[data-account-default]').click();
   await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
   await expect(page.locator('[data-account-default]')).toBeDisabled();
@@ -238,16 +252,24 @@ for(const language of ['zh-CN','en'] as const) test(`${language} reordered platf
   }
   if(await cards.locator('[data-login-username]').innerText()!=='order-a') for(let i=0;i<4&&await cards.locator('[data-login-username]').innerText()!=='order-a';i++) await cards.locator('[data-account-switch]').click();
   await cards.locator('.compact-account-title-block').click();
+  if(await page.locator('[data-account-default]').isEnabled()) await page.locator('[data-account-default]').click();
+  await expect(page.locator('[data-account-default]')).toHaveAttribute('aria-pressed','true');
   const handles=page.getByRole('button',{name:/^(调整|Reorder)/});
   await expect(handles).toHaveCount(3);
-  await handles.first().press('Space');await page.keyboard.press('ArrowRight');await page.keyboard.press('ArrowRight');await page.keyboard.press('Space');
-  await expect(page.locator('.account-related-info > strong')).toHaveText(['Order C','Order D','Order B']);
+  const before=await page.locator('.account-related-info > strong').allTextContents();
+  const position=Number((await page.locator('[data-account-detail-switch]').getAttribute('aria-label'))!.match(/(\d+)\/4/)![1])-1;
+  const expected=[before[1],before[0],before[2]],cycle=[...expected];cycle.splice(position,0,'Order A');
+  const first=handles.first();
+  await first.press('Space',{delay:50});await expect(page.locator('.account-other-item.is-dragging')).toHaveCount(1);
+  await page.keyboard.press('ArrowRight');await page.keyboard.press('Space');
+  await expect(page.locator('.account-related-info > strong')).toHaveText(expected);
   await expect(page.locator('[data-account-default]')).toBeDisabled();
-  for(const name of ['c','d','b','a']){await page.locator('[data-account-detail-switch]').click();await expect(page.locator('[data-login-username]')).toHaveText(`order-${name}`);}
+  const username=(name:string)=>`order-${name.slice(-1).toLowerCase()}`;
+  for(let step=1;step<=4;step++){await page.locator('[data-account-detail-switch]').click();await expect(page.locator('[data-login-username]')).toHaveText(username(cycle[(position+step)%4]));}
   await page.getByRole('link',{name:t('accountBack'),exact:true}).click();await expect(cards.locator('[data-login-username]')).toHaveText('order-a');
   await page.reload();await openVaultAccess(page);await page.locator('#password-vault-unlock-master').fill(master);await page.getByRole('button',{name:t('accountUnlockAction'),exact:true}).first().click();await expect(cards.locator('[data-login-username]')).toHaveText('order-a');
-  await cards.locator('[data-account-switch]').click();await expect(cards.locator('[data-login-username]')).toHaveText('order-c');await cards.getByRole('button',{name:t('edit'),exact:true}).click();
-  for(const name of ['d','b','a']){await page.locator('[data-account-editor-switch]').click();await expect(page.locator('#password-vault-entry-username')).toHaveValue(`order-${name}`);}
+  await cards.locator('[data-account-switch]').click();await expect(cards.locator('[data-login-username]')).toHaveText(username(cycle[(position+1)%4]));await cards.getByRole('button',{name:t('edit'),exact:true}).click();
+  for(let step=2;step<=4;step++){await page.locator('[data-account-editor-switch]').click();await expect(page.locator('#password-vault-entry-username')).toHaveValue(username(cycle[(position+step)%4]));}
   await page.getByRole('dialog').getByRole('button',{name:t('cancel'),exact:true}).click();
  }finally{await context.close();}
 });

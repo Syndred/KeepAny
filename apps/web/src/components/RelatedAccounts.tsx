@@ -39,7 +39,7 @@ export function RelatedAccounts({ asset, entry }: { asset: Asset; entry?: Passwo
  const members = cardGroups.groups.get(asset.id) ?? [];
  const rows = useMemo(() => snapshot.status === "unlocked" ? otherAccountRows({ asset, entry, assets: data.assets, entries: snapshot.entries }, cardGroups.groups.get(asset.id) ?? []) : [], [asset, entry, data.assets, snapshot.status, snapshot.entries, cardGroups]);
  const peerIds = members.filter(member => member.asset.id !== asset.id).map(member => member.asset.id);
- const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
+ const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates, scrollBehavior: "auto" }));
  if (snapshot.status !== "unlocked" || !rows.length) return null;
  function move(direction: number) {
   const element = viewport.current;
