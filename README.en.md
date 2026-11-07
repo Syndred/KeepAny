@@ -30,6 +30,8 @@ The Mac preview is not notarized. If macOS blocks the first launch, you may need
 
 To move existing KeepAny records, export an encrypted `.ka1` from **Backup & restore**, then preview and restore it in the desktop app. Use your original master password to unlock the restored vault.
 
+See the [desktop build guide](apps/desktop/README.md) to build a Windows EXE or macOS DMG from source.
+
 ### Portable preview
 
 The [earlier portable preview ZIP](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-preview.20261027) is available for Windows, Mac, and Linux.

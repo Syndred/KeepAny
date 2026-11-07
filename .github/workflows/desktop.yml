@@ -1,0 +1,66 @@
+name: Build KeepAny desktop
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/tauri-desktop]
+  pull_request:
+    paths:
+      - '.github/workflows/desktop.yml'
+      - 'apps/desktop/**'
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'patches/**'
+      - 'scripts/collect-desktop-artifacts.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2025
+            target: x86_64-pc-windows-msvc
+          - runner: macos-15
+            target: aarch64-apple-darwin
+          - runner: macos-15-intel
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    env:
+      DESKTOP_TARGET: ${{ matrix.target }}
+      RUSTUP_TOOLCHAIN: '1.99.1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.10.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - shell: bash
+        run: rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --target "$DESKTOP_TARGET"
+      - name: Build native installer
+        shell: bash
+        working-directory: apps/desktop
+        run: pnpm exec tauri build --ci --target "$DESKTOP_TARGET" -- --locked
+      - name: Verify native export writes
+        shell: bash
+        run: cargo test --locked --release --target "$DESKTOP_TARGET" --manifest-path apps/desktop/src-tauri/Cargo.toml
+      - name: Verify and stage desktop artifacts
+        shell: bash
+        run: node scripts/collect-desktop-artifacts.mjs "$DESKTOP_TARGET"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KeepAny-desktop-${{ matrix.target }}
+          path: dist/desktop/${{ matrix.target }}
+          if-no-files-found: error

@@ -1,7 +1,8 @@
 import { AssetCardContent } from "./components/AssetSummaryCard";
 import { AssetThumbnail as AssetCover } from "./components/AssetThumbnail";
 import { Input } from "./components/ui/input";
-import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
 	DndContext,
@@ -25,6 +26,7 @@ import { cancelCategoryEdit, createCategory, deleteCustomCategory, editCustomCat
 import { Button } from "./components/ui/button";
 import { Dialog } from "./components/ui/dialog";
 import { matchesAssetSearch } from "./asset-search";
+import { compareAccountCreationNewestFirst } from "./account-order";
 import "./asset-restoration.css";
 import {
 	Empty,
@@ -113,12 +115,14 @@ function CategoryStrip({
 	choose,
 	searchControl,
 	toolbarActions,
+	wrapToolbar,
 }: {
 	kind: AssetKind;
 	chosen: string;
 	choose: (x: string, id?: string) => void;
 	searchControl?: ReactNode;
 	toolbarActions?: ReactNode;
+	wrapToolbar?: (toolbar: ReactNode) => ReactNode;
 }) {
 	const { data, notify } = useAppContext();
 	const { t, i18n } = useTranslation();
@@ -340,9 +344,8 @@ function CategoryStrip({
 			setCategoryBusy(false);
 		}
 	}
-	return (
-		<>
-			<div className={`asset-category-toolbar${searchControl ? " asset-category-toolbar--search" : ""}`}>
+	const toolbar = (
+		<div className={`asset-category-toolbar${searchControl ? " asset-category-toolbar--search" : ""}`}>
 			<div className="asset-category-scroll tabs">
 				<button
 					type="button"
@@ -363,7 +366,11 @@ function CategoryStrip({
 			{searchControl}
 			<Button size="small" className="asset-category-manage" disabled={categoryBusy} onClick={openManager}>{t("manage")}</Button>
 			{toolbarActions}
-			</div>
+		</div>
+	);
+	return (
+		<>
+			{wrapToolbar ? wrapToolbar(toolbar) : toolbar}
 			{data.categoryEditsError && <p className="field-error" role="alert">{t("error")}</p>}
 			{pending && <section className="card asset-category-recovery" aria-label={t("categoryEditRecovery")}>
 				<p role="status">{t(pending.phase === "rolling-back" ? "categoryEditCancelling" : "categoryEditPending")}</p>
@@ -460,7 +467,7 @@ function rememberAssetList(asset: Asset, search: string) {
 	sessionStorage.setItem(`keepany-scroll-${asset.kind}`, String(window.scrollY));
 	sessionStorage.setItem(`keepany-scroll-filter-${asset.kind}`, JSON.stringify({
 		category: sessionStorage.getItem(`keepany-category-${asset.kind}`) || "",
-		tag: sessionStorage.getItem(`keepany-tag-${asset.kind}`) || "",
+		...(asset.kind !== "account" && { tag: sessionStorage.getItem(`keepany-tag-${asset.kind}`) || "" }),
 		search,
 	}));
 }
@@ -500,13 +507,13 @@ export function AssetList() {
 	return <AssetKindList key={kind} kind={kind === "vault" ? "account" : kind} />;
 }
 
-export type AccountListFilters = { search: string; category: string; tag: string };
-export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onAccountFiltersChange, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions, accountCardGroupIds }: {
+export function AssetKindList({ kind, beforeList, afterList, passwordCounts, privateSearch = false, embedded = false, hideTitle = false, accountSearchExtras, renderAccountDetails, renderAccountCard, accountExtras = [], filterAccountId, toolbarActions, accountCardGroupIds, accountToolbarExtras, resetAccountSearch }: {
 	toolbarActions?: ReactNode;
+	accountToolbarExtras?: (visibleAccounts: readonly Asset[]) => ReactNode;
+	resetAccountSearch?: boolean;
 	accountExtras?: Asset[]; filterAccountId?: string; accountCardGroupIds?: ReadonlyMap<string, string>;
 	kind: AssetKind; beforeList?: ReactNode; afterList?: ReactNode;
 	passwordCounts?: ReadonlyMap<string, number>;
-	onAccountFiltersChange?: (filters: AccountListFilters) => void;
 	privateSearch?: boolean;
 	embedded?: boolean;
 	hideTitle?: boolean;
@@ -515,10 +522,13 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	renderAccountCard?: (asset: Asset, context: { connectionCount: number; queries: string[]; onOpen: () => void }) => ReactNode;
 }) {
 	const Container = embedded ? "section" : "main";
-	const { data, search } = useAppContext();
+	const { data, search, accountToolbarTarget } = useAppContext();
 	const workspace = useWorkspaceSummary();
  const [assetView, setAssetView] = useAssetView();
 	const [accountSearch, setAccountSearch] = useState(() => sessionStorage.getItem("keepany-account-list-search") || "");
+	useLayoutEffect(() => {
+		if (resetAccountSearch) setAccountSearch("");
+	}, [resetAccountSearch]);
 	const accountSearchRef = useRef<HTMLInputElement>(null);
 	const wasPrivateSearch = useRef(privateSearch);
 	useEffect(() => {
@@ -552,11 +562,10 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	}, [kind, selectedCategory]);
 	const [tags, setTags] = useState<Record<string, string>>(() =>
 		Object.fromEntries(
-			kinds.map((k) => [k, sessionStorage.getItem(`keepany-tag-${k}`) || ""]),
+			kinds.filter((k) => k !== "account").map((k) => [k, sessionStorage.getItem(`keepany-tag-${k}`) || ""]),
 		),
 	);
-	const tag = tags[kind] || "";
-	useEffect(() => { onAccountFiltersChange?.({ search: accountSearch, category, tag }); }, [onAccountFiltersChange, accountSearch, category, tag]);
+	const tag = kind === "account" ? "" : tags[kind] || "";
 	const chooseTag = (value: string) => {
 		sessionStorage.setItem(`keepany-tag-${kind}`, value);
 		setTags((prev) => ({ ...prev, [kind]: value }));
@@ -601,7 +610,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 	const allLiveAssets = [...liveAssets(data), ...accountExtras];
 	const liveIds = new Set(allLiveAssets.map((asset) => asset.id));
 	const allKindAssets = allLiveAssets.filter((asset) => asset.kind === kind);
-	const availableTags = [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
+	const availableTags = kind === "account" ? [] : [...new Set(allKindAssets.flatMap((asset) => asset.tags))].sort(
 		(a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }),
 	);
 	const normalizedSearch = `${search} ${accountQuery}`.trim().toLocaleLowerCase();
@@ -612,6 +621,8 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			(!tag || a.tags.includes(tag)) &&
 			[search, accountQuery].every((query) => matchesAssetSearch(a, query) || !!accountSearchExtras?.get(a.id)?.includes(query.trim().toLocaleLowerCase())),
 	);
+ // The first matching member determines the position of a collapsed card.
+ if (kind === "account") matchingAssets.sort(compareAccountCreationNewestFirst);
  const seenAccountGroups = new Set<string>();
  // Search results represent individual matching accounts, not platform summaries.
  const expandAccountSearch = kind === "account" && [search, accountQuery].some(query => query.trim());
@@ -650,9 +661,8 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 		});
 		return () => cancelAnimationFrame(frame);
 	}, [kind, category, tag, listSearch, data.loading, assets.length]);
-	const tagFilter = (kind === "account" || availableTags.length > 0 || tag) ? <div className="list-filters">
-		<label className="sr-only" htmlFor={`asset-tag-filter-${kind}`}>{t("filterTag")}</label>
-		<Select id={`asset-tag-filter-${kind}`} value={tag} onValueChange={chooseTag}>
+	const tagFilter = (availableTags.length > 0 || tag) ? <div className="list-filters">
+		<Select id={`asset-tag-filter-${kind}`} aria-label={t("filterTag")} value={tag} onValueChange={chooseTag}>
 			<SelectOption value="">{t("allTags")}</SelectOption>
 			{tag && !availableTags.includes(tag) && <SelectOption value={tag}>{tag}</SelectOption>}
 			{availableTags.map((value) => <SelectOption key={value} value={value}>{value}</SelectOption>)}
@@ -676,7 +686,7 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 			/>}
 			{beforeList}
 			{<>
-			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <><div className="asset-account-search">
+			<CategoryStrip key={kind} kind={kind} chosen={category} choose={choose} searchControl={kind === "account" ? <div className="asset-account-search">
 				<Search size={18} aria-hidden="true" />
 				<Input
 					id={renderAccountDetails || renderAccountCard ? "password-vault-search-input" : undefined}
@@ -691,18 +701,21 @@ export function AssetKindList({ kind, beforeList, afterList, passwordCounts, onA
 					value={accountSearch}
 					onChange={(event) => changeAccountSearch(event.target.value)}
 					onKeyDown={(event) => {
-						if (event.key === "Escape") {
+						if (event.key === "Escape" && accountSearch) {
 							event.stopPropagation();
 							changeAccountSearch("");
 						}
 					}}
 				/>
 				{accountSearch && <Button variant="ghost" size="icon" aria-label={t("accountListClearSearch")} onClick={() => { changeAccountSearch(""); accountSearchRef.current?.focus(); }}><X size={18} /></Button>}
-			</div>{renderAccountCard && tagFilter}</> : undefined} toolbarActions={toolbarActions} />
+			</div> : undefined} toolbarActions={toolbarActions} wrapToolbar={kind === "account" && renderAccountCard ? (toolbar) => {
+				const content = <div className="account-list-toolbar">{toolbar}{accountToolbarExtras?.(assets)}</div>;
+				return accountToolbarTarget ? createPortal(content, accountToolbarTarget) : content;
+			} : undefined} />
 			{kind !== "account" && kind !== "vault" ? <div className="asset-list-toolbar">
 				{tagFilter}
 				<AssetViewToggle value={assetView} onChange={setAssetView} />
-			</div> : !renderAccountCard && tagFilter}
+			</div> : kind === "vault" && !renderAccountCard && tagFilter}
 <section className={`asset-list-content ${assetView === "list" && kind !== "account" ? "asset-dense-list" : ""} ${kind === "project" ? "asset-project-grid" : kind === "account" ? "asset-account-grid" : "asset-library-grid"}`}>
 				{assets.length ? (
 						assets.map((a) => kind === "project" ? <ProjectCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} /> : kind === "account" ? renderAccountCard ? <div className="compact-account-slot" key={a.id}>{renderAccountCard(a, { connectionCount: connectionCount(a), queries: [search, accountQuery], onOpen: () => rememberAssetList(a, listSearch) })}</div> : <article className={renderAccountDetails ? "unified-account" : "account-list-entry"} key={a.id}><AccountCard asset={a} search={listSearch} passwordCount={passwordCounts?.get(a.id)} connectionCount={connectionCount(a)} />{renderAccountDetails?.(a)}</article> : <LibraryCard asset={a} search={listSearch} summary={workspace.summaries.get(a.id)} key={a.id} />)

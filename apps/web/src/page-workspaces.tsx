@@ -1,7 +1,7 @@
 import { Input } from "./components/ui/input";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Plus, Search } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { CircleCheck, Layers2, Plus, Search, Trash2, X } from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { newAsset, type Asset, type AssetKind, type Category } from "../../../packages/domain/src";
 import { CatalogRecordEditor } from './catalog-record-editor';
@@ -14,7 +14,7 @@ import { Select, SelectOption } from "./components/ui/select";
 import { MoneyTotal } from "./components/AssetMetrics";
 import { usePasswordVault } from "./components/PasswordVaultProvider";
 import { SubscriptionRatesDialog } from "./components/SubscriptionRatesDialog";
-import { AssetKindList, LibraryCard, type AccountListFilters } from "./page-asset-list";
+import { AssetKindList, LibraryCard } from "./page-asset-list";
 import { AssetMasonry } from './components/AssetMasonry';
 import { addWalletSamples, walletSamplesId } from './wallet-cards';
 import { matchesAssetSearch } from "./asset-search";
@@ -28,8 +28,10 @@ import type { AccountTemplate } from "./account-entry-save";
 import { CompactAccountCard } from "./components/CompactAccountCard";
 import type { AccountCardMember } from "./account-card-groups";
 import { useAccountCardGroups } from "./use-account-card-groups";
-import { prepareAccountCardDelete, type AccountCardDeleteTarget } from "./account-card-delete";
+import { prepareAccountCardBatchDelete, prepareAccountCardDelete, type AccountCardDeleteTarget } from "./account-card-delete";
 import { AccountDeleteDialog } from "./components/AccountDeleteDialog";
+import { inspectAccountCardMerge } from "./account-card-merge";
+import { AccountBatchDialog, type AccountBatchReview } from "./components/AccountBatchDialog";
 
 type CompactAccountProps = Parameters<typeof CompactAccountCard>[0];
 function GroupedAccountCard({ members, initialAssetId, defaultAssetId, connectionCountFor, ...props }: Omit<CompactAccountProps, "asset" | "entries" | "virtual" | "connectionCount"> & { members: AccountCardMember[]; initialAssetId: string; defaultAssetId?: string; connectionCountFor: (member: AccountCardMember) => number }) {
@@ -69,21 +71,27 @@ const AccountCardEditDialog = lazy(() => import("./components/AccountCardEditDia
 const PrivateAccountDetail = lazy(() => import("./components/PrivateAccountDetail").then(module => ({ default: module.PrivateAccountDetail })));
 
 export function AccountsWorkspace() {
-	const { data, search, notify, registerFeedbackTarget, pendingAccountName, setPendingAccountName } = useAppContext();
+	const { data, search, setSearch, notify, registerFeedbackTarget, pendingAccountName, setPendingAccountName } = useAppContext();
 	const { t } = useTranslation();
 	const { snapshot, session } = usePasswordVault();
 	const hash = useRouterState({ select: (state) => state.location.hash });
 	const [editAccount, setEditAccount] = useState<{ asset?: Asset; entryId?: string; triggerId?: string; template?: AccountTemplate; initialName?: string } | null>(null);
     const [deleteAccount, setDeleteAccount] = useState<{ target: AccountCardDeleteTarget; name: string } | null>(null);
+	const [selectedIds, setSelectedIds] = useState<Set<string> | null>(null);
+	const [batchReview, setBatchReview] = useState<AccountBatchReview | null>(null);
+	const [mergedCount, setMergedCount] = useState<number | null>(null);
+	const batchId = useId();
+	const batchToggleId = `${batchId}-select`;
+	const batchMergeId = `${batchId}-merge`;
+	const batchDeleteId = `${batchId}-delete`;
     const navigate = useNavigate();
     const creationConsumed = useRef(false);
     useEffect(() => { if (hash === "vault-trash") void navigate({ to: "/trash", hash: "", replace: true }); }, [hash, navigate]);
-    useEffect(() => { if (hash !== "new-account") { creationConsumed.current = false; return; } if (snapshot.status === "unlocked" && !creationConsumed.current) { creationConsumed.current = true; setEditAccount({ initialName: pendingAccountName ?? "" }); setPendingAccountName?.(""); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate, pendingAccountName, setPendingAccountName]);
-    useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); } }, [snapshot.status]);
-	const [filters, setFilters] = useState<AccountListFilters>(() => ({ search: sessionStorage.getItem("keepany-account-list-search") ?? "", category: "", tag: "" }));
+    useEffect(() => { if (hash !== "new-account") { creationConsumed.current = false; return; } if (snapshot.status === "unlocked" && !creationConsumed.current) { creationConsumed.current = true; setSelectedIds(null); setEditAccount({ initialName: pendingAccountName ?? "" }); setPendingAccountName?.(""); void navigate({ to: "/accounts", hash: "", replace: true }); } }, [hash, snapshot.status, navigate, pendingAccountName, setPendingAccountName]);
+    useEffect(() => { if (snapshot.status !== "unlocked") { setEditAccount(null); setDeleteAccount(null); setSelectedIds(null); setBatchReview(null); setMergedCount(null); } }, [snapshot.status]);
 	const sampleIds = sampleLibraryAssetIds(data.preferences.find((preference) => preference.id === SAMPLE_LIBRARY_ID)?.value);
 	const sampleAccounts = data.assets.filter((asset) => !asset.deleted && asset.kind === "account" && sampleIds.includes(asset.id));
-    const { grouped, virtualAccounts, virtualEntries, cardGroups, defaultFor } = useAccountCardGroups();
+    const { grouped, members, virtualAccounts, virtualEntries, cardGroups, defaultFor } = useAccountCardGroups();
     const searchExtras = useMemo(() => new Map([
         ...[...grouped.linked].map(([id, entries]) => [id, entries.flatMap(entry => [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url]).join(" ").toLocaleLowerCase()] as const),
         ...grouped.unlinked.map(entry => [`login-${entry.id}`, [entry.title, entry.username, ...(entry.usernameAliases ?? []), entry.url].join(" ").toLocaleLowerCase()] as const),
@@ -93,6 +101,84 @@ export function AccountsWorkspace() {
         : new Set(data.relations.filter(relation => !relation.deleted && relation.from !== relation.to && (relation.from === member.asset.id || relation.to === member.asset.id) && [relation.from,relation.to].every(id => data.assets.some(asset => asset.id === id && !asset.deleted && !asset.purged))).map(relation => relation.from === member.asset.id ? relation.to : relation.from)).size;
     const filterAccountId = hash.startsWith("asset-") ? hash.slice(6) : undefined;
     const privateDetail = hash.startsWith("login-detail-") && snapshot.status === "unlocked" ? snapshot.entries.find(entry => entry.id === hash.slice(13)) : undefined;
+
+	const selecting = selectedIds !== null && snapshot.status === "unlocked";
+	const membersById = useMemo(() => new Map(members.map(member => [member.asset.id, member])), [members]);
+	const selected = Array.from(selectedIds ?? []).flatMap(id => {
+		const member = membersById.get(id);
+		return member ? [member] : [];
+	});
+	useEffect(() => {
+		if (privateDetail) { setSelectedIds(null); setBatchReview(null); setMergedCount(null); }
+	}, [privateDetail]);
+
+	function toggleAccount(id: string) {
+		setSelectedIds(previous => {
+			if (!previous) return previous;
+			const next = new Set(previous);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+	}
+	function exitBatch() {
+		setSelectedIds(null);
+		setBatchReview(null);
+	}
+	function batchKeys(event: KeyboardEvent<HTMLElement>) {
+		if (event.key !== "Escape" || event.defaultPrevented || !selecting || batchReview ||
+			!(event.target instanceof Element) || event.target.closest('[role="dialog"], [role="menu"], [role="listbox"]')) return;
+		event.preventDefault();
+		exitBatch();
+		document.getElementById(batchToggleId)?.focus({ preventScroll: true });
+	}
+	function reviewDelete() {
+		if (!session || !selected.length) return;
+		try {
+			const target = prepareAccountCardBatchDelete(session, selected.map(member => member.virtual
+				? { entryId: member.entries[0].id }
+				: { asset: member.asset }));
+			setBatchReview({ kind: "delete", target, members: selected });
+		} catch { notify(t("assetStale")); }
+	}
+	function reviewMerge() {
+		if (!session || selected.length < 2) return;
+		const result = inspectAccountCardMerge(selected.map(member => member.asset.id), members, snapshot.trash, data.preferences, snapshot);
+		if (result.kind === "ready") setBatchReview({ kind: "merge", plan: result.plan });
+		else if (result.kind === "missing") setBatchReview(result);
+		else notify(t(result.reason === "limit" ? "accountBatchMergeLimit" : result.reason === "unsupported" ? "accountBatchMergeUnsupported" : "assetStale"));
+	}
+	const feedbackSlot = <div className="compact-account-feedback-slot" ref={registerFeedbackTarget} />;
+	function toolbarExtras(visibleAccounts: readonly Asset[]) {
+		if (!selecting) return <>
+			{mergedCount !== null && <div className="notice account-merge-result">
+				<p role="status"><CircleCheck size={18} aria-hidden="true" />{t("accountBatchMergeDone", { count: mergedCount })}</p>
+				<Button type="button" variant="ghost" size="icon" aria-label={t("close")} onClick={() => {
+					setMergedCount(null);
+					document.getElementById(batchToggleId)?.focus({ preventScroll: true });
+				}}><X size={16} /></Button>
+			</div>}
+			{feedbackSlot}
+		</>;
+		const visibleIds = new Set(visibleAccounts.map(asset => asset.id));
+		const hidden = selected.filter(member => !visibleIds.has(member.asset.id)).length;
+		const hasGroupedAccounts = visibleAccounts.some(asset => (cardGroups.groups.get(asset.id)?.length ?? 0) > 1);
+		return <>
+			<div className="account-batch-bar">
+				<p>
+					<span role="status">{t(selected.length === 1 ? "accountBatchSelectedOne" : "accountBatchSelected", { count: selected.length })}
+						{hidden > 0 && <span>{t("accountBatchHidden", { count: hidden })}</span>}
+					</span>
+					{hasGroupedAccounts && <span>{t("accountBatchGroupHint")}</span>}
+				</p>
+				<div className="actions">
+					<Button id={batchMergeId} disabled={selected.length < 2} onClick={reviewMerge}><Layers2 size={16}/>{t("accountBatchMerge")}</Button>
+					<Button id={batchDeleteId} variant="danger" disabled={!selected.length} onClick={reviewDelete}><Trash2 size={16}/>{t("accountDetailDelete")}</Button>
+				</div>
+			</div>
+			{feedbackSlot}
+		</>;
+	}
     function confirmAccountDelete(asset: Asset) {
         if (!session || session.getSnapshot().status !== "unlocked") return;
         try {
@@ -101,21 +187,43 @@ export function AccountsWorkspace() {
         } catch { notify(t("assetStale")); }
     }
     if (privateDetail) return <Suspense fallback={<p role="status">{t("loading")}</p>}><PrivateAccountDetail key={privateDetail.id} entry={privateDetail} /></Suspense>;
-	return <main className="page unified-accounts-page">
+	return <main className="page unified-accounts-page" onKeyDown={batchKeys}>
 		<h1 className="sr-only">{t("accountsWorkspace")}</h1>
 		<Suspense fallback={<p role="status">{t("loading")}</p>}>
 			<PasswordVaultPanel accountToolbar assets={data.assets} sampleAccounts={sampleAccounts} accountCount={data.assets.filter(asset => asset.kind === "account" && !asset.deleted).length + grouped.unlinked.length} notify={notify}
-				headerFeedback={<div className="compact-account-feedback-slot" ref={registerFeedbackTarget} />}
-				headerAction={({ busy, clearMessage }) => <Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { clearMessage(); setEditAccount({}); }}><Plus size={17} />{t("add")}</Button>}
+				headerFeedback={snapshot.status !== "unlocked" ? feedbackSlot : undefined}
+				headerAction={({ busy, clearMessage }) => <>
+					<Button variant="primary" title={t("workspaceAddAccount")} disabled={busy || data.pendingCategoryEdits.some((pending) => pending.kind === "account")} onClick={() => { exitBatch(); clearMessage(); setEditAccount({}); }}><Plus size={17} />{t("add")}</Button>
+					<Button id={batchToggleId} className="account-batch-toggle" variant={selecting ? "primary" : "default"} disabled={busy || !selecting && !members.length} onClick={() => {
+						if (selecting) exitBatch();
+						else { clearMessage(); notify(""); setMergedCount(null); setSelectedIds(new Set()); }
+					}}>{selecting ? <X size={16}/> : <Layers2 size={16}/>} {t(selecting ? "accountBatchExit" : "accountBatchSelect")}</Button>
+				</>}
 				renderAccounts={(tools, toolbarActions) => <AssetKindList kind="account" embedded hideTitle toolbarActions={toolbarActions} privateSearch={snapshot.status === "unlocked"}
-                    accountExtras={virtualAccounts} filterAccountId={filterAccountId} accountCardGroupIds={cardGroups.ids}
+                    accountExtras={virtualAccounts} filterAccountId={filterAccountId} accountCardGroupIds={selecting ? undefined : cardGroups.ids} accountToolbarExtras={toolbarExtras} resetAccountSearch={mergedCount !== null}
                     beforeList={filterAccountId ? <div className="password-vault-filter"><span>{data.assets.find(asset => asset.id === filterAccountId)?.name}</span><Button onClick={() => void navigate({ to: "/accounts", hash: "", replace: true })}>{t("pwVaultClearAssetFilter")}</Button></div> : null}
-					accountSearchExtras={searchExtras} onAccountFiltersChange={setFilters}
-					renderAccountCard={(asset, context) => <GroupedAccountCard members={context.queries.some(query => query.trim()) ? cardGroups.groups.get(asset.id)!.filter(member => member.asset.id === asset.id) : cardGroups.groups.get(asset.id)!} initialAssetId={asset.id} defaultAssetId={defaultFor(asset.id)} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={confirmAccountDelete} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
+					accountSearchExtras={searchExtras}
+					renderAccountCard={(asset, context) => <GroupedAccountCard key={selecting ? "batch" : "normal"} members={selecting || context.queries.some(query => query.trim()) ? [membersById.get(asset.id)!] : cardGroups.groups.get(asset.id)!}
+						batchSelection={selecting ? { selected: selectedIds.has(asset.id), toggle: () => toggleAccount(asset.id) } : undefined} initialAssetId={asset.id} defaultAssetId={defaultFor(asset.id)} connectionCountFor={memberConnectionCount} onCreate={(template, triggerId) => setEditAccount({ template, triggerId })} onEdit={(asset, entryId, triggerId) => setEditAccount({ asset: virtualEntries.has(asset.id) ? undefined : asset, entryId, triggerId })} onDeleteAccount={confirmAccountDelete} {...context} tools={tools} focusEntryId={hash.startsWith("password-") ? hash.slice(9) : undefined} />} />}
 			/>
 		</Suspense>
 		{snapshot.status === "unlocked" && editAccount && <Suspense fallback={<p role="status">{t("loading")}</p>}>{editAccount.asset || editAccount.entryId ? <AccountCardEditDialog {...editAccount} returnFocusTo={() => (editAccount.triggerId ? document.getElementById(editAccount.triggerId) : null) ?? document.querySelector<HTMLElement>(".asset-category-toolbar button")} onClose={() => setEditAccount(null)}/> : <AccountEntryDialog {...editAccount} returnFocusTo={() => editAccount.triggerId ? document.getElementById(editAccount.triggerId) : document.querySelector<HTMLElement>(".account-toolbar-actions button")} onClose={() => setEditAccount(null)} />}</Suspense>}
         {snapshot.status === "unlocked" && deleteAccount && <AccountDeleteDialog target={deleteAccount.target} name={deleteAccount.name} onClose={() => setDeleteAccount(null)} onDeleted={() => {}}/>}
+		{selecting && batchReview && <AccountBatchDialog review={batchReview}
+			onClose={() => setBatchReview(null)}
+			onComplete={(kind, count) => {
+				exitBatch();
+				if (kind === "merge") {
+					setSearch("");
+					setMergedCount(count);
+				} else notify(t("accountBatchDeleteDone"));
+			}}
+			onAddMissing={(missing) => {
+				setSelectedIds(previous => previous && new Set([...previous, ...missing.map(member => member.asset.id)]));
+				setBatchReview(null);
+			}}
+			returnFocusTo={() => document.getElementById(batchReview.kind === "delete" ? batchDeleteId : batchMergeId) ?? document.getElementById(batchToggleId)}
+		/>}
 	</main>;
 }
 

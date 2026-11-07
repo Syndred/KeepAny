@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "KeepAny Dev",
+  "identifier": "com.syndred.keepany.desktop.dev",
+  "build": {
+    "beforeDevCommand": "pnpm dev:web",
+    "devUrl": "http://127.0.0.1:1420"
+  },
+  "bundle": {
+    "resources": null
+  }
+}

@@ -2,9 +2,24 @@ import { describe, expect, it } from 'vitest';
 import { newAsset } from '../../../packages/domain/src';
 import type { AccountCardMember } from './account-card-groups';
 import { defaultAccountId } from './account-defaults';
-import { ACCOUNT_ORDER_ID, orderedAccountMembers, parseAccountOrder, reorderAccountPeers } from './account-order';
+import { ACCOUNT_ORDER_ID, compareAccountCreationNewestFirst, orderedAccountMembers, parseAccountOrder, reorderAccountPeers } from './account-order';
 const member = (id: string, virtual = false): AccountCardMember => ({ asset: { ...newAsset('account'), id, name: id }, entries: [], virtual });
 const ids = (rows: readonly AccountCardMember[]) => rows.map(row => row.asset.id);
+
+describe('account creation order', () => {
+ it('sorts creation instants newest first, breaks ties by ID, and puts unknown dates last', () => {
+  const rows = [
+   { id: 'missing', createdAt: '' },
+   { id: 'private', createdAt: '2026-11-06T00:00:00Z' },
+   { id: 'legacy', createdAt: '1970-01-01T00:00:00Z', updatedAt: '2026-11-07T00:00:00Z' },
+   { id: 'account', createdAt: '2026-11-06T08:00:00+08:00' },
+   { id: 'newest', createdAt: '2026-11-06T19:00:00-07:00' },
+   { id: 'invalid', createdAt: 'not a date' },
+  ];
+  expect(rows.sort(compareAccountCreationNewestFirst).map(row => row.id))
+   .toEqual(['newest', 'account', 'private', 'legacy', 'invalid', 'missing']);
+ });
+});
 
 describe('account cycle order', () => {
  it('accepts only bounded opaque IDs and rejects malformed preferences', () => {

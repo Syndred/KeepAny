@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { readClipboardText, registerClipboardReadHandler } from './clipboard-access';
+import { readClipboardText, registerClipboardReadHandler, registerClipboardWriteHandler, writeClipboardText } from './clipboard-access';
 let unregister: (() => void) | undefined;
 afterEach(() => { unregister?.(); unregister = undefined; vi.unstubAllGlobals(); });
 
@@ -39,4 +39,19 @@ it('discards a pending read after background or unregister, even after returning
   unregister();
   complete('fictional clipboard text');
   await expect(second).rejects.toThrow('clipboard-read-cancelled');
+});
+
+it('copies through the registered native writer and preserves browser behavior when removed', async () => {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal('navigator', { clipboard: { writeText } });
+  const native = vi.fn().mockResolvedValueOnce(undefined).mockRejectedValueOnce(Error('desktop-clipboard-failed'));
+  const dispose = registerClipboardWriteHandler(native);
+  try {
+    await writeClipboardText(' fictional value ');
+    expect(native).toHaveBeenCalledWith(' fictional value ');
+    await expect(writeClipboardText('another fictional value')).rejects.toThrow('desktop-clipboard-failed');
+    expect(writeText).not.toHaveBeenCalled();
+  } finally { dispose(); }
+  await writeClipboardText('browser value');
+  expect(writeText).toHaveBeenCalledWith('browser value');
 });

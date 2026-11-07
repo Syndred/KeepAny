@@ -28,6 +28,8 @@ Mac 版尚未公证，首次可能需要在「系统设置 → 隐私与安全�
 
 已有 KeepAny 资料可以通过「备份与恢复」导出加密 `.ka1`，在桌面版预览并恢复。密码库继续用原主密码解锁。
 
+从源码构建 Windows EXE 或 macOS DMG 请见 [桌面版说明](apps/desktop/README.md)。
+
 ### 便携版
 
 也可以下载 [旧版便携预览 ZIP](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-preview.20261027)，支持 Windows、Mac 和 Linux。

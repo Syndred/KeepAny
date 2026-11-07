@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { RefreshCw, Star } from "lucide-react";
 import { savePreferenceIfCurrent } from "../../../../packages/local-db/src";
+import { ACCOUNT_CARD_MERGES_ID } from "../account-card-merge";
 import { ACCOUNT_DEFAULTS_ID, chooseAccountDefault } from "../account-defaults";
 import { useAppContext } from "../view-shared";
 import { useLayoutEffect, useRef, useState } from "react";
@@ -39,7 +40,7 @@ export function AccountDefaultButton({ assetId, disabled = false, onBusyChange, 
  const { t } = useTranslation();
  const { notify } = useAppContext();
  const { snapshot, session } = usePasswordVault();
- const { cardGroups, defaults, defaultFor, defaultPreference } = useAccountCardGroups();
+ const { cardGroups, defaults, defaultFor, defaultPreference, merges, mergeFor, mergePreference } = useAccountCardGroups();
  const [busy, setBusy] = useState(false);
  const running = useRef(false);
  const selected = defaultFor(assetId) === assetId;
@@ -47,8 +48,14 @@ export function AccountDefaultButton({ assetId, disabled = false, onBusyChange, 
   if (running.current || disabled || selected || session?.getSnapshot().status !== "unlocked") return;
   running.current = true; setBusy(true); onBusyChange?.(true);
   try {
-   const value = chooseAccountDefault(cardGroups.groups.get(assetId) ?? [], defaults, assetId);
-   await savePreferenceIfCurrent(defaultPreference ?? null, { id: ACCOUNT_DEFAULTS_ID, value });
+   const merge = mergeFor(assetId);
+   if (merge) {
+    const value = merges.map(record => record === merge ? { ...record, defaultId: assetId } : record);
+    await savePreferenceIfCurrent(mergePreference ?? null, { id: ACCOUNT_CARD_MERGES_ID, value });
+   } else {
+    const value = chooseAccountDefault(cardGroups.groups.get(assetId) ?? [], defaults, assetId);
+    await savePreferenceIfCurrent(defaultPreference ?? null, { id: ACCOUNT_DEFAULTS_ID, value });
+   }
    notify(t("saved"));
   } catch { if (onError) onError(); else notify(t("error")); }
   finally { running.current = false; setBusy(false); onBusyChange?.(false); }

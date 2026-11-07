@@ -1,6 +1,7 @@
 import { Check, Copy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { writeClipboardText } from "../clipboard-access";
 import { Button } from "./ui/button";
 
 /** Copy the stored value, including whitespace, without revealing secret fields. */
@@ -47,7 +48,7 @@ export function VaultImportCopyButton({
 					const request = ++generation.current;
 					setStatus("pending");
 					try {
-						await navigator.clipboard.writeText(value);
+						await writeClipboardText(value);
 						if (request === generation.current) setStatus("done");
 					} catch {
 						if (request !== generation.current) return;

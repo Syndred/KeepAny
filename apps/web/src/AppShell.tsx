@@ -4,9 +4,9 @@ import "./reminder-entry.css";
 import { Input } from "./components/ui/input";
 import { catalogCategories, catalogCategoryLabel } from './catalog-records';
 import { readCatalogRecordReturn } from './workspace-return';
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentPropsWithRef } from "react";
 import { createPortal } from "react-dom";
-import { Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createLink, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
 	ArrowLeft,
@@ -49,6 +49,17 @@ const SIDEBAR_IDS = workspaceNavIds;
 
 const normalizeHiddenNavIds = workspaceNavHidden;
 
+const TopbarBackLink = createLink(function TopbarBackAnchor({ children, ...anchorProps }: ComponentPropsWithRef<"a">) {
+	return (
+		<Button asChild variant="primary" className="topbar-back-link">
+			<a {...anchorProps}>
+				<ArrowLeft size={16} aria-hidden="true" />
+				{children}
+			</a>
+		</Button>
+	);
+});
+
 export function AppShell() {
 	const data = useData();
 	const { t, i18n } = useTranslation();
@@ -57,11 +68,13 @@ export function AppShell() {
 	);
 	const [pendingAccountName, setPendingAccountName] = useState("");
 	const [searchOpen, setSearchOpen] = useState(false);
+	const topSearchTriggerRef = useRef<HTMLButtonElement>(null);
 	const topSearchPanelRef = useRef<HTMLDivElement>(null);
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
 	const [toast, setToast] = useState("");
 	const [remindersOpen, setRemindersOpen] = useState(false);
 	const [feedbackTarget, setFeedbackTarget] = useState<HTMLElement | null>(null);
+	const [accountToolbarTarget, setAccountToolbarTarget] = useState<HTMLDivElement | null>(null);
 	const [ai, setAi] = useState(false);
 	const [mobile, setMobile] = useState(false);
 	const [pendingNavOrder, setPendingNavOrder] = useState<string[] | null>(null);
@@ -70,6 +83,26 @@ export function AppShell() {
 	const hash = useRouterState({ select: (s) => s.location.hash });
 	const privateAccountDetail = ["/accounts", "/assets/account", "/assets/vault"].includes(pathname) && hash.startsWith("login-detail-");
 	const navigate = useNavigate();
+	useEffect(() => {
+		const toolbar = accountToolbarTarget?.parentElement;
+		const header = toolbar?.querySelector<HTMLElement>(".topbar");
+		if (!toolbar || !header) return;
+		const root = document.documentElement;
+		const update = () => {
+			const inset = Number.parseFloat(getComputedStyle(toolbar).top) || 0;
+			root.style.setProperty("--account-toolbar-offset", `${toolbar.offsetHeight + inset + 8}px`);
+			toolbar.style.setProperty("--account-nav-height", `${header.offsetHeight}px`);
+		};
+		const observer = new ResizeObserver(update);
+		observer.observe(toolbar);
+		observer.observe(header);
+		update();
+		return () => {
+			observer.disconnect();
+			root.style.removeProperty("--account-toolbar-offset");
+			toolbar.style.removeProperty("--account-nav-height");
+		};
+	}, [accountToolbarTarget]);
 	useEffect(() => {
 		if (pathname !== "/accounts") setPendingAccountName("");
 		if (pathname) { setSearchOpen(false); setSearch(""); setMobile(false); }
@@ -104,6 +137,9 @@ export function AppShell() {
 				setSearchOpen(true);
 				window.requestAnimationFrame(() => topSearchInputRef.current?.focus());
 			} else if (event.key === "Escape") {
+				if (topSearchPanelRef.current?.contains(document.activeElement)) {
+					topSearchTriggerRef.current?.focus({ preventScroll: true });
+				}
 				setSearchOpen(false);
 				setSearch("");
 			}
@@ -145,8 +181,8 @@ export function AppShell() {
 		if (hash) requestSearchLocation(hash);
 	}
 	const context = useMemo(
-		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget, pendingAccountName, setPendingAccountName }),
-		[data, search, pendingAccountName],
+		() => ({ data, search, setSearch, notify: setToast, registerFeedbackTarget: setFeedbackTarget, accountToolbarTarget, pendingAccountName, setPendingAccountName }),
+		[data, search, accountToolbarTarget, pendingAccountName],
 	);
 	const navigation: SortableNavItem[] = [
 		{ id: "overview", to: "/", label: t("overview"), icon: LayoutDashboard },
@@ -313,40 +349,75 @@ export function AppShell() {
 					{additionalNavigation}
 				</aside>
 				<div className="main">
-					<header className="topbar">
-						{unifiedDetailReturn ? <Link className="topbar-page-label topbar-back-link" {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><span className="text-link"><ArrowLeft size={15}/>{t("backToOverview")}</span></Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
-						<div className="topbar-spacer"/>
-						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
-							<kbd>⌘ K</kbd>
-						</button>
-						<div className="top-actions">
-							<ReminderCenter feedback={toast} onOpenChange={setRemindersOpen} />
-							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-                           <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
-                            <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
-                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={kind === "project" ? <Link to="/assets" hash="new" /> : <Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "catalogRecords", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
-                            <DropdownMenuItem render={<Link to="/cards" hash="new" />}>{t('walletNew')}</DropdownMenuItem>
-                            <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
-                            <DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
-                           </DropdownMenuContent></DropdownMenu>
-						</div>
-					</header>
-					{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef}>
-						<label htmlFor="top-search-query">{t("globalSearch")}</label>
-						<div className="top-search-panel-input"><Input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("globalSearchHint")} autoComplete="off" /><button type="button" onClick={() => closeSearch()} aria-label={t("close")}><X size={17}/></button></div>
-						<div className="search-results">{matches.length ? matches.map((result) => {
-							const content = <><span className="global-search-result-text"><strong>{result.title}</strong><small>{result.secondary}</small></span><small className="global-search-result-source">{searchLabels.sources[result.source]}</small></>;
-							const target = result.target;
-							if (target.type === "asset") {
-                            if(data.assets.some(a=>a.id===target.assetId && !!a.walletCard))return <Link key={result.key} to="/records/$id" params={{id:`asset:${target.assetId}`}} onClick={()=>{let categoryId:string|null=null;try{categoryId=/^\/assets\/category\/([^/]+)/.exec(pathname)?.[1] ?? null;categoryId=categoryId?decodeURIComponent(categoryId):null;}catch{/* Unknown category falls back to wallet. */}sessionStorage.setItem('keepany-catalog-record-return',JSON.stringify({recordId:`asset:${target.assetId}`,categoryId,wallet:pathname!=='/assets'&&!categoryId}));closeSearch();}}>{content}</Link>;
-                            return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
-                        }
-							if (target.type === "task") return <button type="button" className="reminder-search-result" key={result.key} onClick={() => { closeSearch(); openReminderCenter({ taskId: target.taskId }); }}>{content}</button>;
-							const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : "";
-							return <Link key={result.key} to={target.type === "finance" ? "/assets" : "/intake"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
-						}) : <p>{t("none")}</p>}</div>
-						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
-					</div>}
+					<div className="shell-toolbar">
+						<header className="topbar">
+							{unifiedDetailReturn ? (
+								<TopbarBackLink {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}>{t("back")}</TopbarBackLink>
+							) : catalogReturn ? (
+								<TopbarBackLink
+									to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"}
+									params={catalogReturn.categoryId ? { categoryId: catalogReturn.categoryId } : {}}
+								>{t("back")}</TopbarBackLink>
+							) : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? (
+								<TopbarBackLink to="/accounts" hash="">{t("accountBack")}</TopbarBackLink>
+							) : detailKind && workspaceReturn ? (
+								<TopbarBackLink
+									to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"}
+									params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}
+								>{t("back")}</TopbarBackLink>
+							) : detailKind ? (
+								<TopbarBackLink
+									to="/assets/$kind"
+									params={{ kind: detailReturnKind ?? detailKind }}
+									onClick={hasRelationReturn ? () => {
+										sessionStorage.removeItem("keepany-relation-return-id");
+										sessionStorage.removeItem("keepany-relation-return-kind");
+									} : undefined}
+								>{t("back")}</TopbarBackLink>
+							) : workflowProjectId ? (
+								<TopbarBackLink to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}>{t("workflowBackToProject")}</TopbarBackLink>
+							) : collectionDetailId ? (
+								<TopbarBackLink to="/collections">{t("collectionBack")}</TopbarBackLink>
+							) : pathname !== "/" ? (
+								<TopbarBackLink to="/" className="topbar-overview-link">{t("backToOverview")}</TopbarBackLink>
+							) : <strong className="topbar-page-label">{currentHeading}</strong>}
+							<div className="topbar-spacer"/>
+							<button ref={topSearchTriggerRef} className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
+								<kbd>⌘ K</kbd>
+							</button>
+							<div className="top-actions">
+								<ReminderCenter feedback={toast} onOpenChange={setRemindersOpen} />
+								<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
+								<DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
+								{(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={kind === "project" ? <Link to="/assets" hash="new" /> : <Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "catalogRecords", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
+								<DropdownMenuItem render={<Link to="/cards" hash="new" />}>{t('walletNew')}</DropdownMenuItem>
+								<DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
+								<DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
+							</DropdownMenuContent></DropdownMenu>
+							</div>
+						</header>
+						{pathname === "/accounts" && !privateAccountDetail && <div ref={setAccountToolbarTarget} hidden={data.loading} />}
+						{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef} onBlur={(event) => {
+							const target = event.relatedTarget;
+							if (target && !event.currentTarget.contains(target) && target !== topSearchTriggerRef.current) closeSearch();
+						}}>
+							<label htmlFor="top-search-query">{t("globalSearch")}</label>
+							<div className="top-search-panel-input"><Input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("globalSearchHint")} autoComplete="off" /><button type="button" onClick={() => closeSearch()} aria-label={t("close")}><X size={17}/></button></div>
+							<div className="search-results">{matches.length ? matches.map((result) => {
+								const content = <><span className="global-search-result-text"><strong>{result.title}</strong><small>{result.secondary}</small></span><small className="global-search-result-source">{searchLabels.sources[result.source]}</small></>;
+								const target = result.target;
+								if (target.type === "asset") {
+									if(data.assets.some(a=>a.id===target.assetId && !!a.walletCard))return <Link key={result.key} to="/records/$id" params={{id:`asset:${target.assetId}`}} onClick={()=>{let categoryId:string|null=null;try{categoryId=/^\/assets\/category\/([^/]+)/.exec(pathname)?.[1] ?? null;categoryId=categoryId?decodeURIComponent(categoryId):null;}catch{/* Unknown category falls back to wallet. */}sessionStorage.setItem('keepany-catalog-record-return',JSON.stringify({recordId:`asset:${target.assetId}`,categoryId,wallet:pathname!=='/assets'&&!categoryId}));closeSearch();}}>{content}</Link>;
+									return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
+								}
+								if (target.type === "task") return <button type="button" className="reminder-search-result" key={result.key} onClick={() => { closeSearch(); openReminderCenter({ taskId: target.taskId }); }}>{content}</button>;
+								const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : "";
+								return <Link key={result.key} to={target.type === "finance" ? "/assets" : "/intake"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
+							}) : <p>{t("none")}</p>}</div>
+							<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
+						</div>}
+					</div>
 					<ReminderRuntime hideBanner />
 					{data.loading ? (
 						<main className="page">

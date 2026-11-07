@@ -1,4 +1,4 @@
-import { Kdbx, KdbxCredentials, ProtectedValue, type KdbxEntry } from 'kdbxweb';
+import { Kdbx, KdbxCredentials, KdbxUuid, ProtectedValue, type KdbxEntry } from 'kdbxweb';
 import {
   applyDraft, checkBytes, clearCredentials, clearDatabase, configureDatabase, credentials, draftOf, fail,
   encodeImportDraft, findEntry, isTrash, loadDatabase, nextKdbxTime, normalizeDraft,
@@ -20,6 +20,8 @@ export const VAULT_IMPORT_MAX_ENTRIES = 1_000;
 export const VAULT_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
 const VAULT_MAX_ENTRIES = 10_000;
 const VAULT_CONTENT_REVISION_FIELD = 'KeepAny.ContentRevision';
+const VAULT_ID_BYTES = 16;
+const PASSWORD_HASH_BYTES = 32;
 
 // kdbxweb 2.1.1 copyFrom/importEntry omit these optional 4.1 properties.
 // Preserve the imported plugin metadata when splitting a shared login/history.
@@ -266,20 +268,68 @@ export class VaultSession {
   }
 
   async unlock(master: string): Promise<void> {
+    return this.run((generation) => this.unlockWith(generation, () => credentials(master)));
+  }
+
+  /** Export only the unlock material for the opted-in device credential store. */
+  async rememberUnlockKey(save: (value: Uint8Array) => Promise<void>): Promise<void> {
+    return this.run(async (generation) => {
+      const db = this.unlocked();
+      const hash = db.credentials.passwordHash?.getBinary();
+      if (!hash || hash.length !== PASSWORD_HASH_BYTES) fail('vault-invalid');
+      const value = new Uint8Array(VAULT_ID_BYTES + PASSWORD_HASH_BYTES);
+      try {
+        value.set(new Uint8Array(db.getDefaultGroup().uuid.bytes));
+        value.set(hash, VAULT_ID_BYTES);
+        await save(value);
+        this.checkGeneration(generation);
+      } finally {
+        hash.fill(0);
+        value.fill(0);
+      }
+    });
+  }
+
+  async unlockRemembered(load: () => Promise<Uint8Array | null>): Promise<void> {
     return this.run(async (generation) => {
       if (this.snapshot.status !== 'locked') fail('vault-locked');
-      // Re-read on every unlock so another tab's revision or master rotation is authoritative.
-      const record = await this.storage.read();
-      this.checkGeneration(generation);
-      if (!record) fail('vault-missing');
-      const candidate = await loadDatabase(record.bytes, credentials(master));
+      const value = await load();
       try {
         this.checkGeneration(generation);
-        this.record = { ...record, bytes: record.bytes.slice() };
-        this.db = candidate;
-        this.publish('unlocked');
-      } catch (error) { clearDatabase(candidate); throw error; }
+        if (!value) fail('vault-missing');
+        if (value.length !== VAULT_ID_BYTES + PASSWORD_HASH_BYTES) fail('vault-invalid');
+        const vaultId = new KdbxUuid(value.slice(0, VAULT_ID_BYTES).buffer);
+        await this.unlockWith(generation, () => {
+          const key = new KdbxCredentials(null);
+          key.passwordHash = ProtectedValue.fromBinary(value.slice(VAULT_ID_BYTES).buffer);
+          return key;
+        }, vaultId);
+      } finally {
+        value?.fill(0);
+      }
     });
+  }
+
+  private async unlockWith(generation: number, getKey: () => KdbxCredentials, vaultId?: KdbxUuid): Promise<void> {
+    if (this.snapshot.status !== 'locked') fail('vault-locked');
+    // Re-read on every unlock so another tab's revision or master rotation is authoritative.
+    const record = await this.storage.read();
+    this.checkGeneration(generation);
+    if (!record) fail('vault-missing');
+    const key = getKey();
+    let candidate: Kdbx | null = null;
+    try {
+      candidate = await loadDatabase(record.bytes, key);
+      this.checkGeneration(generation);
+      if (vaultId && !candidate.getDefaultGroup().uuid.equals(vaultId)) fail('vault-password');
+      this.record = { ...record, bytes: record.bytes.slice() };
+      this.db = candidate;
+      this.publish('unlocked');
+    } catch (error) {
+      clearDatabase(candidate);
+      clearCredentials(key);
+      throw error;
+    }
   }
 
   private async mutate<T>(generation: number, operation: (candidate: Kdbx) => T | Promise<T>, preserveContentRevision = false): Promise<T> {
@@ -512,7 +562,7 @@ export class VaultSession {
   }
 
   /** Recycle every login of one reviewed account in one encrypted write, preserving shared owners. */
-  async trashAccountEntries(accountId: string, expectedContentRevision: string, liveAccountIds: readonly string[]): Promise<void> {
+  async trashAccountEntries(accountId: string, expectedContentRevision: string, liveAccountIds: readonly string[]): Promise<string> {
     if (!accountId || accountId.length > 96 || !expectedContentRevision || !liveAccountIds.includes(accountId)) fail('vault-invalid');
     // Non-account relations and deleted owners must not leave a password-only ghost.
     const owners = new Set(liveAccountIds);
@@ -524,7 +574,7 @@ export class VaultSession {
         const stored = await this.storage.read();
         this.checkGeneration(generation);
         if (stored?.revision !== this.record?.revision) fail('vault-stale');
-        return;
+        return expectedContentRevision;
       }
       if (ids.some(id => draftOf(findEntry(db, id)).aiKeyBinding)) fail('vault-invalid');
       await this.mutate(generation, candidate => {
@@ -546,11 +596,12 @@ export class VaultSession {
           candidate.remove(target); target.times.locationChanged = nextKdbxTime(previous);
         }
       });
+      return this.contentRevision(this.unlocked());
     });
   }
 
   /** A private account confirmation freezes its content revision, not just its entry ID. */
-  async trashEntryIfCurrent(id: string, expectedContentRevision: string): Promise<void> {
+  async trashEntryIfCurrent(id: string, expectedContentRevision: string): Promise<string> {
     if (!id || !expectedContentRevision) fail('vault-invalid');
     return this.run(async generation => {
       const db = this.unlocked();
@@ -563,6 +614,7 @@ export class VaultSession {
         const previous = entry.locationChanged;
         candidate.remove(entry); entry.times.locationChanged = nextKdbxTime(previous);
       });
+      return this.contentRevision(this.unlocked());
     });
   }
 

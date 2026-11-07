@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { Asset } from "../../../../packages/domain/src";
 import { accountNotes } from "../account-entry-edit";
 import { accountHttpUrl, type AccountLoginChoice } from "../account-login-choices";
+import { writeClipboardText } from "../clipboard-access";
 import { useAppContext } from "../view-shared";
 import { usePasswordVault } from "./PasswordVaultProvider";
 import { Button } from "./ui/button";
@@ -29,8 +30,7 @@ export function AccountLoginSummary({ asset, current, total, index, onSwitch, on
         const request = ++generation.current;
         setCopied("");
         try {
-            if (!navigator.clipboard?.writeText) throw Error("clipboard");
-            await navigator.clipboard.writeText(value);
+            await writeClipboardText(value);
             if (request !== generation.current || session.getSnapshot().status !== "unlocked") return;
             setCopied(field); notify(t("pwVaultCopied"));
         } catch {

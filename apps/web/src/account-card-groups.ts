@@ -7,7 +7,7 @@ export type AccountCardMember = { asset: Asset; entries: VaultEntrySummary[]; vi
 export function accountCardMembers(assets: readonly Asset[], grouped: { linked: ReadonlyMap<string, VaultEntrySummary[]>; unlinked: readonly VaultEntrySummary[] }): AccountCardMember[] {
  return [
   ...assets.filter(asset => !asset.deleted && !asset.purged && asset.kind === 'account').map(asset => ({ asset, entries: grouped.linked.get(asset.id) ?? [], virtual: false })),
-  ...grouped.unlinked.map(entry => ({ asset: { ...newAsset('account'), id: `login-${entry.id}`, name: entry.title, category: 'other', username: entry.username, url: entry.url, updatedAt: entry.modifiedAt }, entries: [entry], virtual: true })),
+  ...grouped.unlinked.map(entry => ({ asset: { ...newAsset('account'), id: `login-${entry.id}`, name: entry.title, category: 'other', username: entry.username, url: entry.url, createdAt: entry.createdAt ?? '', updatedAt: entry.modifiedAt }, entries: [entry], virtual: true })),
  ];
 }
 
@@ -101,9 +101,14 @@ export function accountCardGroups(members: readonly AccountCardMember[], archive
  }
  const groups = new Map<string, AccountCardMember[]>();
  const ids = new Map<string, string>();
- for (const bucket of buckets.values()) for (const member of bucket) {
-  groups.set(member.asset.id, bucket);
-  ids.set(member.asset.id, bucket[0].asset.id);
+ const explicitGroupFor = new Map<string, readonly string[]>();
+ for (const [key, bucket] of buckets) {
+  const label = explicitLabels.get(key);
+  for (const member of bucket) {
+   groups.set(member.asset.id, bucket);
+   ids.set(member.asset.id, bucket[0].asset.id);
+   if (label !== undefined) explicitGroupFor.set(member.asset.id, validExplicitGroups[label]);
+  }
  }
- return { groups, ids };
+ return { groups, ids, explicitGroupFor };
 }

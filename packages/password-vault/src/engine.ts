@@ -224,11 +224,15 @@ function safeUrl(value: string): string {
 export function summaryOf(entry: KdbxEntry): VaultEntrySummary {
   const usernameAliases = usernameAliasesOf(entry);
   const templateSourceId = templateSourceOf(entry);
+  const creationTime = entry.times.creationTime?.getTime() ?? NaN;
+  // Match KDBX's stored precision so the creation timestamp survives reloads unchanged.
+  const createdAt = Number.isFinite(creationTime) ? new Date(Math.floor(creationTime / 1000) * 1000).toISOString() : undefined;
   return { id: entry.uuid.id, title: text(entry, 'Title'), username: text(entry, 'UserName'),
     ...(usernameAliases ? { usernameAliases } : {}),
     ...(templateSourceId ? { templateSourceId } : {}),
     ...(aiKeyBindingOf(entry) ? { isAiKey: true as const } : {}),
     url: safeUrl(text(entry, 'URL')), linkedAssetIds: links(entry),
+    ...(createdAt ? { createdAt } : {}),
     modifiedAt: (entry.times.lastModTime ?? new Date(0)).toISOString(), historyCount: entry.history.length };
 }
 

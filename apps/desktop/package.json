@@ -1,0 +1,18 @@
+{
+  "name": "@keepany/desktop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev --config src-tauri/tauri.dev.conf.json -- --locked",
+    "dev:web": "vite",
+    "build:web": "vite build",
+    "bundle": "tauri build -- --locked"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.12.4",
+    "@tauri-apps/plugin-clipboard-manager": "2.5.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.12.4"
+  }
+}

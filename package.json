@@ -23,7 +23,9 @@
     "mobile:dev": "vite apps/mobile --host 127.0.0.1 --port 4232 --strictPort",
     "mobile:build": "tsc --noEmit && vite build apps/mobile",
     "mobile:sync": "node scripts/mobile-cli.mjs sync",
-    "mobile:doctor": "node scripts/mobile-cli.mjs doctor"
+    "mobile:doctor": "node scripts/mobile-cli.mjs doctor",
+    "desktop:dev": "pnpm --filter @keepany/desktop dev",
+    "desktop:build": "pnpm --filter @keepany/desktop bundle"
   },
   "dependencies": {
     "@ai-sdk/alibaba": "2.0.58",
