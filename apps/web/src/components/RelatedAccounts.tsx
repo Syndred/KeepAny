@@ -47,7 +47,7 @@ export function RelatedAccounts({ asset, entry }: { asset: Asset; entry?: Passwo
  }
  async function finishDrag(event: DragEndEvent) {
   if (!event.over || event.active.id === event.over.id || running.current || session?.getSnapshot().status !== "unlocked") return;
-  running.current = true; setBusy(true); setError("");
+  running.current = true; setBusy(true); setError(""); notify("");
   try {
    const value = reorderAccountPeers(members, order, asset.id, String(event.active.id), String(event.over.id));
    await savePreferenceIfCurrent(orderPreference ?? null, { id: ACCOUNT_ORDER_ID, value });
