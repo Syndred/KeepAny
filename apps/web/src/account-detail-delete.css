@@ -1,7 +1,7 @@
 .account-detail-delete-control,
 .account-detail-delete-control > .password-vault-panel { display:contents; }
 @media(max-width:700px) {
- .account-relation-layout .page-header > .actions:has([data-account-detail-delete]) { flex-wrap:wrap; }
- .account-relation-layout .page-header > .actions:has([data-account-detail-delete]) > .button,
- .account-relation-layout .page-header > .actions:has([data-account-detail-delete]) .account-detail-delete-control [data-account-detail-delete] { flex:0 0 calc((100% - 16px) / 3); min-width:44px; min-height:44px; padding-inline:6px; gap:6px; font-size:13px; }
+ .account-relation-layout .page-header > .actions:has([data-account-detail-switch]):has([data-account-detail-delete]) { flex-wrap:wrap; }
+ .account-relation-layout .page-header > .actions:has([data-account-detail-switch]):has([data-account-detail-delete]) > .button,
+ .account-relation-layout .page-header > .actions:has([data-account-detail-switch]):has([data-account-detail-delete]) .account-detail-delete-control [data-account-detail-delete] { flex:0 0 calc((100% - 16px) / 3); min-width:44px; min-height:44px; padding-inline:6px; gap:6px; font-size:13px; }
 }
