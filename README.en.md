@@ -2,7 +2,7 @@
 
 **A local digital asset workspace for independent developers. Connect projects, domains, accounts, subscriptions, and maintenance.**
 
-[简体中文](README.md) · [Website](https://syndred.github.io/KeepAny/) · [Try KeepAny](docs/试用指南.md#english) · [Releases](https://github.com/Syndred/KeepAny/releases) · [Report an issue](https://github.com/Syndred/KeepAny/issues)
+[简体中文](README.md) · [Website](https://syndred.github.io/KeepAny/) · [Download desktop](#download-and-try) · [Try KeepAny](docs/试用指南.md#english) · [Releases](https://github.com/Syndred/KeepAny/releases) · [Report an issue](https://github.com/Syndred/KeepAny/issues)
 
 The project uses the KeepAny name and was previously published as StackPerch. Older StackPerch GitHub links still redirect to the same repository; use the KeepAny website address above.
 
@@ -18,9 +18,23 @@ Navigation groups records into **Accounts** and **Assets**. Open Accounts to set
 
 ## Download and try
 
+**Desktop Preview 0.1.0** runs in its own window and requires no Node.js installation.
+
+| System | Direct download |
+|---|---|
+| Windows x64 | [Download installer (EXE)](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64-setup.exe) |
+| macOS 14+ · Apple Silicon (M series) | [Download installer (DMG)](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_aarch64.dmg) |
+| macOS 14+ · Intel | [Download installer (DMG)](https://github.com/Syndred/KeepAny/releases/download/v0.1.0-desktop-preview.20261107/KeepAny_0.1.0_x64.dmg) |
+
+The Mac preview is not notarized. If macOS blocks the first launch, you may need to choose **Open Anyway** in System Settings → Privacy & Security. The Windows installer is unsigned and downloads WebView2 if it is missing. See installation notes, checksums, and the corresponding source on the [desktop preview release page](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-desktop-preview.20261107).
+
+To move existing KeepAny records, export an encrypted `.ka1` from **Backup & restore**, then preview and restore it in the desktop app. Use your original master password to unlock the restored vault.
+
 See the [desktop build guide](apps/desktop/README.md) to build a Windows EXE or macOS DMG from source.
 
-**This is an early preview.** Download the `KeepAny-…-portable.zip` marked `Pre-release` from [GitHub Releases](https://github.com/Syndred/KeepAny/releases). The Releases page provides only the current preview, with its source revision, checksums, and known limits. GitHub's source ZIP is not the portable app.
+### Portable preview
+
+The [earlier portable preview ZIP](https://github.com/Syndred/KeepAny/releases/tag/v0.1.0-preview.20261027) is available for Windows, Mac, and Linux.
 
 The portable package requires **[Node.js 22 or newer](https://nodejs.org/)**. You do not need Git, pnpm, or a build step. Extract it to a folder you can keep:
 
@@ -65,7 +79,7 @@ I also maintain [SyndredVideo](https://syndredvideo.com/) (AI video creation) an
 
 ## Data and AI
 
-- Records are stored locally for the **current browser, profile, and site address**. A different browser, port, or `localhost` address opens a different store. Back up and restore when moving computers. Clearing site data can delete your records.
+- The desktop preview has its own local app data. The portable preview stores records in the **current browser, profile, and site address**. A different browser, port, or `localhost` address opens a different store. Back up and restore when moving computers. Clearing site data can delete portable preview records.
 - The local core works independently. Download `.ka1` files regularly, retain their passwords, and check that you can restore them.
 - Passwords and persistent model keys use a separate KDBX vault. They are excluded from ordinary assets, global search, and MCP. A `.ka1` backup includes the encrypted vault; its master password is still required after restoring. There is no server-side master password reset.
 - AI is optional and uses a provider or compatible server you configure. Ordinary Q&A sends only the limited record fields you select. The vault's **full-text AI import** sends the current list, which may contain usernames, passwords, and notes, after you explicitly review its model, destination, and scope. It does not read or send your existing vault or master password. You review the result before saving. See the [vault guide](docs/密码库使用说明.md) and [AI data boundaries](docs/AI功能与验收合同.md), currently in Chinese.
