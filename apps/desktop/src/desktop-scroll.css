@@ -1,14 +1,43 @@
 @media (min-width: 761px) {
+  :root {
+    --desktop-frame-gutter: 8px;
+    --desktop-frame-edge: calc(var(--desktop-frame-gutter) + var(--app-frame-border-width));
+  }
+
   :root:not(:has(.shell-toolbar :focus)) {
     /* Allow document anchors to clear the toolbar, including its 44px back link. */
-    scroll-padding-top: calc(67px + var(--app-frame-border-width));
+    scroll-padding-top: calc(67px + var(--desktop-frame-edge));
+  }
+
+  body {
+    margin: var(--desktop-frame-gutter);
+  }
+
+  #root {
+    min-height: calc(100dvh - 2 * var(--desktop-frame-gutter));
+    border-color: transparent;
+  }
+
+  /* Draw the rounded outline above the sticky chrome and below dialogs. */
+  body::after {
+    position: fixed;
+    z-index: 22;
+    inset: var(--desktop-frame-gutter);
+    border: var(--app-frame-border-width) solid var(--line);
+    border-radius: 18px;
+    box-shadow: 0 0 0 18px var(--canvas);
+    pointer-events: none;
+    content: "";
+  }
+
+  .shell {
+    min-height: calc(100dvh - 2 * var(--desktop-frame-edge));
   }
 
   .main > .shell-toolbar,
   .shell > .sidebar {
     position: sticky;
-    top: var(--app-frame-border-width);
-    box-shadow: 0 calc(0px - var(--app-frame-border-width)) var(--line);
+    top: var(--desktop-frame-edge);
   }
 
   .main > .shell-toolbar {
@@ -23,7 +52,7 @@
 
   .shell > .sidebar {
     align-self: start;
-    height: calc(100dvh - var(--app-frame-border-width) - var(--app-frame-border-width));
+    height: calc(100dvh - 2 * var(--desktop-frame-edge));
     overflow-y: auto;
     overscroll-behavior-y: contain;
   }
