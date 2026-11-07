@@ -1,25 +1,27 @@
-name: Publish KeepAny desktop preview 2026-11-07
+name: Publish KeepAny desktop preview 0.1.1
 
 on:
   push:
-    branches: [codex/desktop-release-acceptance]
+    branches: [codex/desktop-release-0.1.1]
     paths:
       - '.github/workflows/publish-desktop-preview.yml'
       - 'scripts/prepare-desktop-preview-licenses.sh'
-      - 'release/desktop-preview-20261107.md'
+      - 'release/desktop-preview-0.1.1.md'
 
 permissions:
   actions: read
   contents: read
 
 concurrency:
-  group: keepany-desktop-preview-20261107
+  group: keepany-desktop-preview-0.1.1
   cancel-in-progress: false
 
 env:
-  KEEPANY_EXPECTED_COMMIT: 130a368f50bc1e069da1351b602c9c7e608e8862
-  KEEPANY_BUILD_RUN: '42346276575'
-  KEEPANY_TAG: v0.1.0-desktop-preview.20261107
+  KEEPANY_EXPECTED_COMMIT: d2da82c15f474f487b08a1362b3e141154a283d6
+  KEEPANY_BUILD_RUN: 'REPLACE_BUILD_RUN'
+  KEEPANY_ACCEPTANCE_RUN: 'REPLACE_ACCEPTANCE_RUN'
+  KEEPANY_ACCEPTANCE_COMMIT: REPLACE_ACCEPTANCE_COMMIT
+  KEEPANY_TAG: v0.1.1-desktop-preview.20261107
 
 jobs:
   prepare:
@@ -32,17 +34,23 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
-          ref: 130a368f50bc1e069da1351b602c9c7e608e8862
+          ref: ${{ env.KEEPANY_EXPECTED_COMMIT }}
           path: preview-source
           persist-credentials: false
-      - name: Verify original build and acceptance
+      - name: Verify producing build and native acceptance
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          build=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$KEEPANY_BUILD_RUN" --jq '[.head_sha,.path,.conclusion] | join("|")')
-          test "$build" = "$KEEPANY_EXPECTED_COMMIT|.github/workflows/desktop.yml|success"
-          acceptance=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/42349295899" --jq '[.head_sha,.path,.conclusion] | join("|")')
-          test "$acceptance" = '10ccf0403f94b52e0fc594ec35d7655e0526c0ec|.github/workflows/desktop-acceptance.yml|success'
+          [[ "$KEEPANY_BUILD_RUN" =~ ^[0-9]+$ ]]
+          [[ "$KEEPANY_ACCEPTANCE_RUN" =~ ^[0-9]+$ ]]
+          [[ "$KEEPANY_ACCEPTANCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          build=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$KEEPANY_BUILD_RUN" --jq '[.head_sha,.head_branch,.path,.conclusion] | join("|")')
+          test "$build" = "$KEEPANY_EXPECTED_COMMIT|main|.github/workflows/desktop.yml|success"
+          acceptance=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$KEEPANY_ACCEPTANCE_RUN" --jq '[.head_sha,.path,.conclusion] | join("|")')
+          test "$acceptance" = "$KEEPANY_ACCEPTANCE_COMMIT|.github/workflows/desktop-acceptance.yml|success"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$KEEPANY_ACCEPTANCE_RUN/jobs" \
+            --jq '.jobs | map(select(.name | startswith("installed-window (")))' \
+            | jq -e 'length == 3 and all(.[]; .conclusion == "success")'
           test "$(git -C preview-source rev-parse HEAD)" = "$KEEPANY_EXPECTED_COMMIT"
       - uses: actions/download-artifact@v4
         with:
@@ -56,21 +64,21 @@ jobs:
           for target in x86_64-pc-windows-msvc aarch64-apple-darwin x86_64-apple-darwin; do
             candidate="candidates/KeepAny-desktop-$target"
             KEEPANY_DESKTOP_TARGET="$target" node scripts/verify-desktop-candidate.mjs "$candidate"
-            cp "$candidate"/KeepAny_0.1.0_* release-assets/
+            cp "$candidate"/KeepAny_0.1.1_* release-assets/
           done
           cd release-assets
           sha256sum -c <<'SUMS'
-          b8cdb83d693a48f4457dc69aea22549cc4b8220bb6d3a9f36b40fe850cc4c668  KeepAny_0.1.0_x64-setup.exe
-          7ec74d685e5c36c975dd3731d150081f25297872090906dbce6c6f18f5209a63  KeepAny_0.1.0_x64.exe
-          6ffca2098f5af1b1a55f27c9e1320e71aafa57b8b3a9852ce5174c8c4c48a2f3  KeepAny_0.1.0_aarch64.dmg
-          75663853035196438f2a650febf1f5e8129ed026d576420e1660d248441874af  KeepAny_0.1.0_x64.dmg
+          REPLACE_WINDOWS_INSTALLER_SHA256  KeepAny_0.1.1_x64-setup.exe
+          REPLACE_WINDOWS_PORTABLE_SHA256  KeepAny_0.1.1_x64.exe
+          REPLACE_APPLE_SILICON_SHA256  KeepAny_0.1.1_aarch64.dmg
+          REPLACE_MAC_INTEL_SHA256  KeepAny_0.1.1_x64.dmg
           SUMS
       - name: Verify and gather third-party license materials
         run: bash scripts/prepare-desktop-preview-licenses.sh
       - name: Save the exact files for publication
         run: |
           cd release-assets
-          sha256sum KeepAny_0.1.0_* KeepAny-desktop-licenses.zip > SHA256SUMS.txt
+          sha256sum KeepAny_0.1.1_* KeepAny-desktop-licenses.zip > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: prepared-desktop-preview
@@ -96,16 +104,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           (cd release-assets && sha256sum -c SHA256SUMS.txt)
-          grep -F '尚未通过 Apple 公证' release/desktop-preview-20261107.md
+          grep -F '尚未通过 Apple 公证' release/desktop-preview-0.1.1.md
           if gh release view "$KEEPANY_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo 'Release already exists. Inspect it before making any further changes.' >&2
             exit 1
           fi
-          test -z "$(git ls-remote "https://github.com/$GITHUB_REPOSITORY.git" "refs/tags/$KEEPANY_TAG")"
+          existing_tag=$(git ls-remote "https://github.com/$GITHUB_REPOSITORY.git" "refs/tags/$KEEPANY_TAG")
+          test -z "$existing_tag"
           gh release create "$KEEPANY_TAG" --repo "$GITHUB_REPOSITORY" --target "$KEEPANY_EXPECTED_COMMIT" \
-            --draft --prerelease --latest=false --title 'KeepAny 0.1.0 桌面预览版 / Desktop Preview' \
-            --notes-file release/desktop-preview-20261107.md release-assets/*
+            --draft --prerelease --latest=false --title 'KeepAny 0.1.1 桌面预览版 / Desktop Preview' \
+            --notes-file release/desktop-preview-0.1.1.md release-assets/*
           gh release download "$KEEPANY_TAG" --repo "$GITHUB_REPOSITORY" --dir verify-upload
+          diff <(cd release-assets && ls -1) <(cd verify-upload && ls -1)
           cmp release-assets/SHA256SUMS.txt verify-upload/SHA256SUMS.txt
           (cd verify-upload && sha256sum -c SHA256SUMS.txt)
           gh release edit "$KEEPANY_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
