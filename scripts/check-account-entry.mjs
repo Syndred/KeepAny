@@ -25,7 +25,7 @@ const receipt = {
   toolbarTrashCoverage: ["TT01", "TT02", "TT03", "TT04", "TT05", "TT06", "TT07", "TT08", "TT09"],
   categoryDialogCoverage: ["MD01", "MD04"],
   automatedCoverage: ["AT01", "AT02", "AT03", "AT04", "AT05", "AT06", "AT08", "AT09", "AT10", "AT11", "AT12", "AT13", "CC01", "CC02", "CC11", "UE10", "SR01", "SR02", "SR03", "SR04", "SR05", "SR06", "SR07", "UE01", "UE02", "UE03", "UE04", "UE05", "UE06", "UE07", "UE08", "UE09", "CC03", "CC04", "CC05", "CC09"],
-  coverageNotes: { UE10: "Controller and independent actual candidate review remain separate.", supersedes: "SE01-SE16's earlier form workflow is retained as history; user now requires unlock before account management and direct merged editing." },
+  coverageNotes: { UE10: "Controller and independent actual candidate review remain separate.", supersedes: "SE01-SE16's earlier form workflow is retained as history; user now requires unlock before account management and direct merged editing.", simpleAccountEvidence: "The approved detail no longer embeds tasks, reminders or impact. The matrix verifies inline history, its restore confirmation and the expanded relation graph." },
   legacyLayout: {
     replaces: "The old account-password-layout 10-case execution entry, using the current compact UI contract; not a full certification of every historical AL state.",
     AL01: { current: ["CC01", "CC02", "CC03", "CC04", "CC05", "CC11", "SR01", "SR02", "SR03"], retired: "Inline expanded-card note width and equal-neighbor-height ratios no longer describe the separate compact/detail layout." },
@@ -61,14 +61,13 @@ if (run.error || run.status !== 0) {
     for (const width of [390, 768, 1280, 1810, 1920, 2262]) for (const state of ["toolbar", "menu", "category", "trash", "purge"]) if (!imageNames.has(`${state}-${lang}-${width}.png`)) throw Error(`Missing toolbar/trash evidence: ${lang}/${width}/${state}`);
     for (const width of [390, 768, 1280, 1920, 2262, 2560]) {
       for (const state of ["card", "edit", "create", "delete", "gate"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing unified matrix: ${lang}/${width}/${state}`);
-      for (const state of ["card", "detail", "impact", "graph", "edit", "task", "reminder"]) if (!imageNames.has(`simple-${state}-${lang}-${width}.png`)) throw Error(`Missing simple account evidence: ${lang}/${width}/${state}`);
-      if (!imageNames.has(`populated-impact-${lang}-${width}.png`)) throw Error(`Missing populated impact evidence: ${lang}/${width}`);
+      for (const state of ["card", "detail", "history-confirm", "inline-history", "graph", "edit"]) if (!imageNames.has(`simple-${state}-${lang}-${width}.png`)) throw Error(`Missing simple account evidence: ${lang}/${width}/${state}`);
       for (const state of ["normal", "locked"]) if (!imageNames.has(`matrix-${state}-${lang}-${width}.png`)) throw Error(`Missing compact evidence: ${lang}/${width}/${state}`);
     }
     for (const width of [390, 768, 1058, 1280, 1920, 2262]) {
       for (const state of ["card", "edit", "create", "category-open", "detail", "history-empty", "unlink"]) if (!imageNames.has(`${state}-${lang}-${width}.png`)) throw Error(`Missing account template state: ${lang}/${width}/${state}`);
     }
-    for (const state of ["impact-completed", "relation-fullscreen", "relation-expanded", "relation-after-delete", "private-detail", "unlock-single-status", "unified-edit", "selected-backup", "delete-restored", "ordinary-restored", "locked-editor", "validation-error", "partial-save", "purge-error", "imported-cards", "private-added", "entry-restored", "clipboard-failure", "query-return", "flow-switched", "flow-reloaded"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing unified flow: ${lang}/${state}`);
+    for (const state of ["relation-fullscreen", "relation-after-delete", "private-detail", "unlock-single-status", "unified-edit", "selected-backup", "delete-restored", "ordinary-restored", "locked-editor", "validation-error", "partial-save", "purge-error", "imported-cards", "private-added", "entry-restored", "clipboard-failure", "query-return", "flow-switched", "flow-reloaded"]) if (!imageNames.has(`${state}-${lang}.png`)) throw Error(`Missing unified flow: ${lang}/${state}`);
   }
   writeFileSync(join(output, "result.json"), JSON.stringify({ ...receipt, verdict: "automated-pass", expectedTests: 58, completedTests: tests.length, retries: 0, images }, null, 2));
   console.log(`Account-entry machine checks passed for ${receipt.sourceCommit}. Manual visual review, controller journey and independent review remain separate.`);
