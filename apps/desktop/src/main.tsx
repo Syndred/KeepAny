@@ -10,6 +10,7 @@ import { registerPlatformSettings } from "../../web/src/platform-settings";
 import "@xyflow/react/dist/style.css";
 import "../../web/src/styles.css";
 import "../../web/src/route-load-error.css";
+import "./desktop-scroll.css";
 
 registerPlatformSettings({
   getItem: key => {

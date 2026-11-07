@@ -1,0 +1,34 @@
+@media (min-width: 761px) {
+  :root:not(:has(.shell-toolbar :focus)) {
+    /* Allow document anchors to clear the toolbar, including its 44px back link. */
+    scroll-padding-top: calc(67px + var(--app-frame-border-width));
+  }
+
+  .main > .shell-toolbar,
+  .shell > .sidebar {
+    position: sticky;
+    top: var(--app-frame-border-width);
+    box-shadow: 0 calc(0px - var(--app-frame-border-width)) var(--line);
+  }
+
+  .main > .shell-toolbar {
+    display: block;
+    z-index: 21;
+  }
+
+  .shell-toolbar > .top-search-panel {
+    position: absolute;
+    inset: 100% 0 auto;
+  }
+
+  .shell > .sidebar {
+    align-self: start;
+    height: calc(100dvh - var(--app-frame-border-width) - var(--app-frame-border-width));
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+
+  .shell > .sidebar > * {
+    flex-shrink: 0;
+  }
+}

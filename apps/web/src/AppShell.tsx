@@ -57,6 +57,7 @@ export function AppShell() {
 	);
 	const [pendingAccountName, setPendingAccountName] = useState("");
 	const [searchOpen, setSearchOpen] = useState(false);
+	const topSearchTriggerRef = useRef<HTMLButtonElement>(null);
 	const topSearchPanelRef = useRef<HTMLDivElement>(null);
 	const topSearchInputRef = useRef<HTMLInputElement>(null);
 	const [toast, setToast] = useState("");
@@ -104,6 +105,9 @@ export function AppShell() {
 				setSearchOpen(true);
 				window.requestAnimationFrame(() => topSearchInputRef.current?.focus());
 			} else if (event.key === "Escape") {
+				if (topSearchPanelRef.current?.contains(document.activeElement)) {
+					topSearchTriggerRef.current?.focus({ preventScroll: true });
+				}
 				setSearchOpen(false);
 				setSearch("");
 			}
@@ -313,40 +317,45 @@ export function AppShell() {
 					{additionalNavigation}
 				</aside>
 				<div className="main">
-					<header className="topbar">
-						{unifiedDetailReturn ? <Link className="topbar-page-label topbar-back-link" {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><span className="text-link"><ArrowLeft size={15}/>{t("backToOverview")}</span></Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
-						<div className="topbar-spacer"/>
-						<button className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
-							<kbd>⌘ K</kbd>
-						</button>
-						<div className="top-actions">
-							<ReminderCenter feedback={toast} onOpenChange={setRemindersOpen} />
-							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
-                           <DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
-                            <DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
-                            {(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={kind === "project" ? <Link to="/assets" hash="new" /> : <Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "catalogRecords", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
-                            <DropdownMenuItem render={<Link to="/cards" hash="new" />}>{t('walletNew')}</DropdownMenuItem>
-                            <DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
-                            <DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
-                           </DropdownMenuContent></DropdownMenu>
-						</div>
-					</header>
-					{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef}>
-						<label htmlFor="top-search-query">{t("globalSearch")}</label>
-						<div className="top-search-panel-input"><Input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("globalSearchHint")} autoComplete="off" /><button type="button" onClick={() => closeSearch()} aria-label={t("close")}><X size={17}/></button></div>
-						<div className="search-results">{matches.length ? matches.map((result) => {
-							const content = <><span className="global-search-result-text"><strong>{result.title}</strong><small>{result.secondary}</small></span><small className="global-search-result-source">{searchLabels.sources[result.source]}</small></>;
-							const target = result.target;
-							if (target.type === "asset") {
-                            if(data.assets.some(a=>a.id===target.assetId && !!a.walletCard))return <Link key={result.key} to="/records/$id" params={{id:`asset:${target.assetId}`}} onClick={()=>{let categoryId:string|null=null;try{categoryId=/^\/assets\/category\/([^/]+)/.exec(pathname)?.[1] ?? null;categoryId=categoryId?decodeURIComponent(categoryId):null;}catch{/* Unknown category falls back to wallet. */}sessionStorage.setItem('keepany-catalog-record-return',JSON.stringify({recordId:`asset:${target.assetId}`,categoryId,wallet:pathname!=='/assets'&&!categoryId}));closeSearch();}}>{content}</Link>;
-                            return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
-                        }
-							if (target.type === "task") return <button type="button" className="reminder-search-result" key={result.key} onClick={() => { closeSearch(); openReminderCenter({ taskId: target.taskId }); }}>{content}</button>;
-							const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : "";
-							return <Link key={result.key} to={target.type === "finance" ? "/assets" : "/intake"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
-						}) : <p>{t("none")}</p>}</div>
-						<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
-					</div>}
+					<div className="shell-toolbar">
+						<header className="topbar">
+							{unifiedDetailReturn ? <Link className="topbar-page-label topbar-back-link" {...unifiedDetailReturn} onClick={() => sessionStorage.removeItem("keepany-detail-account-return")}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : catalogReturn ? <Link className="topbar-page-label topbar-back-link" to={catalogReturn.categoryId ? "/assets/category/$categoryId" : catalogReturn.wallet ? "/cards" : "/assets"} params={catalogReturn.categoryId ? {categoryId:catalogReturn.categoryId} : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : privateAccountDetail || (detailKind === "account" && !hasRelationReturn && !workspaceReturn) ? <Link className="topbar-page-label topbar-back-link" to="/accounts" hash=""><span className="text-link"><ArrowLeft size={15}/>{t("accountBack")}</span></Link> : detailKind && workspaceReturn ? <Link className="topbar-page-label topbar-back-link" to={workspaceReturn.view === "wallet" ? "/cards" : workspaceReturn.view !== "all" ? "/assets/$kind" : "/assets"} params={workspaceReturn.view !== "all" && workspaceReturn.view !== "wallet" ? { kind: workspaceReturn.view } : {}}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : detailKind ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind" params={{ kind: detailReturnKind ?? detailKind }} onClick={hasRelationReturn ? () => { sessionStorage.removeItem("keepany-relation-return-id"); sessionStorage.removeItem("keepany-relation-return-kind"); } : undefined}><span className="text-link"><ArrowLeft size={15}/>{t("back")}</span></Link> : workflowProjectId ? <Link className="topbar-page-label topbar-back-link" to="/assets/$kind/$id" params={{ kind: "project", id: workflowProjectId }}><span className="text-link"><ArrowLeft size={15}/>{t("workflowBackToProject")}</span></Link> : collectionDetailId ? <Link className="topbar-page-label topbar-back-link" to="/collections"><span className="text-link"><ArrowLeft size={15}/>{t("collectionBack")}</span></Link> : pathname !== "/" ? <Link className="topbar-page-label topbar-back-link" to="/"><span className="text-link"><ArrowLeft size={15}/>{t("backToOverview")}</span></Link> : <strong className="topbar-page-label">{currentHeading}</strong>}
+							<div className="topbar-spacer"/>
+							<button ref={topSearchTriggerRef} className="top-search top-search-trigger" type="button" aria-label={t("globalSearch")} aria-expanded={searchOpen} onClick={() => { if (searchOpen) { setSearchOpen(false); setSearch(""); } else { setSearchOpen(true); window.requestAnimationFrame(() => topSearchInputRef.current?.focus()); } }}><Search size={17} /><span>{t("globalSearch")}</span>
+								<kbd>⌘ K</kbd>
+							</button>
+							<div className="top-actions">
+								<ReminderCenter feedback={toast} onOpenChange={setRemindersOpen} />
+								<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("assistantMenu")} />}><Sparkles size={17}/></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => setAi(true)}>{t("settingsAskAssistant")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem><DropdownMenuItem render={<Link to="/assistant-access" />}>{t("settingsAssistantAccess")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+							<DropdownMenu><DropdownMenuTrigger render={<Button className="top-icon-button" aria-label={t("globalAddRecord")} />}><Plus size={18}/></DropdownMenuTrigger><DropdownMenuContent align="end">
+								<DropdownMenuItem render={<Link to="/accounts" hash="new-account" />}>{t("newAccountKind")}</DropdownMenuItem>
+								{(["project", "item", "subscription"] as const).map(kind => <DropdownMenuItem key={kind} render={kind === "project" ? <Link to="/assets" hash="new" /> : <Link to="/assets/$kind" params={{ kind }} hash="new" />}>{t(({ project: "catalogRecords", item: "newItemKind", subscription: "newSubscriptionKind" })[kind])}</DropdownMenuItem>)}
+								<DropdownMenuItem render={<Link to="/cards" hash="new" />}>{t('walletNew')}</DropdownMenuItem>
+								<DropdownMenuItem render={<Link to="/intake" />}>{t("intake")}</DropdownMenuItem>
+								<DropdownMenuItem render={<Link to="/intake" hash="ai" />}>{t("aiCaptureTab")}</DropdownMenuItem>
+							</DropdownMenuContent></DropdownMenu>
+							</div>
+						</header>
+						{searchOpen && <div className="top-search-panel" ref={topSearchPanelRef} onBlur={(event) => {
+							const target = event.relatedTarget;
+							if (target && !event.currentTarget.contains(target) && target !== topSearchTriggerRef.current) closeSearch();
+						}}>
+							<label htmlFor="top-search-query">{t("globalSearch")}</label>
+							<div className="top-search-panel-input"><Input id="top-search-query" ref={topSearchInputRef} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("globalSearchHint")} autoComplete="off" /><button type="button" onClick={() => closeSearch()} aria-label={t("close")}><X size={17}/></button></div>
+							<div className="search-results">{matches.length ? matches.map((result) => {
+								const content = <><span className="global-search-result-text"><strong>{result.title}</strong><small>{result.secondary}</small></span><small className="global-search-result-source">{searchLabels.sources[result.source]}</small></>;
+								const target = result.target;
+								if (target.type === "asset") {
+									if(data.assets.some(a=>a.id===target.assetId && !!a.walletCard))return <Link key={result.key} to="/records/$id" params={{id:`asset:${target.assetId}`}} onClick={()=>{let categoryId:string|null=null;try{categoryId=/^\/assets\/category\/([^/]+)/.exec(pathname)?.[1] ?? null;categoryId=categoryId?decodeURIComponent(categoryId):null;}catch{/* Unknown category falls back to wallet. */}sessionStorage.setItem('keepany-catalog-record-return',JSON.stringify({recordId:`asset:${target.assetId}`,categoryId,wallet:pathname!=='/assets'&&!categoryId}));closeSearch();}}>{content}</Link>;
+									return <Link key={result.key} to="/assets/$kind/$id" params={{ kind: target.kind, id: target.assetId }} onClick={() => closeSearch()}>{content}</Link>;
+								}
+								if (target.type === "task") return <button type="button" className="reminder-search-result" key={result.key} onClick={() => { closeSearch(); openReminderCenter({ taskId: target.taskId }); }}>{content}</button>;
+								const hash = target.type === "finance" ? `finance-entry-${target.historyId}` : target.type === "intake" ? `intake-review-${target.candidateId}` : "";
+								return <Link key={result.key} to={target.type === "finance" ? "/assets" : "/intake"} hash={hash} onClick={() => closeSearch(hash)}>{content}</Link>;
+							}) : <p>{t("none")}</p>}</div>
+							<button type="button" className="top-search-panel-close" onClick={() => { setSearchOpen(false); setSearch(""); }}>{t("close")}</button>
+						</div>}
+					</div>
 					<ReminderRuntime hideBanner />
 					{data.loading ? (
 						<main className="page">
