@@ -23,6 +23,7 @@ import { EntryEditor } from "./PasswordVaultEntryEditor";
 import { removeAccountLogin } from "../account-entry-edit";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu";
 import { EmptyState, LockedState } from "./PasswordVaultAccessStates";
+import { getRememberedVaultUnlock } from "../remembered-vault-unlock";
 
 export type AccountVaultTools = {
 	renderEntry: (entry: PasswordVaultEntrySummary) => ReactNode;
@@ -192,6 +193,9 @@ export function PasswordVaultPanel({
 	const backgroundRevision = useRef(0);
 	const native = hasPlatformSettings();
 	const [master, setMaster] = useState("");
+	const [rememberMaster, setRememberMaster] = useState(false);
+	const rememberedVault = getRememberedVaultUnlock();
+	const hasRememberedVault = rememberedVault?.hasSaved() ?? false;
 	const [masterConfirm, setMasterConfirm] = useState("");
 	const [search, setSearch] = useState("");
 	const [accessOpen, setAccessOpen] = useState(!assets.some((asset) => asset.kind === "account" && !asset.deleted));
@@ -280,6 +284,7 @@ export function PasswordVaultPanel({
 		const clearNativeSecrets = () => {
 			backgroundRevision.current += 1;
 			setMaster(""); setMasterConfirm(""); setShowMaster(false);
+			setRememberMaster(false);
 			setImportPassword(""); setCurrentMaster(""); setNewMaster(""); setNewMasterConfirm("");
 		};
 		window.addEventListener("keepany-native-background", clearNativeSecrets);
@@ -512,12 +517,66 @@ export function PasswordVaultPanel({
 		try {
 			await session.unlock(master);
 			setMaster("");
+			setShowMaster(false);
+			setRememberMaster(false);
+			if (rememberMaster && rememberedVault) {
+				try {
+					await session.rememberUnlockKey(rememberedVault.save);
+				} catch {
+					setMessageKey("pwVaultRememberSaveFailed");
+				}
+			}
 		} catch (error) {
 			setMessageKey(
 				errorCode(error) === "vault-password"
 					? "pwVaultUnlockFailed"
 					: errorKey(error),
 			);
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function unlockRememberedVault() {
+		if (busy || !session || !rememberedVault) return;
+		setBusy(true);
+		clearMessage();
+		try {
+			await session.unlockRemembered(rememberedVault.load);
+			setMaster("");
+			setShowMaster(false);
+		} catch (error) {
+			switch (errorCode(error)) {
+				case "vault-missing":
+				case "vault-password":
+					try {
+						await rememberedVault.forget();
+						setMessageKey("pwVaultRememberExpired");
+					} catch {
+						setMessageKey("pwVaultRememberUnavailable");
+					}
+					break;
+				case "vault-memory":
+				case "vault-locked":
+					setMessageKey(errorKey(error));
+					break;
+				default:
+					setMessageKey("pwVaultRememberUnavailable");
+			}
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function forgetRememberedVault() {
+		if (busy || !rememberedVault) return;
+		setBusy(true);
+		clearMessage();
+		try {
+			await rememberedVault.forget();
+			setMessageKey("pwVaultRememberRemoved");
+		} catch {
+			setMessageKey("pwVaultRememberRemoveFailed");
 		} finally {
 			setBusy(false);
 		}
@@ -766,6 +825,14 @@ export function PasswordVaultPanel({
 			setCurrentMaster("");
 			setNewMaster("");
 			setNewMasterConfirm("");
+			if (hasRememberedVault && rememberedVault) {
+				try {
+					await rememberedVault.forget();
+				} catch {
+					setMessageKey("pwVaultMasterChangedRememberRemoveFailed");
+					return;
+				}
+			}
 			announce("pwVaultMasterChanged");
 		} catch (error) {
 			announce(
@@ -910,6 +977,13 @@ export function PasswordVaultPanel({
 					setMaster={setMaster}
 					setShowMaster={setShowMaster}
 					onUnlock={unlockVault}
+					remembered={rememberedVault && {
+						saved: hasRememberedVault,
+						checked: rememberMaster,
+						onCheckedChange: setRememberMaster,
+						onUnlock: () => void unlockRememberedVault(),
+						onForget: () => void forgetRememberedVault(),
+					}}
 				/>
 			)}
 	</>;
@@ -925,6 +999,7 @@ export function PasswordVaultPanel({
 			<DropdownMenuItem onClick={() => setSmartImportOpen(true)}>{t("pwSmartTitle")}</DropdownMenuItem>
 			<DropdownMenuItem onClick={() => void exportVault()}>{t("pwVaultExport")}</DropdownMenuItem>
 			<DropdownMenuItem onClick={() => setChangeMasterOpen(true)}>{t("pwVaultChangeMaster")}</DropdownMenuItem>
+			{hasRememberedVault && <DropdownMenuItem onClick={() => void forgetRememberedVault()}>{t("pwVaultForgetRemembered")}</DropdownMenuItem>}
 		</DropdownMenuContent></DropdownMenu>
 	</div>;
 

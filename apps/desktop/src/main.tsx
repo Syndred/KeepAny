@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { invoke, isTauri } from "@tauri-apps/api/core";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
@@ -7,6 +7,8 @@ import { registerClipboardReadHandler, registerClipboardWriteHandler } from "../
 import { registerFileDeliveryHandler } from "../../web/src/file-delivery";
 import { registerNativeMetadataHandler } from "../../web/src/intake-url";
 import { registerPlatformSettings } from "../../web/src/platform-settings";
+import { registerRememberedVaultUnlock } from "../../web/src/remembered-vault-unlock";
+import { desktopRememberedVaultUnlock } from "./remembered-vault-unlock";
 import "@xyflow/react/dist/style.css";
 import "../../web/src/styles.css";
 import "../../web/src/route-load-error.css";
@@ -20,6 +22,9 @@ registerPlatformSettings({
   setItem: (key, value) => localStorage.setItem(key, value),
   removeItem: key => localStorage.removeItem(key),
 });
+if (isTauri() && navigator.platform.startsWith("Mac")) {
+  registerRememberedVaultUnlock(desktopRememberedVaultUnlock);
+}
 registerClipboardReadHandler(readText);
 registerClipboardWriteHandler(writeText);
 registerFileDeliveryHandler(async ({ name, bytes }) => {

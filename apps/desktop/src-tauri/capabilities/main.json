@@ -1,9 +1,13 @@
 {
   "identifier": "main",
   "description": "Local KeepAny window",
+  "local": true,
   "windows": ["main"],
   "permissions": [
     "allow-save-export",
+    "allow-save-remembered-vault-key",
+    "allow-load-remembered-vault-key",
+    "allow-forget-remembered-vault-key",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text"
   ]

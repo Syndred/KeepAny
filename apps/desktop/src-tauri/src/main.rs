@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod export;
+mod remembered_vault;
 
 use tauri::{webview::NewWindowResponse, Manager, Url, WebviewWindowBuilder};
 use tauri_plugin_opener::OpenerExt;
@@ -50,7 +51,12 @@ fn main() {
                 .open_js_links_on_click(false)
                 .build(),
         )
-        .invoke_handler(tauri::generate_handler![export::save_export])
+        .invoke_handler(tauri::generate_handler![
+            export::save_export,
+            remembered_vault::save_remembered_vault_key,
+            remembered_vault::load_remembered_vault_key,
+            remembered_vault::forget_remembered_vault_key,
+        ])
         .setup(|app| {
             let config = app
                 .config()

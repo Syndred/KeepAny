@@ -40,6 +40,57 @@ function deferred() {
 
 afterEach(() => vi.restoreAllMocks());
 
+describe('remembered device unlock', () => {
+  it('reopens after a normal write but rejects another vault with the same password and a rotated password', async () => {
+    const { storage, session } = await created();
+    let saved: Uint8Array | undefined;
+    await session.rememberUnlockKey(async (value) => { saved = value.slice(); });
+    const load = async () => saved!.slice();
+    try {
+      const id = await session.saveEntry(draft);
+      session.lock();
+      const reopened = new VaultSession(storage);
+      await reopened.initialize();
+      await reopened.unlockRemembered(load);
+      expect(reopened.readEntry(id)).toEqual(expect.objectContaining(draft));
+
+      const other = await created();
+      other.session.lock();
+      await expect(other.session.unlockRemembered(load)).rejects.toThrow('vault-password');
+      expect(other.session.getSnapshot().status).toBe('locked');
+
+      await reopened.changeMasterPassword(master, nextMaster);
+      reopened.lock();
+      await expect(reopened.unlockRemembered(load)).rejects.toThrow('vault-password');
+      expect(reopened.getSnapshot().status).toBe('locked');
+      await reopened.unlock(nextMaster);
+      reopened.lock();
+    } finally {
+      saved?.fill(0);
+    }
+  }, 20_000);
+
+  it('stays locked if the user locks while a remembered device key is being read', async () => {
+    const { session } = await created();
+    let saved: Uint8Array | undefined;
+    await session.rememberUnlockKey(async (value) => { saved = value.slice(); });
+    session.lock();
+    const started = deferred();
+    const release = deferred();
+    const pending = session.unlockRemembered(async () => {
+      started.resolve();
+      await release.promise;
+      return saved!;
+    });
+    await started.promise;
+    session.lock();
+    release.resolve();
+    await expect(pending).rejects.toThrow('vault-locked');
+    expect(session.getSnapshot().status).toBe('locked');
+    expect(saved?.every((byte) => byte === 0)).toBe(true);
+  });
+});
+
 it('preserves imported entry custom metadata in every shared deletion version', async () => {
   const { storage, session } = await created();
   const id = await session.saveEntry({ ...draft, usernameAliases: ['alias@example.test'], linkedAssetIds: ['current-account', 'other-account'] });

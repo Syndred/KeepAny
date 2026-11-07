@@ -1,6 +1,8 @@
 import { Input } from "./ui/input";
-import { Eye, EyeOff, KeyRound, Lock, ShieldCheck, Upload } from "lucide-react";
+import { Checkbox } from "@base-ui/react/checkbox";
+import { Check, Eye, EyeOff, KeyRound, Lock, ShieldCheck, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useEffect, useId, useRef } from "react";
 import { Button } from "./ui/button";
 import { MIN_MASTER_PASSWORD_LENGTH as MIN_MASTER_LENGTH } from "../../../../packages/password-vault/src/policy";
 export function EmptyState({
@@ -105,6 +107,7 @@ export function LockedState({
 	setMaster,
 	setShowMaster,
 	onUnlock,
+	remembered,
 }: {
     accounts?: boolean;
 	busy: boolean;
@@ -113,15 +116,40 @@ export function LockedState({
 	setMaster: (value: string) => void;
 	setShowMaster: (value: boolean) => void;
 	onUnlock: (event: React.FormEvent<HTMLFormElement>) => void;
+	remembered?: {
+		saved: boolean;
+		checked: boolean;
+		onCheckedChange: (checked: boolean) => void;
+		onUnlock: () => void;
+		onForget: () => void;
+	};
 }) {
 	const { t } = useTranslation();
+	const rememberId = useId();
+	const saved = remembered?.saved ?? false;
+	const passwordInput = useRef<HTMLInputElement>(null);
+	const previouslySaved = useRef(saved);
+	useEffect(() => {
+		if (previouslySaved.current && !saved) passwordInput.current?.focus();
+		previouslySaved.current = saved;
+	}, [saved]);
 	return (
 		<div className="password-vault-unlock">
 			<div className="password-vault-empty-icon">
 				<Lock size={26} />
 			</div>
 			<h3>{t(accounts ? "accountUnlockTitle" : "pwVaultLockedTitle")}</h3>
-			<p>{t(accounts ? "accountUnlockHint" : "pwVaultLockedHint")}</p>
+			<p>{t(saved ? "pwVaultRememberedHint" : accounts ? "accountUnlockHint" : "pwVaultLockedHint")}</p>
+			{remembered?.saved && (
+				<div className="actions">
+					<Button type="button" variant="primary" autoFocus={accounts} disabled={busy} onClick={remembered.onUnlock}>
+						<KeyRound size={16} /> {t("pwVaultUnlockRemembered")}
+					</Button>
+					<Button type="button" variant="ghost" disabled={busy} onClick={remembered.onForget}>
+						{t("pwVaultForgetRemembered")}
+					</Button>
+				</div>
+			)}
 			<form className="password-vault-master-form" onSubmit={onUnlock}>
 				<div className="field">
 					<label htmlFor="password-vault-unlock-master">
@@ -130,7 +158,8 @@ export function LockedState({
 					<div className="password-vault-password-input">
 						<Input
 							id="password-vault-unlock-master"
-                            autoFocus={accounts}
+							ref={passwordInput}
+							autoFocus={accounts && !saved}
 							type={showMaster ? "text" : "password"}
 							value={master}
 							onChange={(event) => setMaster(event.target.value)}
@@ -152,14 +181,29 @@ export function LockedState({
 						</Button>
 					</div>
 				</div>
+				{remembered && !saved && (
+					<div className="password-vault-remember">
+						<Checkbox.Root
+							id={rememberId}
+							className="password-vault-remember-checkbox"
+							aria-labelledby={`${rememberId}-label`}
+							checked={remembered.checked}
+							disabled={busy}
+							onCheckedChange={remembered.onCheckedChange}
+						>
+							<Checkbox.Indicator><Check size={15} /></Checkbox.Indicator>
+						</Checkbox.Root>
+						<label id={`${rememberId}-label`} htmlFor={rememberId}>{t("pwVaultRememberOnMac")}</label>
+					</div>
+				)}
 				<div className="actions">
-					<Button type="submit" variant="primary" disabled={busy}>
+					<Button type="submit" variant={saved ? undefined : "primary"} disabled={busy}>
 						<Lock size={16} /> {t(accounts ? "accountUnlockAction" : "pwVaultUnlock")}
 					</Button>
 				</div>
 			</form>
 			<p className="password-vault-security-note">
-				<KeyRound size={15} /> {t("pwVaultForgotHint")}
+				<KeyRound size={15} /> {t(saved ? "pwVaultRememberedRecovery" : "pwVaultForgotHint")}
 			</p>
 		</div>
 	);
